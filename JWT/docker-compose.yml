@@ -1,0 +1,15 @@
+﻿services:
+   sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: examsystem_sqlserver
+
+    environment:
+        SA_PASSWORD: Exam@123
+        ACCEPT_EULA: "Y"
+    ports:
+        - "1433:1433"
+    volumes:
+        - sql_data:/var/opt/mssql
+
+volumes:
+      sql_data:

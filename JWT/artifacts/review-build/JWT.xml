@@ -1,0 +1,478 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>JWT</name>
+    </assembly>
+    <members>
+        <member name="T:JWT.Controllers.BaoAccessController">
+            <summary>
+            Bao - kiem tra quyen truy cap truoc khi Student join bai thi.
+            </summary>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.CheckAccess(System.Int32,JWT.DTOs.BaoAccess.BaoAccessRequestDto)">
+            <summary>
+            Kiem tra Student co du quyen join hay khong.
+            </summary>
+            <remarks>
+            Chi Student duoc check de join.
+            De thi phai ton tai, Published, dang trong thoi gian thi,
+            Student da enroll subject, private thi AccessCode phai dung
+            va Student chua vuot MaxAttempts.
+            </remarks>
+            <response code="200">Student duoc phep join.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen join.</response>
+            <response code="404">Khong tim thay de thi.</response>
+            <response code="409">Da vuot so lan lam bai toi da.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.Start(System.Int32)">
+            <summary>
+            Student bat dau lam bai, tao attempt va attempt questions.
+            </summary>
+            <remarks>
+            Neu Student da co attempt InProgress thi resume attempt do, khong tao moi.
+            Neu ShuffleQuestions = true thi thu tu AttemptQuestions duoc random.
+            </remarks>
+            <response code="200">Bat dau hoac resume bai lam thanh cong.</response>
+            <response code="400">De thi chua co cau hoi published.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong du dieu kien bat dau lam bai.</response>
+            <response code="404">Khong tim thay de thi.</response>
+            <response code="409">Da vuot so lan lam bai toi da.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.GetAttempt(System.Int32)">
+            <summary>
+            Lay thong tin mot lan lam bai de resume hoac xem lai.
+            </summary>
+            <remarks>
+            Student chi xem attempt cua minh.
+            Teacher chi xem attempt thuoc de thi cua minh.
+            Admin xem duoc tat ca.
+            Attempt InProgress khong tra dap an dung.
+            Attempt Submitted chi tra ket qua khi ShowAnswerAfterSubmit = true.
+            </remarks>
+            <response code="200">Tra ve thong tin attempt.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xem attempt.</response>
+            <response code="404">Khong tim thay attempt.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.SaveAnswer(System.Int32,JWT.DTOs.BaoAccess.BaoSaveAnswerRequestDto)">
+            <summary>
+            Luu cau tra loi trong qua trinh Student lam bai.
+            </summary>
+            <remarks>
+            Attempt phai ton tai, thuoc Student hien tai, dang InProgress,
+            chua qua thoi gian lam bai, question phai thuoc AttemptQuestions,
+            option chon phai thuoc question do. Neu tra loi lai thi update answer cu.
+            </remarks>
+            <response code="200">Luu cau tra loi thanh cong.</response>
+            <response code="400">Du lieu cau tra loi khong hop le.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen hoac da qua thoi gian lam bai.</response>
+            <response code="404">Khong tim thay attempt.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.Submit(System.Int32,JWT.DTOs.BaoAccess.BaoSubmitRequestDto)">
+            <summary>
+            Student nop bai, cham diem tu dong va tinh passed/failed.
+            </summary>
+            <remarks>
+            Attempt phai ton tai, thuoc Student hien tai va dang InProgress.
+            Multiple choice phai match exact moi duoc diem.
+            Neu qua thoi gian thi Status = Expired va IsAutoSubmitted = true.
+            </remarks>
+            <response code="200">Nop bai va cham diem thanh cong.</response>
+            <response code="400">Attempt khong con InProgress hoac da submit.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen nop attempt nay.</response>
+            <response code="404">Khong tim thay attempt.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.GetResult(System.Int32)">
+            <summary>
+            Student xem ket qua bai thi cua minh.
+            </summary>
+            <remarks>
+            Student chi xem ket qua cua chinh minh.
+            Attempt phai Submitted hoac Expired.
+            Neu ShowAnswerAfterSubmit = true thi tra dap an/giai thich.
+            Neu false thi khong tra dap an dung.
+            </remarks>
+            <response code="200">Tra ve ket qua bai thi.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xem ket qua.</response>
+            <response code="404">Khong tim thay exam hoac attempt da nop.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoAccessController.GetRanking(System.Int32,System.Int32)">
+            <summary>
+            Xem bang xep hang cua exam.
+            </summary>
+            <remarks>
+            Chi lay attempt Submitted.
+            Moi Student lay attempt co score cao nhat.
+            Sort Score DESC, neu bang diem thi SubmitDuration ASC.
+            Mac dinh Top 5.
+            </remarks>
+            <response code="200">Tra ve bang xep hang.</response>
+            <response code="404">Khong tim thay exam.</response>
+        </member>
+        <member name="T:JWT.Controllers.BaoNotificationController">
+            <summary>
+            Bao - quan ly notification cua user hien tai.
+            </summary>
+        </member>
+        <member name="M:JWT.Controllers.BaoNotificationController.GetNotifications(System.Nullable{System.Boolean})">
+            <summary>
+            User xem danh sach thong bao cua minh.
+            </summary>
+            <remarks>
+            User chi xem notification cua chinh minh.
+            Sort CreatedAt DESC. Co the filter IsRead.
+            </remarks>
+            <response code="200">Tra ve danh sach thong bao.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoNotificationController.MarkAsRead(System.Int32)">
+            <summary>
+            Danh dau thong bao da doc.
+            </summary>
+            <remarks>
+            Notification phai ton tai va thuoc user hien tai.
+            Sau khi read se push SignalR event NotificationRead va UnreadNotificationCountChanged.
+            </remarks>
+            <response code="200">Danh dau da doc thanh cong.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Notification khong thuoc user hien tai.</response>
+            <response code="404">Khong tim thay notification.</response>
+        </member>
+        <member name="T:JWT.Controllers.BaoTecherRequestController">
+            <summary>
+            Bao - user gui request tro thanh Teacher va Admin xem request.
+            </summary>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.Create(JWT.DTOs.BaoTecherRequests.BaoTecherRequestCreateDto)">
+            <summary>
+            Student gui yeu cau tro thanh Teacher, Teacher gui yeu cau xin day them mon.
+            </summary>
+            <response code="201">Tao request thanh cong.</response>
+            <response code="400">Du lieu khong hop le.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Khong phai Student/Teacher hoac user la Admin.</response>
+            <response code="404">Khong tim thay subject.</response>
+            <response code="409">Dang co request Pending cho mon nay hoac Teacher da day mon nay.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.GetAvailableSubjects">
+            <summary>
+            User xem danh sach subject con co the gui request.
+            </summary>
+            <response code="200">Tra ve danh sach subject con hoat dong.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Admin khong can gui request.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.GetMyRequests">
+            <summary>
+            User xem danh sach teacher request cua minh.
+            </summary>
+            <response code="200">Tra ve danh sach request cua user hien tai.</response>
+            <response code="401">Token khong hop le.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.Cancel(System.Int32)">
+            <summary>
+            User huy teacher request Pending cua chinh minh.
+            </summary>
+            <response code="200">Huy request thanh cong.</response>
+            <response code="400">Request khong con Pending.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Admin khong the huy request cua user.</response>
+            <response code="404">Khong tim thay request cua user hien tai.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.GetRequests(JWT.DTOs.BaoTecherRequests.BaoTecherRequestFilterDto)">
+            <summary>
+            Admin xem danh sach yeu cau tro thanh Teacher.
+            </summary>
+            <response code="200">Tra ve danh sach request.</response>
+            <response code="400">Filter khong hop le.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Khong phai Admin.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.GetById(System.Int32)">
+            <summary>
+            Admin xem chi tiet request.
+            </summary>
+            <response code="200">Tra ve chi tiet request.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Khong phai Admin.</response>
+            <response code="404">Khong tim thay request.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.Approve(System.Int32)">
+            <summary>
+            Admin duyet yeu cau len Teacher.
+            </summary>
+            <response code="200">Duyet request thanh cong.</response>
+            <response code="400">Request khong con Pending.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Khong phai Admin hoac user da bi xoa.</response>
+            <response code="404">Khong tim thay request/user/role.</response>
+        </member>
+        <member name="M:JWT.Controllers.BaoTecherRequestController.Reject(System.Int32,JWT.DTOs.BaoTecherRequests.BaoTecherRequestRejectDto)">
+            <summary>
+            Admin tu choi yeu cau len Teacher.
+            </summary>
+            <response code="200">Tu choi request thanh cong.</response>
+            <response code="400">Request khong con Pending.</response>
+            <response code="401">Token khong hop le.</response>
+            <response code="403">Khong phai Admin hoac user da bi xoa.</response>
+            <response code="404">Khong tim thay request/user.</response>
+        </member>
+        <member name="T:JWT.Controllers.ExamsController">
+            <summary>
+            Quan ly de thi, cau hoi trong de thi, publish/close exam va exam public/private.
+            </summary>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.GetExams(JWT.DTOs.Exam.ExamFilterRequestDto)">
+            <summary>
+            Lay danh sach de thi co phan trang va loc theo mon hoc.
+            </summary>
+            <remarks>
+            Student chi thay exam co Status = Published va khong nhan AccessCode.
+            Teacher thay exam do minh tao hoac exam thuoc subject minh duoc gan.
+            Admin thay tat ca exam chua bi xoa mem.
+            </remarks>
+            <response code="200">Tra ve danh sach de thi.</response>
+            <response code="400">PageNumber hoac PageSize khong hop le.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Role khong co quyen truy cap.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.GetExamById(System.Int32)">
+            <summary>
+            Lay chi tiet mot de thi theo id.
+            </summary>
+            <remarks>
+            Neu exam khong ton tai hoac da bi xoa mem thi tra ve 404.
+            Student chi xem duoc exam Published va AccessCode se bi an.
+            Teacher chi xem duoc exam do minh tao hoac thuoc subject minh duoc gan.
+            Admin xem duoc day du thong tin.
+            </remarks>
+            <response code="200">Tra ve chi tiet de thi.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xem de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.CreateExam(JWT.DTOs.Exam.ExamCreateDto)">
+            <summary>
+            Teacher tao de thi moi cho subject minh duoc phan cong.
+            </summary>
+            <remarks>
+            Chi role Teacher duoc goi API nay.
+            Exam moi mac dinh Status = Draft.
+            StartTime phai nho hon EndTime, DurationMinutes phai lon hon 0,
+            PassingScore khong duoc lon hon TotalScore.
+            Private exam bat buoc co AccessCode.
+            Exam co anh bia qua truong ExamImageUrl.
+            Ten de thi khong duoc trung voi de thi dang hoat dong.
+            </remarks>
+            <response code="201">Tao de thi thanh cong.</response>
+            <response code="400">Du lieu tao de thi khong hop le.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong phai Teacher hoac Teacher chua duoc gan subject.</response>
+            <response code="409">Ten de thi da ton tai.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.UpdateExam(System.Int32,JWT.DTOs.Exam.ExamUpdateDto)">
+            <summary>
+            Teacher cap nhat de thi do chinh minh tao.
+            </summary>
+            <remarks>
+            Ap dung validate nhu tao exam.
+            Teacher khong duoc sua exam cua nguoi khac.
+            Ten de thi khong duoc trung voi de thi dang hoat dong khac.
+            </remarks>
+            <response code="200">Cap nhat de thi thanh cong.</response>
+            <response code="400">Du lieu cap nhat khong hop le.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen cap nhat de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+            <response code="409">Ten de thi da ton tai.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.DeleteExam(System.Int32)">
+            <summary>
+            Xoa mem de thi.
+            </summary>
+            <remarks>
+            Chi Teacher tao de thi moi duoc xoa.
+            He thong set IsDeleted = true va Status = Closed.
+            </remarks>
+            <response code="204">Xoa mem thanh cong.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xoa de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.AddQuestionToExam(System.Int32,JWT.DTOs.Exam.AddExamQuestionDto)">
+            <summary>
+            Them cau hoi tu ngan hang vao de thi.
+            </summary>
+            <remarks>
+            Chi Teacher tao de thi moi duoc them cau hoi.
+            Exam phai dang Draft.
+            Question phai co Status = Published va khong bi xoa.
+            Khong cho add trung question vao cung mot exam.
+            </remarks>
+            <response code="200">Them cau hoi thanh cong.</response>
+            <response code="400">Exam khong Draft, question chua Published, hoac du lieu khong hop le.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen them cau hoi.</response>
+            <response code="404">Khong tim thay exam hoac question.</response>
+            <response code="409">Question da ton tai trong exam.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.RemoveQuestionFromExam(System.Int32,System.Int32)">
+            <summary>
+            Xoa cau hoi khoi de thi.
+            </summary>
+            <remarks>
+            Chi Teacher tao de thi moi duoc xoa cau hoi.
+            Exam phai dang Draft.
+            Neu khong tim thay lien ket ExamQuestions thi tra ve 404.
+            </remarks>
+            <response code="204">Xoa cau hoi khoi de thi thanh cong.</response>
+            <response code="400">Exam khong o trang thai Draft.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xoa cau hoi.</response>
+            <response code="404">Khong tim thay exam hoac lien ket question trong exam.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.PublishExam(System.Int32)">
+            <summary>
+            Publish de thi de Student co the nhin thay va lam bai.
+            </summary>
+            <remarks>
+            Chuyen Status tu Draft sang Published.
+            Teacher chi publish exam cua minh; Admin co the publish exam bat ky.
+            </remarks>
+            <response code="200">Publish thanh cong.</response>
+            <response code="400">Exam khong o trang thai Draft.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen publish de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.CloseExam(System.Int32)">
+            <summary>
+            Dong de thi, khong cho Student tiep tuc join.
+            </summary>
+            <remarks>
+            Chuyen Status cua exam sang Closed.
+            Teacher chi close exam cua minh; Admin co the close exam bat ky.
+            </remarks>
+            <response code="200">Close thanh cong.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen close de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+        </member>
+        <member name="M:JWT.Controllers.ExamsController.GetExamQuestions(System.Int32)">
+            <summary>
+            Lay danh sach cau hoi trong de thi.
+            </summary>
+            <remarks>
+            Student chi duoc xem cau hoi cua exam Published trong thoi gian lam bai.
+            Khi role la Student, he thong an hoan toan IsCorrect va Explanation de chong gian lan F12.
+            Teacher xem duoc exam do minh tao hoac exam thuoc subject minh duoc gan.
+            Admin xem duoc day du.
+            </remarks>
+            <response code="200">Tra ve danh sach cau hoi trong de thi.</response>
+            <response code="401">Token khong hop le hoac thieu thong tin user.</response>
+            <response code="403">Khong co quyen xem cau hoi trong de thi.</response>
+            <response code="404">Khong tim thay de thi.</response>
+        </member>
+        <member name="T:JWT.Migrations.Inital">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Inital.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Inital.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Inital.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.Initial2">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial2.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial2.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial2.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.AddTeacherSubjects">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.AddTeacherSubjects.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.AddTeacherSubjects.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.AddTeacherSubjects.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.Setup">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Setup.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Setup.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Setup.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.update">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.update.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.update.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.update.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.Initial9">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial9.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial9.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial9.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.Initial90">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial90.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial90.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.Initial90.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:JWT.Migrations.FixTeacherSubjectRelation">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.FixTeacherSubjectRelation.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.FixTeacherSubjectRelation.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:JWT.Migrations.FixTeacherSubjectRelation.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>
