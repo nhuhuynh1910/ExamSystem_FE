@@ -25,6 +25,7 @@ namespace JWT.Controllers
                 request,
                 GetCurrentUserId(),
                 GetCurrentUserRole());
+
             return Ok(result);
         }
 
@@ -48,7 +49,10 @@ namespace JWT.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
         }
 
@@ -68,7 +72,10 @@ namespace JWT.Controllers
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -85,13 +92,20 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                var result = await _questionService.UpdateQuestionAsync(id, request, teacherId);
+
+                var result = await _questionService.UpdateQuestionAsync(
+                    id,
+                    request,
+                    teacherId);
 
                 return Ok(result);
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -106,13 +120,22 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                await _questionService.DeleteQuestionAsync(id, teacherId);
 
-                return Ok(new { message = "Question deleted successfully." });
+                await _questionService.DeleteQuestionAsync(
+                    id,
+                    teacherId);
+
+                return Ok(new
+                {
+                    message = "Question deleted successfully."
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -129,13 +152,20 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                var result = await _questionService.AddOptionAsync(questionId, request, teacherId);
+
+                var result = await _questionService.AddOptionAsync(
+                    questionId,
+                    request,
+                    teacherId);
 
                 return Ok(result);
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -152,13 +182,20 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                var result = await _questionService.UpdateOptionAsync(optionId, request, teacherId);
+
+                var result = await _questionService.UpdateOptionAsync(
+                    optionId,
+                    request,
+                    teacherId);
 
                 return Ok(result);
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -173,13 +210,22 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                await _questionService.DeleteOptionAsync(optionId, teacherId);
 
-                return Ok(new { message = "Option deleted successfully." });
+                await _questionService.DeleteOptionAsync(
+                    optionId,
+                    teacherId);
+
+                return Ok(new
+                {
+                    message = "Option deleted successfully."
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -194,13 +240,22 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                await _questionService.PublishQuestionAsync(id, teacherId);
 
-                return Ok(new { message = "Question published successfully." });
+                await _questionService.PublishQuestionAsync(
+                    id,
+                    teacherId);
+
+                return Ok(new
+                {
+                    message = "Question published successfully."
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -215,13 +270,22 @@ namespace JWT.Controllers
             try
             {
                 var teacherId = GetCurrentUserId();
-                await _questionService.DraftQuestionAsync(id, teacherId);
 
-                return Ok(new { message = "Question moved to draft successfully." });
+                await _questionService.DraftQuestionAsync(
+                    id,
+                    teacherId);
+
+                return Ok(new
+                {
+                    message = "Question moved to draft successfully."
+                });
             }
             catch (UnauthorizedAccessException ex)
             {
-                return Forbid(ex.Message);
+                return StatusCode(403, new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {
@@ -236,12 +300,19 @@ namespace JWT.Controllers
                 ?? User.FindFirst("UserId")?.Value
                 ?? User.FindFirst("userId")?.Value;
 
-            if (string.IsNullOrEmpty(userIdClaim))
+            if (string.IsNullOrWhiteSpace(userIdClaim))
             {
-                throw new UnauthorizedAccessException("User id not found in token.");
+                throw new UnauthorizedAccessException(
+                    "User id not found in token.");
             }
 
-            return int.Parse(userIdClaim);
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                throw new UnauthorizedAccessException(
+                    "Invalid user id.");
+            }
+
+            return userId;
         }
 
         private string GetCurrentUserRole()
@@ -249,4 +320,4 @@ namespace JWT.Controllers
             return User.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
         }
     }
-}
+}   
