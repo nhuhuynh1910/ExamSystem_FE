@@ -27,7 +27,7 @@
 /// ════════════════════════════════════════════════════════════════════════════
 class ApiConstants {
   // ─── Base URL (chỉ dùng làm fallback, DioClient override theo nền tảng) ────
-  static const String baseUrl = 'https://localhost:7004/api';
+  static const String baseUrl = 'http://localhost:5122/api';
 
   // ─── Auth (/api/auth/...) ────────────────────────────────────────────────────
   // Đồng bộ với: Controllers/AuthController.cs → [Route("api/[controller]")]

@@ -80,19 +80,19 @@ class DioClient {
   }
 
   // ── Xác định Base URL theo nền tảng ───────────────────────────────────────
-  /// BE chạy tại port 7004. Tất cả endpoint đều có tiền tố `/api/`.
-  /// Ví dụ:  POST https://10.0.2.2:7004/api/auth/login
-  ///         GET  https://10.0.2.2:7004/api/exams
+  /// BE chạy tại port 5122. Tất cả endpoint đều có tiền tố `/api/`.
+  /// Ví dụ:  POST http://10.0.2.2:5122/api/auth/login
+  ///         GET  http://10.0.2.2:5122/api/exams
   static String _resolveBaseUrl() {
     // defaultTargetPlatform là Android → đang chạy trên Android Emulator.
     // Android Emulator không thể dùng "localhost" vì nó là localhost của chính emulator.
     // Phải dùng 10.0.2.2 để trỏ về máy host.
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'https://10.0.2.2:7004/api';
+      return 'http://10.0.2.2:5122/api';
     }
 
     // iOS Simulator, macOS Desktop, Windows Desktop, Web → dùng localhost.
-    return 'https://localhost:7004/api';
+    return 'http://localhost:5122/api';
   }
 
   // ── Xây dựng Interceptor xác thực ─────────────────────────────────────────

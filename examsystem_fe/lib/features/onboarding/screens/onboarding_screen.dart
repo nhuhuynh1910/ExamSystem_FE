@@ -84,6 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Scaffold(
       // Nền trắng — đồng bộ với background: #ffffff trong HTML.
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
 
       // Mở rộng body sau status bar để overlay decorative elements.
       extendBodyBehindAppBar: true,

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
+import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/bloc/register_bloc.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/register_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
 
@@ -89,24 +94,21 @@ class AppRouter {
         path: login,
         name: 'login',
         builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Login Screen',
-            routePath: '/login',
-            assignee: 'Thành viên phụ trách: Auth Feature',
+          return BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(),
+            child: const LoginScreen(),
           );
         },
       ),
 
-      // ── Route: Đăng ký ───────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
+      // ── Route: Đăng ký ───────────────────────────────────────────
       GoRoute(
         path: register,
         name: 'register',
         builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Register Screen',
-            routePath: '/register',
-            assignee: 'Thành viên phụ trách: Auth Feature',
+          return BlocProvider<RegisterBloc>(
+            create: (context) => RegisterBloc(),
+            child: const RegisterScreen(),
           );
         },
       ),

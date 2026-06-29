@@ -91,6 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       // Nền trắng — đồng bộ với background: #ffffff trong HTML.
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Center(
           child: FadeTransition(
