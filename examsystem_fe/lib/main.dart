@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/routes/app_router.dart';
@@ -41,24 +42,60 @@ class ExamSystemApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       // ── Thông tin app ──────────────────────────────────────────────────────
-      title: 'ExamSystem',
+      title: 'FPT ExamHub',
 
       // ── Ẩn badge "DEBUG" ở góc trên phải khi chạy debug mode ──────────────
       debugShowCheckedModeBanner: false,
 
-      // ── Cấu hình theme mặc định ────────────────────────────────────────────
-      // Thành viên phụ trách theme sẽ bổ sung ThemeData đầy đủ vào lib/core/theme/
-      // và import vào đây sau.
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        useMaterial3: true,
-      ),
+      // ── Theme — màu sắc và font đồng bộ với thiết kế HTML ────────────────
+      // Primary: #F15A22 (FPT Orange) — lấy từ Tailwind config trong HTML.
+      // Font: Inter — đồng bộ với fontFamily trong HTML.
+      theme: _buildTheme(),
 
       // ── Kết nối với GoRouter từ AppRouter ─────────────────────────────────
       // routerConfig thay thế hoàn toàn cho home/initialRoute của MaterialApp.
       // GoRouter sẽ tự quyết định màn hình nào hiển thị đầu tiên
       // dựa trên initialLocation và kết quả của hàm guard _guardRedirect.
       routerConfig: AppRouter.router,
+    );
+  }
+
+  /// Xây dựng ThemeData đồng bộ với thiết kế HTML/Figma.
+  ///
+  /// Màu sắc lấy từ Tailwind config trong Splash & Onboarding.txt:
+  ///   primary: #F15A22
+  ///   background: #ffffff
+  ///   on-background: #0b1c30
+  ///   surface-container: #e5eeff
+  ///   secondary: #485f84
+  ThemeData _buildTheme() {
+    // Dùng ColorScheme.fromSeed với seedColor là FPT Orange.
+    // Material 3 tự tính toán toàn bộ bảng màu từ seed color.
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFFF15A22), // FPT Orange — primary từ HTML
+      brightness: Brightness.light,
+    ).copyWith(
+      // Override các màu cần khớp chính xác với HTML design:
+      primary: const Color(0xFFF15A22),        // primary: #F15A22
+      surface: const Color(0xFFF8F9FF),         // surface: #f8f9ff
+      surfaceContainerLowest: Colors.white,     // surface-container-lowest: #ffffff
+      onSurface: const Color(0xFF0B1C30),       // on-surface: #0b1c30
+      secondary: const Color(0xFF485F84),       // secondary: #485f84
+      error: const Color(0xFFBA1A1A),           // error: #ba1a1a
+      outline: const Color(0xFF8E7067),         // outline: #8e7067
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+
+      // Font Inter — đồng bộ với fontFamily trong HTML design.
+      textTheme: GoogleFonts.interTextTheme(
+        ThemeData.light().textTheme,
+      ),
+
+      // Scaffold background: #ffffff (background từ HTML).
+      scaffoldBackgroundColor: Colors.white,
     );
   }
 }

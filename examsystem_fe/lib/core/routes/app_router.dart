@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/splash/screens/splash_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -12,16 +14,25 @@ import '../../core/utils/storage_manager.dart';
 //   - Dùng context.go('/path') hoặc context.push('/path') để điều hướng,
 //     KHÔNG dùng Navigator.push truyền thống.
 //
-// LUỒNG ĐIỀU HƯỚNG (theo file phân chia việc PRM393_Group3_Backlog.xlsx):
-//   - Người dùng chưa đăng nhập → InitialLocation = '/login'
-//   - Đăng nhập thành công      → GoRouter Guard tự redirect về '/exams'
-//   - Đã đăng nhập, mở app lại  → GoRouter Guard tự redirect về '/exams'
+// LUỒNG ĐIỀU HƯỚNG:
+//   App start → /splash (2.5s delay + check token)
+//     ├── [Có token] → /exams
+//     └── [Không có token] → /onboarding → /login
+//
+// PUBLIC ROUTES (không cần auth): /splash, /onboarding, /login, /register
+// PROTECTED ROUTES (cần auth): /exams, /exams/:id
 // ════════════════════════════════════════════════════════════════════════════
 class AppRouter {
-  // ── Hằng định nghĩa tên đường dẫn (dùng khi navigate, tránh hard-code string) ──
+  // ── Hằng định nghĩa tên đường dẫn ──────────────────────────────────────────
 
-  /// Màn hình đăng nhập — màn hình đầu tiên khi chưa có phiên đăng nhập.
-  static const String login    = '/login';
+  /// Màn hình khởi động — điểm đầu tiên khi mở app.
+  static const String splash = '/splash';
+
+  /// Màn hình onboarding — giới thiệu app cho người dùng mới.
+  static const String onboarding = '/onboarding';
+
+  /// Màn hình đăng nhập — màn hình auth chính.
+  static const String login = '/login';
 
   /// Màn hình đăng ký tài khoản mới.
   static const String register = '/register';
@@ -30,23 +41,48 @@ class AppRouter {
   static const String examList = '/exams';
 
   /// Màn hình chi tiết một đề thi theo ID.
-  /// Dùng: context.go('/exams/123') hoặc context.go(AppRouter.examDetail(123))
   static const String examDetailPath = '/exams/:id';
 
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
 
+  // ── Tập hợp các route không cần xác thực (public) ──────────────────────
+  static const Set<String> _publicRoutes = {
+    splash,
+    onboarding,
+    login,
+    register,
+  };
+
   // ── Khởi tạo GoRouter chính ─────────────────────────────────────────────
   static final GoRouter router = GoRouter(
-    // Màn hình đầu tiên khi mở app: trang Login.
-    // GoRouter Guard bên dưới sẽ tự redirect sang /exams nếu đã có token.
-    initialLocation: login,
+    // Màn hình đầu tiên: SplashScreen.
+    // GoRouter Guard sẽ KHÔNG redirect khi ở /splash (là public route).
+    initialLocation: splash,
 
     // Hàm guard: kiểm tra xác thực trước mỗi lần điều hướng.
     redirect: _guardRedirect,
 
     // Danh sách tất cả các route của app.
     routes: [
+      // ── Route: Splash Screen ──────────────────────────────────────────────
+      GoRoute(
+        path: splash,
+        name: 'splash',
+        builder: (BuildContext context, GoRouterState state) {
+          return const SplashScreen();
+        },
+      ),
+
+      // ── Route: Onboarding Screen ──────────────────────────────────────────
+      GoRoute(
+        path: onboarding,
+        name: 'onboarding',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OnboardingScreen();
+        },
+      ),
+
       // ── Route: Đăng nhập ─────────────────────────────────────────────────
       // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
       GoRoute(
@@ -89,13 +125,11 @@ class AppRouter {
         },
 
         // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
-        // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
         routes: [
           GoRoute(
             path: ':id', // Đường dẫn đầy đủ: /exams/:id
             name: 'examDetail',
             builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter.
               final examId = state.pathParameters['id'] ?? '';
               return _PlaceholderScreen(
                 routeName: 'Exam Detail Screen (id: $examId)',
@@ -108,7 +142,7 @@ class AppRouter {
       ),
     ],
 
-    // Callback khi GoRouter gặp lỗi (ví dụ: truy cập route không tồn tại).
+    // Callback khi GoRouter gặp lỗi.
     errorBuilder: (BuildContext context, GoRouterState state) {
       return Scaffold(
         appBar: AppBar(title: const Text('Lỗi điều hướng')),
@@ -126,29 +160,33 @@ class AppRouter {
   /// Được GoRouter gọi trước MỌI lần chuyển màn hình.
   ///
   /// Logic:
-  ///   - Chưa đăng nhập + cố vào trang cần auth → redirect về /login.
-  ///   - Đã đăng nhập + đang ở trang public (login/register) → redirect về /exams.
+  ///   - /splash → luôn cho qua (SplashScreen tự xử lý navigate).
+  ///   - Đã đăng nhập + đang ở public route (trừ /splash) → redirect /exams.
+  ///   - Chưa đăng nhập + cố vào route cần auth → redirect /onboarding.
   ///   - Các trường hợp còn lại → cho đi bình thường (return null).
   static Future<String?> _guardRedirect(
     BuildContext context,
     GoRouterState state,
   ) async {
-    // Kiểm tra trạng thái đăng nhập từ StorageManager.
+    final String currentPath = state.matchedLocation;
+
+    // /splash tự xử lý navigate sau delay — không can thiệp.
+    if (currentPath == splash) return null;
+
+    // Kiểm tra trạng thái đăng nhập từ StorageManager (local, không gọi API).
     final bool isLoggedIn = await StorageManager.isLoggedIn();
 
-    // Xác định route hiện tại có phải trang public không (không cần auth).
-    final bool isPublicRoute =
-        state.matchedLocation == login ||
-        state.matchedLocation == register;
+    // Xác định route hiện tại có phải public không.
+    final bool isPublicRoute = _publicRoutes.contains(currentPath);
 
-    // Chưa đăng nhập và cố vào trang cần auth → về Login.
-    if (!isLoggedIn && !isPublicRoute) {
-      return login;
-    }
-
-    // Đã đăng nhập và đang ở trang public → vào thẳng trang chủ.
+    // Đã đăng nhập + đang ở trang public → vào thẳng trang chủ.
     if (isLoggedIn && isPublicRoute) {
       return examList;
+    }
+
+    // Chưa đăng nhập + cố vào trang cần auth → về Onboarding.
+    if (!isLoggedIn && !isPublicRoute) {
+      return onboarding;
     }
 
     // Mọi trường hợp còn lại → điều hướng bình thường.
@@ -157,23 +195,13 @@ class AppRouter {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// _PlaceholderScreen — Màn hình tạm thời, tối giản để dự án compile được.
+// _PlaceholderScreen — Màn hình tạm thời cho các tính năng chưa implement.
 //
-// Mục đích:
-//   - Giữ cho app không bị lỗi compile trong khi các thành viên chưa code xong UI.
-//   - Hiển thị thông tin route để dễ nhận biết đang ở màn hình nào khi test.
-//
-// Thành viên phụ trách tính năng sẽ XÓA class này khỏi import và
-// THAY THẾ builder trong GoRoute bằng màn hình thật của mình.
+// Thành viên phụ trách tính năng sẽ XÓA và THAY THẾ builder trong GoRoute.
 // ════════════════════════════════════════════════════════════════════════════
 class _PlaceholderScreen extends StatelessWidget {
-  /// Tên màn hình (để hiển thị cho dễ nhận biết).
   final String routeName;
-
-  /// Đường dẫn route (để debug).
   final String routePath;
-
-  /// Thành viên phụ trách implement màn hình này.
   final String assignee;
 
   const _PlaceholderScreen({
@@ -187,7 +215,7 @@ class _PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(routeName),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFFF15A22), // FPT Orange
         foregroundColor: Colors.white,
       ),
       body: Center(
@@ -199,7 +227,7 @@ class _PlaceholderScreen extends StatelessWidget {
               const Icon(
                 Icons.build_circle_outlined,
                 size: 64,
-                color: Colors.indigo,
+                color: Color(0xFFF15A22),
               ),
               const SizedBox(height: 16),
               Text(
@@ -218,7 +246,10 @@ class _PlaceholderScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber[50],
                   border: Border.all(color: Colors.amber),
