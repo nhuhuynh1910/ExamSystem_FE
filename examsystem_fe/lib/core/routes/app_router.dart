@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/utils/storage_manager.dart';
+import '../utils/storage_manager.dart';
+import '../../features/exam/block/exam_detail_cubit.dart';
+import '../../features/exam/block/exam_list_cubit.dart';
+import '../../features/exam/screens/exam_detail_screen.dart';
+import '../../features/exam/screens/exam_list_screen.dart';
+import '../../features/exam/screens/enter_access_code_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -76,15 +82,13 @@ class AppRouter {
       ),
 
       // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: examList,
         name: 'examList',
         builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Exam List Screen',
-            routePath: '/exams',
-            assignee: 'Thành viên phụ trách: Exam Feature',
+          return BlocProvider(
+            create: (_) => ExamListCubit()..loadExams(),
+            child: const ExamListScreen(),
           );
         },
 
@@ -92,17 +96,34 @@ class AppRouter {
         // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
         routes: [
           GoRoute(
-            path: ':id', // Đường dẫn đầy đủ: /exams/:id
+            path: ':id',
             name: 'examDetail',
             builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter.
-              final examId = state.pathParameters['id'] ?? '';
-              return _PlaceholderScreen(
-                routeName: 'Exam Detail Screen (id: $examId)',
-                routePath: '/exams/$examId',
-                assignee: 'Thành viên phụ trách: Exam Detail Feature',
+              final examId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+              return BlocProvider(
+                create: (_) => ExamDetailCubit()..loadDetail(examId),
+                child: ExamDetailScreen(examId: examId),
               );
             },
+            routes: [
+              GoRoute(
+                path: 'access-code',
+                name: 'examAccessCode',
+                builder: (BuildContext context, GoRouterState state) {
+                  final examId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+                  final examName = state.uri.queryParameters['name'] ?? '';
+                  final duration = int.tryParse(state.uri.queryParameters['duration'] ?? '') ?? 60;
+                  final endTimeStr = state.uri.queryParameters['endTime'] ?? '';
+                  final endTime = DateTime.tryParse(endTimeStr);
+                  return EnterAccessCodeScreen(
+                    examId: examId,
+                    examName: examName,
+                    durationMinutes: duration,
+                    endTime: endTime,
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -237,3 +258,4 @@ class _PlaceholderScreen extends StatelessWidget {
     );
   }
 }
+
