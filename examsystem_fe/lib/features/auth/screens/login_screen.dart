@@ -427,7 +427,8 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: isLoading
             ? null
             : () {
-                // TODO: Đăng nhập bằng Google
+                // Chuyển sang Google Account Picker
+                context.push(AppRouter.googleAccountPicker);
               },
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Color(0xFFE2E8F0)),

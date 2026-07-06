@@ -19,6 +19,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+
+// ── CORS — cho phép Flutter Web (localhost:3000) gọi API ────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFlutterWeb", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:3000",  // Flutter Web dev
+                "http://localhost:5122"   // BE self-origin
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();          // cần cho SignalR WebSocket
+    });
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -195,6 +210,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+
+// CORS phải đặt TRƯỚC Authentication/Authorization
+app.UseCors("AllowFlutterWeb");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

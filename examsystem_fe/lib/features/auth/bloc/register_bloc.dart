@@ -36,6 +36,7 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
         email:    event.email.trim().toLowerCase(),
         username: event.username.trim(),
         password: event.password,
+        role:     event.role,
       );
 
       // POST /api/auth/register → trả về message string

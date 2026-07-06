@@ -12,19 +12,19 @@ abstract class RegisterEvent {
 ///   - [email]     → địa chỉ email
 ///   - [username]  → Student/Teacher ID (sẽ là username trong BE)
 ///   - [password]  → mật khẩu (đã pass validate ở UI)
-///
-/// Lưu ý: confirmPassword và role chỉ dùng cho validate/UI ở Flutter,
-///        KHÔNG gửi lên Backend.
+///   - [role]      → 'Student' hoặc 'Teacher'
 class RegisterSubmitted extends RegisterEvent {
   final String fullName;
   final String email;
   final String username;
   final String password;
+  final String role;
 
   const RegisterSubmitted({
     required this.fullName,
     required this.email,
     required this.username,
     required this.password,
+    this.role = 'Student',
   });
 }

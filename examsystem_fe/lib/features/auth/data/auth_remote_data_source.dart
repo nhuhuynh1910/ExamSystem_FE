@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../models/auth_response.dart';
+import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
 
@@ -56,5 +57,18 @@ class AuthRemoteDataSource {
       ApiConstants.logout,
       data: {'refreshToken': refreshToken},
     );
+  }
+
+  /// Gọi API đăng nhập bằng Google: POST /api/auth/google-login
+  ///
+  /// Nhận vào `GoogleLoginRequest` (idToken từ Google)
+  /// BE sẽ verify idToken → tạo/tìm user → trả `AuthResponse`.
+  Future<AuthResponse> googleLogin(GoogleLoginRequest request) async {
+    final response = await _dio.post(
+      ApiConstants.googleLogin,
+      data: request.toJson(),
+    );
+
+    return AuthResponse.fromJson(response.data as Map<String, dynamic>);
   }
 }

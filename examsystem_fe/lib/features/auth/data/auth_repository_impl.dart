@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../domain/auth_repository.dart';
 import '../models/auth_response.dart';
+import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
 import 'auth_remote_data_source.dart';
@@ -83,6 +84,32 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception('Không thể kết nối đến máy chủ để đăng xuất.');
     } catch (e) {
       throw Exception('Đã xảy ra lỗi khi đăng xuất: $e');
+    }
+  }
+
+  @override
+  Future<AuthResponse> googleLogin(GoogleLoginRequest request) async {
+    try {
+      return await _remoteDataSource.googleLogin(request);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data is Map) {
+        final message = e.response!.data['message'] as String?;
+        if (message != null && message.isNotEmpty) {
+          throw Exception(message);
+        }
+      }
+
+      // Lỗi 404 — BE chưa implement endpoint google-login
+      if (e.response?.statusCode == 404) {
+        throw Exception(
+          'Chức năng đăng nhập bằng Google đang được phát triển. '
+          'Vui lòng đăng nhập bằng email/password.',
+        );
+      }
+
+      throw Exception('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    } catch (e) {
+      rethrow;
     }
   }
 }

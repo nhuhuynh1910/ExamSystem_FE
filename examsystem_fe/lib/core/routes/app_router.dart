@@ -4,7 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/bloc/google_register_bloc.dart';
 import '../../features/auth/bloc/register_bloc.dart';
+import '../../features/auth/data/google_auth_service.dart';
+import '../../features/auth/screens/google_account_picker_screen.dart';
+import '../../features/auth/screens/google_complete_registration_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
@@ -42,6 +46,12 @@ class AppRouter {
   /// Màn hình đăng ký tài khoản mới.
   static const String register = '/register';
 
+  /// Màn hình hoàn tất đăng ký bằng Google.
+  static const String googleRegister = '/register/google-complete';
+
+  /// Màn hình chọn tài khoản Google để đăng nhập.
+  static const String googleAccountPicker = '/login/google-picker';
+
   /// Màn hình danh sách đề thi (trang chủ sau khi đăng nhập).
   static const String examList = '/exams';
 
@@ -57,6 +67,8 @@ class AppRouter {
     onboarding,
     login,
     register,
+    googleRegister,
+    googleAccountPicker,
   };
 
   // ── Khởi tạo GoRouter chính ─────────────────────────────────────────────
@@ -101,14 +113,65 @@ class AppRouter {
         },
       ),
 
+      // ── Route: Google Account Picker ──────────────────────────────
+      GoRoute(
+        path: googleAccountPicker,
+        name: 'googleAccountPicker',
+        builder: (BuildContext context, GoRouterState state) {
+          return BlocProvider<AuthBloc>(
+            create: (context) => AuthBloc(),
+            child: const GoogleAccountPickerScreen(),
+          );
+        },
+      ),
+
       // ── Route: Đăng ký ───────────────────────────────────────────
       GoRoute(
         path: register,
         name: 'register',
         builder: (BuildContext context, GoRouterState state) {
-          return BlocProvider<RegisterBloc>(
-            create: (context) => RegisterBloc(),
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<RegisterBloc>(
+                create: (context) => RegisterBloc(),
+              ),
+              BlocProvider<GoogleRegisterBloc>(
+                create: (context) => GoogleRegisterBloc(),
+              ),
+            ],
             child: const RegisterScreen(),
+          );
+        },
+      ),
+
+      // ── Route: Hoàn tất đăng ký bằng Google ──────────────────────
+      GoRoute(
+        path: googleRegister,
+        name: 'googleRegister',
+        builder: (BuildContext context, GoRouterState state) {
+          // Nhận GoogleUserProfile từ extra khi navigate
+          final profile = state.extra as GoogleUserProfile?;
+
+          // Fallback nếu không có profile (deep link trực tiếp)
+          if (profile == null) {
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider<RegisterBloc>(
+                  create: (context) => RegisterBloc(),
+                ),
+                BlocProvider<GoogleRegisterBloc>(
+                  create: (context) => GoogleRegisterBloc(),
+                ),
+              ],
+              child: const RegisterScreen(),
+            );
+          }
+
+          return BlocProvider<GoogleRegisterBloc>(
+            create: (context) => GoogleRegisterBloc(),
+            child: GoogleCompleteRegistrationScreen(
+              googleProfile: profile,
+            ),
           );
         },
       ),

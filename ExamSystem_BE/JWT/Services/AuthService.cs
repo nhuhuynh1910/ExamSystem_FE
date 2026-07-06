@@ -1,7 +1,8 @@
-﻿using JWT.DTOs.Auth;
+using JWT.DTOs.Auth;
 using JWT.Models;
 using JWT.Repositories.Contracts;
 using JWT.Services.Contracts;
+using Google.Apis.Auth;
 using System.Security.Cryptography;
 
 namespace JWT.Services
@@ -46,6 +47,21 @@ namespace JWT.Services
             if (await _authRepository.UsernameExistsAsync(username))
                 throw new Exception("Username đã tồn tại.");
 
+            // Map role string → RoleId (1=Admin, 2=Teacher, 3=Student)
+            var roleName = (request.Role ?? "Student").Trim();
+            int roleId;
+            switch (roleName.ToLower())
+            {
+                case "teacher":
+                    roleId = 2;
+                    break;
+                case "student":
+                    roleId = 3;
+                    break;
+                default:
+                    throw new Exception("Role không hợp lệ. Chỉ chấp nhận Student hoặc Teacher.");
+            }
+
             var verifyToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
             var user = new User
@@ -54,7 +70,7 @@ namespace JWT.Services
                 Email = email,
                 Username = username,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                RoleId = 3,
+                RoleId = roleId,
                 IsEmailVerified = false,
                 EmailVerificationToken = verifyToken,
                 EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24),
@@ -159,6 +175,146 @@ namespace JWT.Services
                 AccessToken = accessToken,
                 RefreshToken = refreshToken.Token
             };
+        }
+
+        /// <summary>
+        /// Đăng nhập bằng Google — hỗ trợ 2 luồng xác thực linh hoạt.
+        /// 
+        /// Flow:
+        ///   1. Xác thực Google token (idToken HOẶC accessToken).
+        ///   2. Lấy email từ token đã xác thực.
+        ///   3. Tìm user theo email trong Database.
+        ///   4. KHÔNG tạo user mới nếu chưa tồn tại.
+        ///   5. Kiểm tra IsActive, IsDeleted, IsEmailVerified.
+        ///   6. Tạo JWT + RefreshToken (tái sử dụng _jwtService).
+        ///   7. Trả AuthResponse (giống email login).
+        /// </summary>
+        public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request)
+        {
+            // ── Bước 1: Xác thực Google token (idToken hoặc accessToken) ────
+            var email = await GetEmailFromGoogleAsync(request);
+
+            // ── Bước 2: Tìm user theo email (TÁI SỬ DỤNG repository) ───────
+            var user = await _authRepository.GetByEmailAsync(email);
+
+            // ── Bước 3: User KHÔNG tồn tại → trả lỗi, KHÔNG tạo mới ────────
+            if (user == null)
+                throw new Exception("Tài khoản không tồn tại trong hệ thống. Vui lòng đăng ký trước.");
+
+            // ── Bước 4: Kiểm tra trạng thái tài khoản ───────────────────────
+            if (!user.IsActive || user.IsDeleted)
+                throw new Exception("Tài khoản đã bị khóa hoặc bị xóa.");
+
+            if (!user.IsEmailVerified)
+                throw new Exception("Vui lòng xác nhận email trước khi đăng nhập.");
+
+            // ── Bước 5: Tạo JWT + RefreshToken (TÁI SỬ DỤNG _jwtService) ───
+            var accessToken = _jwtService.GenerateAccessToken(user);
+            var refreshToken = _jwtService.GenerateRefreshToken();
+
+            refreshToken.UserId = user.UserId;
+            user.RefreshTokens.Add(refreshToken);
+
+            await _authRepository.SaveChangesAsync();
+
+            // ── Bước 6: Trả AuthResponse (GIỐNG email login 100%) ───────────
+            return new AuthResponse
+            {
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                Username = user.Username,
+                Role = user.Role?.RoleName ?? "Student",
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token
+            };
+        }
+
+        /// <summary>
+        /// Lấy email từ Google token — hỗ trợ 2 phương thức:
+        ///   1. idToken (ưu tiên) → verify bằng GoogleJsonWebSignature.
+        ///   2. accessToken (fallback cho Web) → gọi Google UserInfo API.
+        /// </summary>
+        private async Task<string> GetEmailFromGoogleAsync(GoogleLoginRequest request)
+        {
+            // ── Ưu tiên 1: Verify idToken (native/mobile) ───────────────────
+            if (!string.IsNullOrWhiteSpace(request.IdToken))
+            {
+                try
+                {
+                    var googleClientId = _configuration["Google:ClientId"];
+
+                    var settings = new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = string.IsNullOrWhiteSpace(googleClientId)
+                            ? null
+                            : new[] { googleClientId }
+                    };
+
+                    var payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, settings);
+
+                    var email = payload.Email?.Trim().ToLower();
+                    if (string.IsNullOrWhiteSpace(email))
+                        throw new Exception("Không thể lấy email từ tài khoản Google.");
+
+                    return email;
+                }
+                catch (InvalidJwtException)
+                {
+                    throw new Exception("Google token không hợp lệ hoặc đã hết hạn.");
+                }
+            }
+
+            // ── Fallback 2: Dùng accessToken gọi Google UserInfo API (web) ──
+            if (!string.IsNullOrWhiteSpace(request.AccessToken))
+            {
+                try
+                {
+                    using var httpClient = new HttpClient();
+                    httpClient.DefaultRequestHeaders.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", request.AccessToken);
+
+                    var response = await httpClient.GetAsync("https://www.googleapis.com/oauth2/v3/userinfo");
+
+                    if (!response.IsSuccessStatusCode)
+                        throw new Exception("Google access token không hợp lệ hoặc đã hết hạn.");
+
+                    var json = await response.Content.ReadAsStringAsync();
+                    var userInfo = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfoResponse>(json);
+
+                    var email = userInfo?.Email?.Trim().ToLower();
+                    if (string.IsNullOrWhiteSpace(email))
+                        throw new Exception("Không thể lấy email từ tài khoản Google.");
+
+                    return email;
+                }
+                catch (HttpRequestException)
+                {
+                    throw new Exception("Không thể kết nối đến Google để xác thực. Vui lòng thử lại.");
+                }
+            }
+
+            // ── Không có token nào ──────────────────────────────────────────
+            throw new Exception("Cần cung cấp idToken hoặc accessToken từ Google.");
+        }
+
+        /// <summary>
+        /// DTO nội bộ để deserialize response từ Google UserInfo API.
+        /// Endpoint: https://www.googleapis.com/oauth2/v3/userinfo
+        /// </summary>
+        private class GoogleUserInfoResponse
+        {
+            [System.Text.Json.Serialization.JsonPropertyName("email")]
+            public string? Email { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("email_verified")]
+            public bool EmailVerified { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("name")]
+            public string? Name { get; set; }
+
+            [System.Text.Json.Serialization.JsonPropertyName("picture")]
+            public string? Picture { get; set; }
         }
 
         public async Task<AuthResponse> RefreshTokenAsync(string refreshToken)

@@ -4,6 +4,7 @@ import '../../../core/network/dio_client.dart';
 import '../../../core/utils/storage_manager.dart';
 import '../data/auth_repository_impl.dart';
 import '../domain/auth_repository.dart';
+import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -18,6 +19,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       : _authRepository = authRepository ?? AuthRepositoryImpl(),
         super(const AuthInitial()) {
     on<LoginSubmitted>(_onLoginSubmitted);
+    on<GoogleLoginSubmitted>(_onGoogleLoginSubmitted);
     on<LogoutRequested>(_onLogoutRequested);
   }
 
@@ -54,6 +56,48 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthSuccess(response));
     } catch (e) {
       // Trích xuất message lỗi từ Exception
+      final errorMessage = e.toString().replaceAll('Exception: ', '');
+      emit(AuthFailure(errorMessage));
+    }
+  }
+
+  /// Xử lý sự kiện đăng nhập bằng Google.
+  ///
+  /// Tương tự [_onLoginSubmitted] nhưng:
+  ///   - Nhận idToken thay vì email/password.
+  ///   - Gọi `googleLogin()` thay vì `login()`.
+  ///   - Cùng output: lưu AuthResponse vào StorageManager → navigate Home.
+  Future<void> _onGoogleLoginSubmitted(
+    GoogleLoginSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+
+    try {
+      final request = GoogleLoginRequest(
+        idToken: event.idToken,
+        accessToken: event.accessToken,
+      );
+
+      // Gọi API google-login trên BE
+      final response = await _authRepository.googleLogin(request);
+
+      // Lưu trữ phiên đăng nhập vào SharedPreferences
+      await StorageManager.saveAuthData(
+        userId: response.userId,
+        fullName: response.fullName,
+        email: response.email,
+        username: response.username,
+        role: response.role,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+      );
+
+      // Reset DioClient để gắn Access Token mới
+      DioClient.resetInstance();
+
+      emit(AuthSuccess(response));
+    } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       emit(AuthFailure(errorMessage));
     }

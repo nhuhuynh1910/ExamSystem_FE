@@ -1,4 +1,5 @@
 import '../models/auth_response.dart';
+import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
 
@@ -23,5 +24,11 @@ abstract class AuthRepository {
 
   /// Thực hiện đăng xuất tài khoản trên máy chủ.
   Future<void> logout(String refreshToken);
+
+  /// Đăng nhập bằng Google (gửi idToken lên BE để verify).
+  ///
+  /// Trả về [AuthResponse] chứa JWT nếu BE verify thành công.
+  /// Bắn ra [Exception] nếu idToken không hợp lệ hoặc lỗi server.
+  Future<AuthResponse> googleLogin(GoogleLoginRequest request);
 }
 

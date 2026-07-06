@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routes/app_router.dart';
+import '../bloc/google_register_bloc.dart';
+import '../bloc/google_register_state.dart';
+import '../bloc/google_register_event.dart';
 import '../bloc/register_bloc.dart';
 import '../bloc/register_event.dart';
 import '../bloc/register_state.dart';
@@ -82,7 +85,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               email:    _emailController.text,
               username: _usernameController.text,
               password: _passwordController.text,
-              // confirmPassword và role KHÔNG gửi lên BE
+              role:     _selectedRole,
             ),
           );
     }
@@ -267,6 +270,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                           // ── Submit button ─────────────────────────────────
                           _buildSubmitButton(isLoading),
+
+                          const SizedBox(height: 20),
+
+                          // ── Divider ───────────────────────────────────────
+                          _buildDivider(),
+
+                          const SizedBox(height: 20),
+
+                          // ── Google Register Button ────────────────────────
+                          _buildGoogleButton(isLoading),
                         ],
                       ),
                     ),
@@ -671,6 +684,101 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  /// Đường gạch phân cách "or continue with".
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(height: 1, color: _slate),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'or continue with',
+            style: TextStyle(
+              fontSize: 12,
+              color: _grey.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(height: 1, color: _slate),
+        ),
+      ],
+    );
+  }
+
+  /// Nút đăng ký bằng Google.
+  Widget _buildGoogleButton(bool isLoading) {
+    return BlocConsumer<GoogleRegisterBloc, GoogleRegisterState>(
+      listener: (context, state) {
+        if (state is GoogleSignInSuccess) {
+          // Google Sign-In thành công → navigate sang Complete Registration
+          context.push(
+            AppRouter.googleRegister,
+            extra: state.profile,
+          );
+        } else if (state is GoogleSignInFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            _buildSnackBar(state.errorMessage),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isGoogleLoading = state is GoogleSignInLoading;
+
+        return SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton(
+            onPressed: (isLoading || isGoogleLoading)
+                ? null
+                : () {
+                    context
+                        .read<GoogleRegisterBloc>()
+                        .add(const GoogleSignInRequested());
+                  },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: _slate),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: _white,
+              foregroundColor: _navy,
+            ),
+            child: isGoogleLoading
+                ? SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(_grey.withValues(alpha: 0.5)),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomPaint(
+                        size: const Size(20, 20),
+                        painter: _GoogleIconPainter(),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Register with Google',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
+  }
+
   // ── Dialogs ──────────────────────────────────────────────────────────────
 
   /// Dialog thành công → thông báo kiểm tra email → về Login.
@@ -789,4 +897,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// _GoogleIconPainter — Vẽ Icon Google bằng Vector (reuse từ LoginScreen).
+// ════════════════════════════════════════════════════════════════════════════
+class _GoogleIconPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+
+    final Paint bluePaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..style = PaintingStyle.fill;
+    final Paint greenPaint = Paint()
+      ..color = const Color(0xFF34A853)
+      ..style = PaintingStyle.fill;
+    final Paint yellowPaint = Paint()
+      ..color = const Color(0xFFFBBC05)
+      ..style = PaintingStyle.fill;
+    final Paint redPaint = Paint()
+      ..color = const Color(0xFFEA4335)
+      ..style = PaintingStyle.fill;
+
+    final Path bluePath = Path()
+      ..moveTo(w * 0.94, h * 0.51)
+      ..arcToPoint(Offset(w * 0.94, h * 0.41),
+          radius: Radius.circular(w * 0.5), clockwise: false)
+      ..lineTo(w * 0.5, h * 0.5)
+      ..close();
+    canvas.drawPath(bluePath, bluePaint);
+
+    final Rect blueBar =
+        Rect.fromLTRB(w * 0.5, h * 0.41, w * 0.95, h * 0.59);
+    canvas.drawRect(blueBar, bluePaint);
+
+    final Path redPath = Path()
+      ..moveTo(w * 0.5, h * 0.5)
+      ..lineTo(w * 0.18, h * 0.29)
+      ..arcToPoint(Offset(w * 0.81, h * 0.22),
+          radius: Radius.circular(w * 0.5))
+      ..close();
+    canvas.drawPath(redPath, redPaint);
+
+    final Path yellowPath = Path()
+      ..moveTo(w * 0.5, h * 0.5)
+      ..lineTo(w * 0.18, h * 0.71)
+      ..arcToPoint(Offset(w * 0.18, h * 0.29),
+          radius: Radius.circular(w * 0.5))
+      ..close();
+    canvas.drawPath(yellowPath, yellowPaint);
+
+    final Path greenPath = Path()
+      ..moveTo(w * 0.5, h * 0.5)
+      ..lineTo(w * 0.81, h * 0.78)
+      ..arcToPoint(Offset(w * 0.18, h * 0.71),
+          radius: Radius.circular(w * 0.5))
+      ..close();
+    canvas.drawPath(greenPath, greenPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
