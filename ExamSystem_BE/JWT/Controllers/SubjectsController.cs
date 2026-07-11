@@ -1,4 +1,4 @@
-﻿using JWT.DTOs.Subjects;
+using JWT.DTOs.Subjects;
 using JWT.Exceptions;
 using JWT.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
@@ -163,6 +163,87 @@ namespace JWT.Controllers
             {
                 await _subjectService.UnenrollSubjectAsync(
                     subjectId,
+                    GetCurrentUserId(),
+                    GetCurrentUserRole());
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        /// <summary>GET /api/subjects/assigned — Giáo viên lấy danh sách môn học được phân công</summary>
+        [HttpGet("assigned")]
+        [Authorize(Roles = "Teacher,Admin")]
+        public async Task<IActionResult> GetAssignedSubjects()
+        {
+            try
+            {
+                var result = await _subjectService.GetTeacherSubjectsAsync(
+                    GetCurrentUserId(),
+                    GetCurrentUserRole());
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        /// <summary>GET /api/subjects/{subjectId}/teachers — Lấy danh sách giáo viên của môn học</summary>
+        [HttpGet("{subjectId:int}/teachers")]
+        [Authorize(Roles = "Admin,Teacher")]
+        public async Task<IActionResult> GetSubjectTeachers(int subjectId)
+        {
+            try
+            {
+                var result = await _subjectService.GetSubjectTeachersAsync(
+                    subjectId,
+                    GetCurrentUserId(),
+                    GetCurrentUserRole());
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        /// <summary>POST /api/subjects/{subjectId}/assign-teacher/{teacherId} — Admin gán giáo viên vào môn học</summary>
+        [HttpPost("{subjectId:int}/assign-teacher/{teacherId:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignTeacher(int subjectId, int teacherId)
+        {
+            try
+            {
+                var result = await _subjectService.AssignTeacherAsync(
+                    subjectId,
+                    teacherId,
+                    GetCurrentUserId(),
+                    GetCurrentUserRole());
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return HandleException(ex);
+            }
+        }
+
+        /// <summary>DELETE /api/subjects/{subjectId}/unassign-teacher/{teacherId} — Admin gỡ giáo viên khỏi môn học</summary>
+        [HttpDelete("{subjectId:int}/unassign-teacher/{teacherId:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UnassignTeacher(int subjectId, int teacherId)
+        {
+            try
+            {
+                await _subjectService.UnassignTeacherAsync(
+                    subjectId,
+                    teacherId,
                     GetCurrentUserId(),
                     GetCurrentUserRole());
 

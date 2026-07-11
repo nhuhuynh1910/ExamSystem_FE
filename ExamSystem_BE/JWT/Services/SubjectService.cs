@@ -1,4 +1,4 @@
-﻿using JWT.DTOs.Subjects;
+using JWT.DTOs.Subjects;
 using JWT.Exceptions;
 using JWT.Models;
 using JWT.Repositories.Contracts;
@@ -9,10 +9,14 @@ namespace JWT.Services
     public class SubjectService : ISubjectService
     {
         private readonly ISubjectRepository _subjectRepository;
+        private readonly ITeacherSubjectRepository _teacherSubjectRepository;
 
-        public SubjectService(ISubjectRepository subjectRepository)
+        public SubjectService(
+            ISubjectRepository subjectRepository,
+            ITeacherSubjectRepository teacherSubjectRepository)
         {
             _subjectRepository = subjectRepository;
+            _teacherSubjectRepository = teacherSubjectRepository;
         }
 
         public async Task<List<SubjectResponseDto>> GetSubjectsAsync(string? currentUserRole)
@@ -260,6 +264,113 @@ namespace JWT.Services
             await _subjectRepository.SaveChangesAsync();
         }
 
+        public async Task<TeacherInSubjectDto> AssignTeacherAsync(
+            int subjectId,
+            int teacherId,
+            string? currentUserId,
+            string? currentUserRole)
+        {
+            if (currentUserRole != "Admin")
+                throw new ForbiddenException("Only Admin can assign teachers to subjects.");
+
+            var subject = await _subjectRepository.GetSubjectByIdAsync(subjectId)
+                ?? throw new NotFoundException("Subject not found.");
+
+            var teacher = await _subjectRepository.GetUserByIdAsync(teacherId)
+                ?? throw new NotFoundException("Teacher not found.");
+
+            if (teacher.Role?.RoleName != "Teacher")
+                throw new BadRequestException("The specified user is not a Teacher.");
+
+            // Nếu đã từng gán, chỉ cập nhật IsActive = true (tránh tạo bản ghi trùng)
+            var existing = await _teacherSubjectRepository.GetByTeacherAndSubjectAsync(teacherId, subjectId);
+
+            if (existing != null)
+            {
+                if (existing.IsActive)
+                    throw new ConflictException("This teacher is already assigned to the subject.");
+
+                existing.IsActive = true;
+                existing.AssignedAt = DateTime.UtcNow;
+                await _teacherSubjectRepository.SaveChangesAsync();
+                return MapToTeacherInSubjectDto(existing, teacher);
+            }
+
+            var ts = new TeacherSubject
+            {
+                TeacherId = teacherId,
+                SubjectId = subjectId,
+                AssignedAt = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            await _teacherSubjectRepository.AddAsync(ts);
+            await _teacherSubjectRepository.SaveChangesAsync();
+
+            ts.Teacher = teacher;
+            ts.Subject = subject;
+
+            return MapToTeacherInSubjectDto(ts, teacher);
+        }
+
+        public async Task UnassignTeacherAsync(
+            int subjectId,
+            int teacherId,
+            string? currentUserId,
+            string? currentUserRole)
+        {
+            if (currentUserRole != "Admin")
+                throw new ForbiddenException("Only Admin can unassign teachers from subjects.");
+
+            var ts = await _teacherSubjectRepository.GetByTeacherAndSubjectAsync(teacherId, subjectId)
+                ?? throw new NotFoundException("This teacher is not assigned to the subject.");
+
+            if (!ts.IsActive)
+                throw new NotFoundException("This teacher is not assigned to the subject.");
+
+            ts.IsActive = false;
+            await _teacherSubjectRepository.SaveChangesAsync();
+        }
+
+        public async Task<List<TeacherSubjectResponseDto>> GetTeacherSubjectsAsync(
+            string? currentUserId,
+            string? currentUserRole)
+        {
+            if (currentUserRole != "Teacher" && currentUserRole != "Admin")
+                throw new ForbiddenException("Only Teacher or Admin can view assigned subjects.");
+
+            if (!int.TryParse(currentUserId, out var teacherId))
+                throw new UnauthorizedException("Invalid token.");
+
+            var assignments = await _teacherSubjectRepository.GetTeacherSubjectsAsync(teacherId);
+
+            return assignments.Select(ts => new TeacherSubjectResponseDto
+            {
+                TeacherSubjectId = ts.TeacherSubjectId,
+                SubjectId = ts.SubjectId,
+                SubjectName = ts.Subject?.SubjectName ?? string.Empty,
+                Description = ts.Subject?.Description,
+                IsActive = ts.Subject?.IsActive ?? false,
+                AssignedAt = ts.AssignedAt
+            }).ToList();
+        }
+
+        public async Task<List<TeacherInSubjectDto>> GetSubjectTeachersAsync(
+            int subjectId,
+            string? currentUserId,
+            string? currentUserRole)
+        {
+            if (currentUserRole != "Admin" && currentUserRole != "Teacher")
+                throw new ForbiddenException("Only Admin or Teacher can view the teacher list.");
+
+            var subject = await _subjectRepository.GetSubjectByIdAsync(subjectId)
+                ?? throw new NotFoundException("Subject not found.");
+
+            var assignments = await _teacherSubjectRepository.GetTeachersBySubjectAsync(subjectId);
+
+            return assignments.Select(ts => MapToTeacherInSubjectDto(ts, ts.Teacher)).ToList();
+        }
+
         private static SubjectResponseDto MapToSubjectResponse(Subject subject)
         {
             return new SubjectResponseDto
@@ -270,6 +381,19 @@ namespace JWT.Services
                 IsActive = subject.IsActive,
                 CreatedAt = subject.CreatedAt,
                 UpdatedAt = subject.UpdatedAt
+            };
+        }
+
+        private static TeacherInSubjectDto MapToTeacherInSubjectDto(TeacherSubject ts, User teacher)
+        {
+            return new TeacherInSubjectDto
+            {
+                TeacherSubjectId = ts.TeacherSubjectId,
+                TeacherId = ts.TeacherId,
+                FullName = teacher.FullName ?? string.Empty,
+                Email = teacher.Email ?? string.Empty,
+                AssignedAt = ts.AssignedAt,
+                IsActive = ts.IsActive
             };
         }
 
