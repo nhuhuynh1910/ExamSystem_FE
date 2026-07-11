@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
+import '../../features/Subject_phat/screens/admin_course_management_screen.dart';
+import '../../features/Subject_phat/screens/admin_create_course_screen.dart';
+import '../../features/Subject_phat/screens/assign_teacher_screen.dart';
+import '../../features/Subject_phat/screens/course_details_edit_screen.dart';
+import '../../features/Subject_phat/screens/course_student_list_screen.dart';
+import '../../features/common/feature_hub_screen.dart';
+import '../../features/Enrollment/screens/course_registration_catalog_screen.dart';
+import '../../features/Enrollment/screens/my_registered_courses_screen.dart';
+import '../../features/Teacher_phat/screens/teacher_assigned_courses_screen.dart';
+import '../../features/Teacher_phat/screens/teacher_course_roster_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -21,7 +31,7 @@ class AppRouter {
   // ── Hằng định nghĩa tên đường dẫn (dùng khi navigate, tránh hard-code string) ──
 
   /// Màn hình đăng nhập — màn hình đầu tiên khi chưa có phiên đăng nhập.
-  static const String login    = '/login';
+  static const String login = '/login';
 
   /// Màn hình đăng ký tài khoản mới.
   static const String register = '/register';
@@ -36,17 +46,107 @@ class AppRouter {
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
 
+  static const String featureHub = '/feature-hub';
+  static const String adminCourses = '/admin/courses';
+  static const String studentCatalog = '/student/courses/catalog';
+  static const String studentRegistered = '/student/courses/registered';
+  static const String teacherCourses = '/teacher/courses';
+
   // ── Khởi tạo GoRouter chính ─────────────────────────────────────────────
   static final GoRouter router = GoRouter(
-    // Màn hình đầu tiên khi mở app: trang Login.
-    // GoRouter Guard bên dưới sẽ tự redirect sang /exams nếu đã có token.
-    initialLocation: login,
+    // Màn hình đầu tiên khi mở app: trang Feature Hub để test các flow mới.
+    initialLocation: featureHub,
 
     // Hàm guard: kiểm tra xác thực trước mỗi lần điều hướng.
     redirect: _guardRedirect,
 
     // Danh sách tất cả các route của app.
     routes: [
+      GoRoute(
+        path: featureHub,
+        name: 'featureHub',
+        builder: (BuildContext context, GoRouterState state) {
+          return const FeatureHubScreen();
+        },
+      ),
+
+      GoRoute(
+        path: adminCourses,
+        name: 'adminCourses',
+        builder: (BuildContext context, GoRouterState state) {
+          return const AdminCourseManagementScreen();
+        },
+        routes: [
+          GoRoute(
+            path: 'create',
+            name: 'adminCreateCourse',
+            builder: (BuildContext context, GoRouterState state) {
+              return const AdminCreateCourseScreen();
+            },
+          ),
+          GoRoute(
+            path: ':code',
+            name: 'adminCourseDetail',
+            builder: (BuildContext context, GoRouterState state) {
+              final code = state.pathParameters['code'] ?? 'PRN231';
+              return CourseDetailsEditScreen(courseCode: code);
+            },
+            routes: [
+              GoRoute(
+                path: 'students',
+                name: 'adminCourseStudents',
+                builder: (BuildContext context, GoRouterState state) {
+                  final code = state.pathParameters['code'] ?? 'PRN231';
+                  return CourseStudentListScreen(courseCode: code);
+                },
+              ),
+              GoRoute(
+                path: 'assign-teacher',
+                name: 'adminAssignTeacher',
+                builder: (BuildContext context, GoRouterState state) {
+                  final code = state.pathParameters['code'] ?? 'IOT301';
+                  return AssignTeacherScreen(courseCode: code);
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+
+      GoRoute(
+        path: studentCatalog,
+        name: 'studentCatalog',
+        builder: (BuildContext context, GoRouterState state) {
+          return const CourseRegistrationCatalogScreen();
+        },
+      ),
+
+      GoRoute(
+        path: studentRegistered,
+        name: 'studentRegistered',
+        builder: (BuildContext context, GoRouterState state) {
+          return const MyRegisteredCoursesScreen();
+        },
+      ),
+
+      GoRoute(
+        path: teacherCourses,
+        name: 'teacherCourses',
+        builder: (BuildContext context, GoRouterState state) {
+          return const TeacherAssignedCoursesScreen();
+        },
+        routes: [
+          GoRoute(
+            path: ':code/roster',
+            name: 'teacherCourseRoster',
+            builder: (BuildContext context, GoRouterState state) {
+              final code = state.pathParameters['code'] ?? 'PRN231';
+              return TeacherCourseRosterScreen(courseCode: code);
+            },
+          ),
+        ],
+      ),
+
       // ── Route: Đăng nhập ─────────────────────────────────────────────────
       // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
       GoRoute(
@@ -139,7 +239,8 @@ class AppRouter {
     // Xác định route hiện tại có phải trang public không (không cần auth).
     final bool isPublicRoute =
         state.matchedLocation == login ||
-        state.matchedLocation == register;
+        state.matchedLocation == register ||
+        state.matchedLocation == featureHub;
 
     // Chưa đăng nhập và cố vào trang cần auth → về Login.
     if (!isLoggedIn && !isPublicRoute) {
@@ -148,7 +249,7 @@ class AppRouter {
 
     // Đã đăng nhập và đang ở trang public → vào thẳng trang chủ.
     if (isLoggedIn && isPublicRoute) {
-      return examList;
+      return state.matchedLocation == featureHub ? featureHub : examList;
     }
 
     // Mọi trường hợp còn lại → điều hướng bình thường.
@@ -205,20 +306,23 @@ class _PlaceholderScreen extends StatelessWidget {
               Text(
                 routeName,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Route: $routePath',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.amber[50],
                   border: Border.all(color: Colors.amber),
