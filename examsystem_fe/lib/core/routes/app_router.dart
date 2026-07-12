@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
+import '../../features/attempt/screens/waiting_room_screen.dart';
+import '../../features/auth/screens/login_screen.dart'; 
+import '../../features/exam/models/exam_model.dart';
+import '../../features/exam/screens/exam_list_screen.dart'; 
+import '../../features/exam/screens/exam_detail_screen.dart'; 
+import '../../features/question/screens/question_list_screen.dart';
+import '../utils/token_storage.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -33,6 +40,12 @@ class AppRouter {
   /// Dùng: context.go('/exams/123') hoặc context.go(AppRouter.examDetail(123))
   static const String examDetailPath = '/exams/:id';
 
+  /// Màn hình ngân hàng câu hỏi.
+  static const String questionBank = '/questions';
+
+  /// Màn hình phòng chờ thi.
+  static const String waitingRoom = '/waiting-room';
+
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
 
@@ -48,16 +61,12 @@ class AppRouter {
     // Danh sách tất cả các route của app.
     routes: [
       // ── Route: Đăng nhập ─────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
+      // CẬP NHẬT: Kết nối LoginScreen thật
       GoRoute(
         path: login,
         name: 'login',
         builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Login Screen',
-            routePath: '/login',
-            assignee: 'Thành viên phụ trách: Auth Feature',
-          );
+          return const LoginScreen();
         },
       ),
 
@@ -76,35 +85,46 @@ class AppRouter {
       ),
 
       // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
+      // CẬP NHẬT: Kết nối ExamListScreen thật
       GoRoute(
         path: examList,
         name: 'examList',
         builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Exam List Screen',
-            routePath: '/exams',
-            assignee: 'Thành viên phụ trách: Exam Feature',
-          );
+          return const ExamListScreen();
         },
 
         // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
-        // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
+        // CẬP NHẬT: Kết nối ExamDetailScreen thật
         routes: [
           GoRoute(
             path: ':id', // Đường dẫn đầy đủ: /exams/:id
             name: 'examDetail',
             builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter.
-              final examId = state.pathParameters['id'] ?? '';
-              return _PlaceholderScreen(
-                routeName: 'Exam Detail Screen (id: $examId)',
-                routePath: '/exams/$examId',
-                assignee: 'Thành viên phụ trách: Exam Detail Feature',
-              );
+              // Lấy examId từ path parameter và chuyển sang kiểu int
+              final idStr = state.pathParameters['id'] ?? '0';
+              final examId = int.tryParse(idStr) ?? 0;
+              return ExamDetailScreen(examId: examId);
             },
           ),
         ],
+      ),
+
+      // ── Route: Ngân hàng câu hỏi ──────────────────────────────────────────
+      GoRoute(
+        path: questionBank,
+        name: 'questionBank',
+        builder: (BuildContext context, GoRouterState state) {
+          return const QuestionListScreen();
+        },
+      ),
+
+      GoRoute(
+        path: waitingRoom,
+        name: 'waitingRoom',
+        builder: (BuildContext context, GoRouterState state) {
+          final exam = state.extra as ExamModel;
+          return WaitingRoomScreen(exam: exam);
+        },
       ),
     ],
 
@@ -179,7 +199,7 @@ class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({
     required this.routeName,
     required this.routePath,
-    required this.assignee,
+    this.assignee = "N/A",
   });
 
   @override
