@@ -38,6 +38,7 @@ dependencies:
   go_router: ^14.2.0          # Quản lý chuyển trang tập trung, chống conflict route
   flutter_bloc: ^8.1.6       # Quản lý State/Logic độc lập theo từng Feature
   shared_preferences: ^2.2.3
+  file_picker: 10.3.10
 
 dev_dependencies:
   flutter_test:

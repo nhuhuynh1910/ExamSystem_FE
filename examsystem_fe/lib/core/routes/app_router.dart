@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/utils/storage_manager.dart';
 
+import '../../core/utils/storage_manager.dart';
+import '../../features/question/screens/question_list_screen_khanh.dart';
+import '../../features/subject/screens/assigned_subject_screen_khanh.dart';
+import '../../features/teacher_request/screens/available_teacher_subject_screen_khanh.dart';
+import '../../features/teacher_request/screens/my_teacher_requests_screen_khanh.dart';
+import '../../features/teacher_request/screens/admin_teacher_requests_screen_khanh.dart';
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
 //
@@ -28,7 +33,11 @@ class AppRouter {
 
   /// Màn hình danh sách đề thi (trang chủ sau khi đăng nhập).
   static const String examList = '/exams';
-
+  static const String questionList = '/questions';
+  static const String assignedSubjects = '/assigned-subjects';
+  static const String availableTeacherSubjects = '/teacher-request/available-subjects';
+  static const String myTeacherRequests = '/teacher-request/my-requests';
+  static const String adminTeacherRequests = '/admin/teacher-requests';
   /// Màn hình chi tiết một đề thi theo ID.
   /// Dùng: context.go('/exams/123') hoặc context.go(AppRouter.examDetail(123))
   static const String examDetailPath = '/exams/:id';
@@ -40,15 +49,13 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     // Màn hình đầu tiên khi mở app: trang Login.
     // GoRouter Guard bên dưới sẽ tự redirect sang /exams nếu đã có token.
-    initialLocation: login,
+    initialLocation: assignedSubjects,
 
     // Hàm guard: kiểm tra xác thực trước mỗi lần điều hướng.
     redirect: _guardRedirect,
 
     // Danh sách tất cả các route của app.
     routes: [
-      // ── Route: Đăng nhập ─────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: login,
         name: 'login',
@@ -61,8 +68,6 @@ class AppRouter {
         },
       ),
 
-      // ── Route: Đăng ký ───────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: register,
         name: 'register',
@@ -75,8 +80,6 @@ class AppRouter {
         },
       ),
 
-      // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: examList,
         name: 'examList',
@@ -87,15 +90,11 @@ class AppRouter {
             assignee: 'Thành viên phụ trách: Exam Feature',
           );
         },
-
-        // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
-        // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
         routes: [
           GoRoute(
-            path: ':id', // Đường dẫn đầy đủ: /exams/:id
+            path: ':id',
             name: 'examDetail',
             builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter.
               final examId = state.pathParameters['id'] ?? '';
               return _PlaceholderScreen(
                 routeName: 'Exam Detail Screen (id: $examId)',
@@ -106,7 +105,44 @@ class AppRouter {
           ),
         ],
       ),
+
+      GoRoute(
+        path: questionList,
+        name: 'questionList',
+        builder: (BuildContext context, GoRouterState state) {
+          return const QuestionListScreenKhanh();
+        },
+      ),
+      GoRoute(
+        path: assignedSubjects,
+        name: 'assignedSubjects',
+        builder: (BuildContext context, GoRouterState state) {
+          return const AssignedSubjectScreenKhanh();
+        },
+      ),
+      GoRoute(
+        path: availableTeacherSubjects,
+        name: 'availableTeacherSubjects',
+        builder: (BuildContext context, GoRouterState state) {
+          return const AvailableTeacherSubjectScreenKhanh();
+        },
+      ),
+      GoRoute(
+        path: myTeacherRequests,
+        name: 'myTeacherRequests',
+        builder: (BuildContext context, GoRouterState state) {
+          return const MyTeacherRequestsScreenKhanh();
+        },
+      ),
+      GoRoute(
+        path: adminTeacherRequests,
+        name: 'adminTeacherRequests',
+        builder: (BuildContext context, GoRouterState state) {
+          return const AdminTeacherRequestsScreenKhanh();
+        },
+      ),
     ],
+
 
     // Callback khi GoRouter gặp lỗi (ví dụ: truy cập route không tồn tại).
     errorBuilder: (BuildContext context, GoRouterState state) {
