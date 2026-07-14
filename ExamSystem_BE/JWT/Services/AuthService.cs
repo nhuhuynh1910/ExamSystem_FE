@@ -74,7 +74,7 @@ namespace JWT.Services
                 IsEmailVerified = false,
                 EmailVerificationToken = verifyToken,
                 EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24),
-                AvatarUrl = "default.png",
+                AvatarUrl = string.IsNullOrWhiteSpace(request.AvatarUrl) ? "default.png" : request.AvatarUrl,
                 IsActive = true,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
@@ -192,7 +192,7 @@ namespace JWT.Services
         public async Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request)
         {
             // ── Bước 1: Xác thực Google token (idToken hoặc accessToken) ────
-            var email = await GetEmailFromGoogleAsync(request);
+            var (email, picture) = await GetEmailFromGoogleAsync(request);
 
             // ── Bước 2: Tìm user theo email (TÁI SỬ DỤNG repository) ───────
             var user = await _authRepository.GetByEmailAsync(email);
@@ -207,6 +207,13 @@ namespace JWT.Services
 
             if (!user.IsEmailVerified)
                 throw new Exception("Vui lòng xác nhận email trước khi đăng nhập.");
+
+            // ── Bước 4.5: Cập nhật Google Avatar nếu cần ────────────────────
+            if (!string.IsNullOrWhiteSpace(picture) && 
+                (string.IsNullOrWhiteSpace(user.AvatarUrl) || user.AvatarUrl == "default.png"))
+            {
+                user.AvatarUrl = picture;
+            }
 
             // ── Bước 5: Tạo JWT + RefreshToken (TÁI SỬ DỤNG _jwtService) ───
             var accessToken = _jwtService.GenerateAccessToken(user);
@@ -235,7 +242,7 @@ namespace JWT.Services
         ///   1. idToken (ưu tiên) → verify bằng GoogleJsonWebSignature.
         ///   2. accessToken (fallback cho Web) → gọi Google UserInfo API.
         /// </summary>
-        private async Task<string> GetEmailFromGoogleAsync(GoogleLoginRequest request)
+        private async Task<(string Email, string? Picture)> GetEmailFromGoogleAsync(GoogleLoginRequest request)
         {
             // ── Ưu tiên 1: Verify idToken (native/mobile) ───────────────────
             if (!string.IsNullOrWhiteSpace(request.IdToken))
@@ -257,7 +264,7 @@ namespace JWT.Services
                     if (string.IsNullOrWhiteSpace(email))
                         throw new Exception("Không thể lấy email từ tài khoản Google.");
 
-                    return email;
+                    return (email, payload.Picture);
                 }
                 catch (InvalidJwtException)
                 {
@@ -286,7 +293,7 @@ namespace JWT.Services
                     if (string.IsNullOrWhiteSpace(email))
                         throw new Exception("Không thể lấy email từ tài khoản Google.");
 
-                    return email;
+                    return (email, userInfo?.Picture);
                 }
                 catch (HttpRequestException)
                 {

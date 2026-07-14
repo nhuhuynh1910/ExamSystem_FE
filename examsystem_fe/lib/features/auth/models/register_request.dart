@@ -9,12 +9,15 @@ class RegisterRequest {
   /// Role đăng ký: 'Student' (default) hoặc 'Teacher'.
   final String role;
 
+  final String? avatarUrl;
+
   const RegisterRequest({
     required this.fullName,
     required this.email,
     required this.username,
     required this.password,
     this.role = 'Student',
+    this.avatarUrl,
   });
 
   Map<String, dynamic> toJson() => {
@@ -23,5 +26,6 @@ class RegisterRequest {
     'username': username,
     'password': password,
     'role':     role,
+    if (avatarUrl != null) 'avatarUrl': avatarUrl,
   };
 }

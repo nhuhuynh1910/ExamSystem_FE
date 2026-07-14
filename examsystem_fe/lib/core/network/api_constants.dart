@@ -41,7 +41,9 @@ class ApiConstants {
 
   // ─── Profile (/api/profile) ───────────────────────────────────────────────────
   // Đồng bộ với: Controllers/ProfileController.cs
-  static const String profile = '/profile'; // GET / PUT
+  static const String profile        = '/profile';                 // GET / PUT
+  static const String profileAvatar   = '/profile/avatar';          // POST
+  static const String changePassword  = '/profile/change-password'; // POST
 
   // ─── Exams (/api/exams/...) ───────────────────────────────────────────────────
   // Đồng bộ với: Controllers/ExamsController.cs → [Route("api/exams")]

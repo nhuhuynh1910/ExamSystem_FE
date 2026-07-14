@@ -30,6 +30,8 @@ namespace JWT.DTOs.Auth
         /// </summary>
         [MaxLength(50)]
         public string Role { get; set; } = "Student";
+
+        public string? AvatarUrl { get; set; }
     }
 }
 

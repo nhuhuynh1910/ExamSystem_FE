@@ -9,6 +9,7 @@ namespace JWT.Services.Contracts
         Task<ProfileResponse> GetProfileAsync(int userId);
         Task<UserResponse> UpdateAsync(int id, UpdateUserRequest request);
         Task<ProfileResponse> UpdateProfileAsync(int userId, UpdateProfileRequest request);
+        Task<string> ChangePasswordAsync(int userId, ChangePasswordRequest request);
         Task<string> SoftDeleteAsync(int id);
     }
 }

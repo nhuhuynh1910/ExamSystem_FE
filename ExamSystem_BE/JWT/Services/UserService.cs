@@ -134,6 +134,42 @@ namespace JWT.Services
             return MapToProfileResponse(user);
         }
 
+        public async Task<string> ChangePasswordAsync(int userId, ChangePasswordRequest request)
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null)
+                throw new Exception("Không tìm thấy user.");
+
+            // Kiểm tra user đã có password chưa (Google-only account có thể chưa có)
+            var hasExistingPassword = !string.IsNullOrWhiteSpace(user.PasswordHash)
+                && user.PasswordHash != "GOOGLE_NO_PASSWORD";
+
+            if (hasExistingPassword)
+            {
+                // User đã có password → bắt buộc nhập OldPassword
+                if (string.IsNullOrWhiteSpace(request.OldPassword))
+                    throw new Exception("Vui lòng nhập mật khẩu hiện tại.");
+
+                if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.PasswordHash))
+                    throw new Exception("Mật khẩu hiện tại không đúng.");
+            }
+
+            // Validate new password
+            if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 6)
+                throw new Exception("Mật khẩu mới phải có ít nhất 6 ký tự.");
+
+            if (request.NewPassword != request.ConfirmPassword)
+                throw new Exception("Xác nhận mật khẩu không khớp.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _userRepository.SaveChangesAsync();
+
+            return "Đổi mật khẩu thành công.";
+        }
+
         public async Task<string> SoftDeleteAsync(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
@@ -169,12 +205,34 @@ namespace JWT.Services
 
         private static ProfileResponse MapToProfileResponse(User user)
         {
+            var roleName = user.Role?.RoleName ?? "Student";
+
+            // Format StudentId / TeacherId từ UserId (không cần field DB riêng)
+            string? studentId = null;
+            string? teacherId = null;
+
+            if (roleName.Equals("Student", StringComparison.OrdinalIgnoreCase))
+                studentId = $"HE{user.UserId:D6}";
+            else if (roleName.Equals("Teacher", StringComparison.OrdinalIgnoreCase))
+                teacherId = $"TE{user.UserId:D6}";
+
+            // Kiểm tra user có password hay không (Google-only account)
+            var hasPassword = !string.IsNullOrWhiteSpace(user.PasswordHash)
+                && user.PasswordHash != "GOOGLE_NO_PASSWORD";
+
             return new ProfileResponse
             {
                 UserId = user.UserId,
                 FullName = user.FullName,
+                Email = user.Email,
                 Username = user.Username,
-                ProfileImageUrl = user.AvatarUrl
+                Role = roleName,
+                StudentId = studentId,
+                TeacherId = teacherId,
+                IsEmailVerified = user.IsEmailVerified,
+                CreatedAt = user.CreatedAt,
+                ProfileImageUrl = user.AvatarUrl,
+                HasPassword = hasPassword,
             };
         }
 

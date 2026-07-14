@@ -132,6 +132,9 @@ class DioClient {
             return handler.next(error);
           }
 
+          String newAccessToken = '';
+          String newRefreshToken = '';
+
           try {
             // Tạo một Dio riêng để gọi API refresh token (không dùng Dio chính
             // để tránh vòng lặp interceptor vô tận).
@@ -153,8 +156,12 @@ class DioClient {
 
             // BE trả về JSON dạng camelCase (do .NET mặc định serialize PascalCase → camelCase):
             // { "accessToken": "...", "refreshToken": "..." }
-            final newAccessToken  = refreshResponse.data['accessToken']  as String? ?? '';
-            final newRefreshToken = refreshResponse.data['refreshToken'] as String? ?? '';
+            newAccessToken  = refreshResponse.data['accessToken']  as String? ?? '';
+            newRefreshToken = refreshResponse.data['refreshToken'] as String? ?? '';
+
+            if (newAccessToken.isEmpty || newRefreshToken.isEmpty) {
+              throw DioException(requestOptions: refreshResponse.requestOptions);
+            }
 
             // Lưu cặp token mới vào bộ nhớ cục bộ.
             await StorageManager.saveTokens(
@@ -163,18 +170,24 @@ class DioClient {
             );
 
             debugPrint('[DioClient] Refresh token thành công — retry request gốc.');
-
-            // Cập nhật header của request gốc với token mới.
-            error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-
-            // Retry lại request gốc đã thất bại.
-            final retryResponse = await dio.fetch(error.requestOptions);
-            return handler.resolve(retryResponse);
           } on DioException catch (refreshError) {
             // Refresh thất bại (token hết hạn hoặc đã bị thu hồi) → buộc logout.
             debugPrint('[DioClient] Refresh token thất bại: ${refreshError.message}');
             await StorageManager.clearAll(); // Xóa toàn bộ dữ liệu auth.
             return handler.next(error); // Trả lỗi 401 về cho UI xử lý.
+          }
+
+          // Cập nhật header của request gốc với token mới.
+          error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+
+          // Retry lại request gốc đã thất bại.
+          try {
+            final retryResponse = await dio.fetch(error.requestOptions);
+            return handler.resolve(retryResponse);
+          } on DioException catch (retryError) {
+            // Trả đúng lỗi từ request retry (ví dụ 400 Mật khẩu hiện tại không đúng)
+            // về cho Repository/UI xử lý, không bị nhầm là lỗi refresh token.
+            return handler.next(retryError);
           }
         }
 

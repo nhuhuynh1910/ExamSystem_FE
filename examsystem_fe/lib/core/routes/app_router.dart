@@ -12,7 +12,16 @@ import '../../features/auth/screens/google_complete_registration_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/profile/bloc/profile_bloc.dart';
+import '../../features/profile/bloc/profile_event.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/splash/screens/splash_screen.dart';
+import '../../features/student_dashboard/bloc/student_dashboard_bloc.dart';
+import '../../features/student_dashboard/bloc/student_dashboard_event.dart';
+import '../../features/student_dashboard/presentation/screens/student_dashboard_screen.dart';
+import '../../features/teacher_dashboard/bloc/teacher_dashboard_bloc.dart';
+import '../../features/teacher_dashboard/bloc/teacher_dashboard_event.dart';
+import '../../features/teacher_dashboard/presentation/screens/teacher_dashboard_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -29,7 +38,7 @@ import '../../features/splash/screens/splash_screen.dart';
 //     └── [Không có token] → /onboarding → /login
 //
 // PUBLIC ROUTES (không cần auth): /splash, /onboarding, /login, /register
-// PROTECTED ROUTES (cần auth): /exams, /exams/:id
+// PROTECTED ROUTES (cần auth): /exams, /exams/:id, /profile
 // ════════════════════════════════════════════════════════════════════════════
 class AppRouter {
   // ── Hằng định nghĩa tên đường dẫn ──────────────────────────────────────────
@@ -52,6 +61,9 @@ class AppRouter {
   /// Màn hình chọn tài khoản Google để đăng nhập.
   static const String googleAccountPicker = '/login/google-picker';
 
+  /// Màn hình Profile — hiển thị thông tin cá nhân.
+  static const String profile = '/profile';
+
   /// Màn hình danh sách đề thi (trang chủ sau khi đăng nhập).
   static const String examList = '/exams';
 
@@ -60,6 +72,12 @@ class AppRouter {
 
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
+
+  /// Màn hình Teacher Dashboard.
+  static const String teacherDashboard = '/teacher/dashboard';
+
+  /// Màn hình Student Dashboard.
+  static const String studentDashboard = '/student/dashboard';
 
   // ── Tập hợp các route không cần xác thực (public) ──────────────────────
   static const Set<String> _publicRoutes = {
@@ -176,11 +194,89 @@ class AppRouter {
         },
       ),
 
+      // ── Route: Profile ────────────────────────────────────────────────────
+      GoRoute(
+        path: profile,
+        name: 'profile',
+        builder: (BuildContext context, GoRouterState state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<ProfileBloc>(
+                create: (context) => ProfileBloc()
+                  ..add(const ProfileLoadRequested()),
+              ),
+              BlocProvider<AuthBloc>(
+                create: (context) => AuthBloc(),
+              ),
+            ],
+            child: const ProfileScreen(),
+          );
+        },
+      ),
+
+      // ── Route: Teacher Dashboard ─────────────────────────────────────────
+      GoRoute(
+        path: teacherDashboard,
+        name: 'teacherDashboard',
+        builder: (BuildContext context, GoRouterState state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<TeacherDashboardBloc>(
+                create: (context) => TeacherDashboardBloc()
+                  ..add(const TeacherDashboardLoadRequested()),
+              ),
+              BlocProvider<ProfileBloc>(
+                create: (context) => ProfileBloc()
+                  ..add(const ProfileLoadRequested()),
+              ),
+              BlocProvider<AuthBloc>(
+                create: (context) => AuthBloc(),
+              ),
+            ],
+            child: const TeacherDashboardScreen(),
+          );
+        },
+      ),
+
+      // ── Route: Student Dashboard ─────────────────────────────────────────
+      GoRoute(
+        path: studentDashboard,
+        name: 'studentDashboard',
+        builder: (BuildContext context, GoRouterState state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<StudentDashboardBloc>(
+                create: (context) => StudentDashboardBloc()
+                  ..add(const StudentDashboardLoadRequested()),
+              ),
+              BlocProvider<ProfileBloc>(
+                create: (context) => ProfileBloc()
+                  ..add(const ProfileLoadRequested()),
+              ),
+              BlocProvider<AuthBloc>(
+                create: (context) => AuthBloc(),
+              ),
+            ],
+            child: const StudentDashboardScreen(),
+          );
+        },
+      ),
+
       // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: examList,
         name: 'examList',
+        redirect: (BuildContext context, GoRouterState state) async {
+          // Redirect theo role: Teacher → Teacher Dashboard, Student → Student Dashboard.
+          final role = await StorageManager.getRole();
+          if (role != null && role.toLowerCase() == 'teacher') {
+            return teacherDashboard;
+          }
+          if (role != null && role.toLowerCase() == 'student') {
+            return studentDashboard;
+          }
+          return null; // Admin → tiếp tục vào /exams bình thường.
+        },
         builder: (BuildContext context, GoRouterState state) {
           return const _PlaceholderScreen(
             routeName: 'Exam List Screen',

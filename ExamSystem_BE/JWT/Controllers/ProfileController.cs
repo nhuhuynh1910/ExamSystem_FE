@@ -56,6 +56,55 @@ namespace JWT.Controllers
             }
         }
 
+        /// <summary>
+        /// Đổi mật khẩu. Nếu user có password cũ → phải nhập OldPassword.
+        /// Nếu user Google-only (chưa có password) → chỉ cần NewPassword + ConfirmPassword.
+        /// </summary>
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var message = await _userService.ChangePasswordAsync(userId, request);
+                return Ok(new { message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Upload avatar (placeholder — thiết kế sẵn endpoint, sau này chỉ cần thay service).
+        /// </summary>
+        [HttpPost("avatar")]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
+        {
+            try
+            {
+                if (file == null || file.Length == 0)
+                    return BadRequest(new { message = "Vui lòng chọn ảnh." });
+
+                var userId = GetCurrentUserId();
+                var updateRequest = new UpdateProfileRequest { ProfileImageUrl = file };
+                var profile = await _userService.UpdateProfileAsync(userId, updateRequest);
+                return Ok(profile);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private int GetCurrentUserId()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -67,3 +116,4 @@ namespace JWT.Controllers
         }
     }
 }
+

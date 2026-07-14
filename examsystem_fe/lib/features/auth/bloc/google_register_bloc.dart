@@ -81,6 +81,7 @@ class GoogleRegisterBloc
         username: event.username.trim(),
         password: password,
         role: event.role,
+        avatarUrl: event.photoUrl,
       );
 
       // Dùng cùng API register như đăng ký bằng form

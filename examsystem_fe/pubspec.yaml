@@ -39,7 +39,9 @@ dependencies:
   flutter_bloc: ^8.1.6       # Quản lý State/Logic độc lập theo từng Feature
   shared_preferences: ^2.2.3
   google_fonts: ^6.2.1       # Font Inter — đồng bộ với thiết kế HTML/Figma
+  intl: ^0.19.0              # Format date/time cho Profile (Joined date)
   google_sign_in: ^6.2.2     # Đăng nhập/đăng ký bằng tài khoản Google
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:
