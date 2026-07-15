@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JWT.Models
@@ -42,6 +42,10 @@ namespace JWT.Models
         public DateTime? EmailVerificationTokenExpiresAt { get; set; }
 
         public DateTime? EmailVerifiedAt { get; set; }
+
+        public string? PasswordResetToken { get; set; }
+
+        public DateTime? PasswordResetTokenExpiresAt { get; set; }
 
         public bool IsActive { get; set; } = true;
 

@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 
 import '../domain/auth_repository.dart';
 import '../models/auth_response.dart';
+import '../models/forgot_password_request.dart';
 import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 import 'auth_remote_data_source.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -107,6 +109,40 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
+      throw Exception('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> forgotPassword(ForgotPasswordRequest request) async {
+    try {
+      return await _remoteDataSource.forgotPassword(request);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data is Map) {
+        final message = e.response!.data['message'] as String?;
+        if (message != null && message.isNotEmpty) {
+          throw Exception(message);
+        }
+      }
+      throw Exception('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> resetPassword(ResetPasswordRequest request) async {
+    try {
+      return await _remoteDataSource.resetPassword(request);
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data is Map) {
+        final message = e.response!.data['message'] as String?;
+        if (message != null && message.isNotEmpty) {
+          throw Exception(message);
+        }
+      }
       throw Exception('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
     } catch (e) {
       rethrow;

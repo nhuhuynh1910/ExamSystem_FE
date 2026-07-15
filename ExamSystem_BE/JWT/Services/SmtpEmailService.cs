@@ -80,5 +80,62 @@ namespace JWT.Services
                 <p>N&#7871;u b&#7841;n kh&ocirc;ng &#273;&#259;ng k&yacute; t&agrave;i kho&#7843;n, vui l&ograve;ng b&#7887; qua email n&agrave;y.</p>
             ";
         }
+
+        public async Task SendPasswordResetEmailAsync(string toEmail, string fullName, string resetLink)
+        {
+            var host = GetRequiredSetting("Smtp:Host");
+            var fromEmail = GetRequiredSetting("Smtp:FromEmail");
+            var fromName = _configuration["Smtp:FromName"];
+            var username = GetRequiredSetting("Smtp:Username").Trim();
+            var password = GetRequiredSetting("Smtp:Password").Replace(" ", string.Empty).Trim();
+            var port = _configuration.GetValue("Smtp:Port", 587);
+            var enableSsl = _configuration.GetValue("Smtp:EnableSsl", true);
+
+            using var message = new MailMessage
+            {
+                From = string.IsNullOrWhiteSpace(fromName)
+                    ? new MailAddress(fromEmail)
+                    : new MailAddress(fromEmail, fromName),
+                Subject = "Đặt lại mật khẩu",
+                Body = BuildPasswordResetEmailBody(fullName, resetLink),
+                IsBodyHtml = true
+            };
+
+            message.To.Add(new MailAddress(toEmail));
+            message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
+                message.Body,
+                null,
+                MediaTypeNames.Text.Html));
+
+            using var client = new SmtpClient(host, port)
+            {
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(username, password),
+                EnableSsl = enableSsl
+            };
+
+            await client.SendMailAsync(message);
+        }
+
+        private static string BuildPasswordResetEmailBody(string fullName, string resetLink)
+        {
+            var encodedName = HtmlEncoder.Default.Encode(fullName);
+            var encodedResetLink = HtmlEncoder.Default.Encode(resetLink);
+
+            return $@"
+                <h2>Xin chào {encodedName},</h2>
+                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
+                <p>Vui lòng bấm vào nút bên dưới để đặt lại mật khẩu:</p>
+                <p>
+                    <a href='{encodedResetLink}'
+                       style='display:inline-block;padding:10px 16px;background:#F15A22;color:white;text-decoration:none;border-radius:6px;font-weight:bold;'>
+                        Đặt lại mật khẩu
+                    </a>
+                </p>
+                <p>Link này sẽ hết hạn sau 15 phút.</p>
+                <p>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
+            ";
+        }
     }
 }

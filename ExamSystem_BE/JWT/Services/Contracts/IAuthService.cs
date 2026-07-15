@@ -11,5 +11,7 @@ namespace JWT.Services.Contracts
         Task<AuthResponse> GoogleLoginAsync(GoogleLoginRequest request);
         Task<AuthResponse> RefreshTokenAsync(string refreshToken);
         Task<string> LogoutAsync(string refreshToken);
+        Task<string> ForgotPasswordAsync(string email);
+        Task<string> ResetPasswordAsync(string token, string newPassword);
     }
 }

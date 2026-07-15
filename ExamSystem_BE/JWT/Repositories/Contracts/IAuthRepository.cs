@@ -1,4 +1,4 @@
-﻿using JWT.Models;
+using JWT.Models;
 
 namespace JWT.Repositories.Contracts
 {
@@ -9,6 +9,7 @@ namespace JWT.Repositories.Contracts
         Task<User?> GetByEmailOrUsernameAsync(string emailOrUsername); // dùng cho login
         Task<User?> GetByVerificationTokenAsync(string token); // dùng cho email verification
         Task<User?> GetByRefreshTokenAsync(string refreshToken); // dùng cho refresh token
+        Task<User?> GetByPasswordResetTokenAsync(string token); // dùng cho reset password
 
         Task<bool> EmailExistsAsync(string email); // dùng cho register
         Task<bool> UsernameExistsAsync(string username); // dùng cho register

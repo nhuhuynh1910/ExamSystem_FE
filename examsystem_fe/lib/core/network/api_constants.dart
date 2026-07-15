@@ -38,6 +38,8 @@ class ApiConstants {
   static const String verifyEmail        = '/auth/verify-email';        // GET
   static const String resendVerification = '/auth/resend-verification-email'; // POST
   static const String googleLogin        = '/auth/google-login';        // POST
+  static const String forgotPassword     = '/auth/forgot-password';     // POST
+  static const String resetPassword      = '/auth/reset-password';      // POST
 
   // ─── Profile (/api/profile) ───────────────────────────────────────────────────
   // Đồng bộ với: Controllers/ProfileController.cs

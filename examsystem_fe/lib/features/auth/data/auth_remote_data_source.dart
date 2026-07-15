@@ -3,9 +3,11 @@ import 'package:dio/dio.dart';
 import '../../../core/network/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../models/auth_response.dart';
+import '../models/forgot_password_request.dart';
 import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AuthRemoteDataSource — Nguồn dữ liệu từ xa cho tính năng Xác thực.
@@ -70,5 +72,32 @@ class AuthRemoteDataSource {
     );
 
     return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Gọi API quên mật khẩu: POST /api/auth/forgot-password
+  ///
+  /// BE luôn trả về 200 OK: { "message": "..." } (email enumeration protection).
+  Future<String> forgotPassword(ForgotPasswordRequest request) async {
+    final response = await _dio.post(
+      ApiConstants.forgotPassword,
+      data: request.toJson(),
+    );
+
+    return (response.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// Gọi API đặt lại mật khẩu: POST /api/auth/reset-password
+  ///
+  /// Nhận vào `ResetPasswordRequest` (token + newPassword).
+  /// BE trả về:
+  ///   200 OK → { "message": "Đặt lại mật khẩu thành công..." }
+  ///   400 Bad Request → { "message": "Token không hợp lệ..." }
+  Future<String> resetPassword(ResetPasswordRequest request) async {
+    final response = await _dio.post(
+      ApiConstants.resetPassword,
+      data: request.toJson(),
+    );
+
+    return (response.data as Map<String, dynamic>)['message'] as String;
   }
 }

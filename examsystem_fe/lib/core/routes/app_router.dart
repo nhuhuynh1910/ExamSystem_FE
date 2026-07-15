@@ -4,13 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
+import '../../features/auth/bloc/forgot_password_bloc.dart';
 import '../../features/auth/bloc/google_register_bloc.dart';
 import '../../features/auth/bloc/register_bloc.dart';
+import '../../features/auth/bloc/reset_password_bloc.dart';
 import '../../features/auth/data/google_auth_service.dart';
 import '../../features/auth/screens/google_account_picker_screen.dart';
 import '../../features/auth/screens/google_complete_registration_screen.dart';
+import '../../features/auth/screens/forgot_password_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
+import '../../features/auth/screens/reset_password_screen.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
 import '../../features/profile/bloc/profile_bloc.dart';
 import '../../features/profile/bloc/profile_event.dart';
@@ -61,6 +65,12 @@ class AppRouter {
   /// Màn hình chọn tài khoản Google để đăng nhập.
   static const String googleAccountPicker = '/login/google-picker';
 
+  /// Màn hình quên mật khẩu — nhập email để nhận link reset.
+  static const String forgotPassword = '/forgot-password';
+
+  /// Màn hình đặt lại mật khẩu — nhập mật khẩu mới sau khi click link email.
+  static const String resetPassword = '/reset-password';
+
   /// Màn hình Profile — hiển thị thông tin cá nhân.
   static const String profile = '/profile';
 
@@ -87,6 +97,8 @@ class AppRouter {
     register,
     googleRegister,
     googleAccountPicker,
+    forgotPassword,
+    resetPassword,
   };
 
   // ── Khởi tạo GoRouter chính ─────────────────────────────────────────────
@@ -127,6 +139,32 @@ class AppRouter {
           return BlocProvider<AuthBloc>(
             create: (context) => AuthBloc(),
             child: const LoginScreen(),
+          );
+        },
+      ),
+
+      // ── Route: Forgot Password ────────────────────────────────────
+      GoRoute(
+        path: forgotPassword,
+        name: 'forgotPassword',
+        builder: (BuildContext context, GoRouterState state) {
+          return BlocProvider<ForgotPasswordBloc>(
+            create: (context) => ForgotPasswordBloc(),
+            child: const ForgotPasswordScreen(),
+          );
+        },
+      ),
+
+      // ── Route: Reset Password ─────────────────────────────────────
+      GoRoute(
+        path: resetPassword,
+        name: 'resetPassword',
+        builder: (BuildContext context, GoRouterState state) {
+          // Lấy token từ query parameter: /reset-password?token=abc123
+          final token = state.uri.queryParameters['token'] ?? '';
+          return BlocProvider<ResetPasswordBloc>(
+            create: (context) => ResetPasswordBloc(),
+            child: ResetPasswordScreen(token: token),
           );
         },
       ),

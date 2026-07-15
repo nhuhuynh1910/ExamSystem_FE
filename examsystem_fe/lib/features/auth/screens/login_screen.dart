@@ -337,7 +337,7 @@ class _LoginScreenState extends State<LoginScreen> {
             onTap: isLoading
                 ? null
                 : () {
-                    // TODO: Xử lý quên mật khẩu
+                    context.push(AppRouter.forgotPassword);
                   },
             child: const Text(
               'Forgot Password?',

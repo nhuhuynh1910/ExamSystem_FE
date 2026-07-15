@@ -1,4 +1,4 @@
-﻿using JWT.Data;
+using JWT.Data;
 using JWT.Models;
 using JWT.Repositories.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +59,14 @@ namespace JWT.Repositories
             return await _context.Users
                 .FirstOrDefaultAsync(u =>
                 u.EmailVerificationToken == token &&
+                    !u.IsDeleted);
+        }
+
+        public async Task<User?> GetByPasswordResetTokenAsync(string token)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u =>
+                    u.PasswordResetToken == token &&
                     !u.IsDeleted);
         }
 

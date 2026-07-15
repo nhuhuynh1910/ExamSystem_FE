@@ -63,14 +63,13 @@ class DioClient {
     if (kDebugMode) {
       dio.interceptors.add(
         LogInterceptor(
-          // In đầy đủ thông tin request và response để debug.
+          // Bật tắt log request/response (tắt body để tránh lỗi OOM trên Windows console)
           request: true,
           requestHeader: true,
-          requestBody: true,
+          requestBody: false, // <-- Tắt để fix lỗi OOM
           responseHeader: true,
-          responseBody: true,
+          responseBody: false, // <-- Tắt để fix lỗi OOM
           error: true,
-          // Dùng print mặc định của Dio (hiển thị trong console Flutter).
           logPrint: (object) => debugPrint('[DioClient] $object'),
         ),
       );

@@ -380,5 +380,88 @@ namespace JWT.Services
 
             return "Đăng xuất thành công.";
         }
+
+        /// <summary>
+        /// Xử lý yêu cầu quên mật khẩu.
+        /// 
+        /// Flow:
+        ///   1. Tìm user theo email.
+        ///   2. Nếu user tồn tại và đã verify email → tạo reset token + gửi email.
+        ///   3. Luôn trả về message thành công (email enumeration protection).
+        /// </summary>
+        public async Task<string> ForgotPasswordAsync(string email)
+        {
+            var normalizedEmail = email.Trim().ToLower();
+            var user = await _authRepository.GetByEmailAsync(normalizedEmail);
+
+            // Email enumeration protection: luôn trả về thông báo giống nhau
+            // dù email có tồn tại hay không.
+            if (user == null || !user.IsEmailVerified || !user.IsActive || user.IsDeleted)
+            {
+                return "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu.";
+            }
+
+            // Tạo reset token (dùng cùng pattern với EmailVerificationToken)
+            var resetToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
+            user.PasswordResetToken = resetToken;
+            user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddMinutes(15);
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _authRepository.SaveChangesAsync();
+
+            // Tạo reset link trỏ đến Frontend
+            var frontendUrl = _configuration["App:FrontendUrl"]?.TrimEnd('/');
+            if (string.IsNullOrEmpty(frontendUrl))
+            {
+                frontendUrl = "http://localhost:3000"; // Fallback nếu quên cấu hình
+            }
+
+            var resetLink = $"{frontendUrl}/#/reset-password?token={resetToken}";
+
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, resetLink);
+
+            return "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu.";
+        }
+
+        /// <summary>
+        /// Đặt lại mật khẩu bằng token từ email.
+        /// 
+        /// Flow:
+        ///   1. Tìm user theo PasswordResetToken.
+        ///   2. Kiểm tra token chưa hết hạn.
+        ///   3. Hash mật khẩu mới.
+        ///   4. Xóa reset token (one-time use).
+        ///   5. Thu hồi TẤT CẢ refresh token (bảo mật: buộc đăng nhập lại).
+        /// </summary>
+        public async Task<string> ResetPasswordAsync(string token, string newPassword)
+        {
+            var user = await _authRepository.GetByPasswordResetTokenAsync(token);
+
+            if (user == null)
+                throw new Exception("Token đặt lại mật khẩu không hợp lệ.");
+
+            if (user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
+                throw new Exception("Token đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu lại.");
+
+            // Cập nhật mật khẩu mới
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+
+            // Xóa reset token (one-time use)
+            user.PasswordResetToken = null;
+            user.PasswordResetTokenExpiresAt = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            // Thu hồi TẤT CẢ refresh token → buộc user đăng nhập lại ở mọi thiết bị
+            foreach (var rt in user.RefreshTokens.Where(rt => !rt.IsRevoked))
+            {
+                rt.IsRevoked = true;
+                rt.RevokedAt = DateTime.UtcNow;
+            }
+
+            await _authRepository.SaveChangesAsync();
+
+            return "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.";
+        }
     }
 }

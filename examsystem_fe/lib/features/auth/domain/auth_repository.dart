@@ -1,7 +1,9 @@
 import '../models/auth_response.dart';
+import '../models/forgot_password_request.dart';
 import '../models/google_login_request.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
+import '../models/reset_password_request.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AuthRepository — Hợp đồng nghiệp vụ (Interface) cho tính năng Xác thực.
@@ -30,5 +32,14 @@ abstract class AuthRepository {
   /// Trả về [AuthResponse] chứa JWT nếu BE verify thành công.
   /// Bắn ra [Exception] nếu idToken không hợp lệ hoặc lỗi server.
   Future<AuthResponse> googleLogin(GoogleLoginRequest request);
-}
 
+  /// Gửi yêu cầu quên mật khẩu.
+  ///
+  /// BE luôn trả về message thành công (email enumeration protection).
+  Future<String> forgotPassword(ForgotPasswordRequest request);
+
+  /// Đặt lại mật khẩu bằng token từ email.
+  ///
+  /// Bắn ra [Exception] nếu token không hợp lệ hoặc hết hạn.
+  Future<String> resetPassword(ResetPasswordRequest request);
+}
