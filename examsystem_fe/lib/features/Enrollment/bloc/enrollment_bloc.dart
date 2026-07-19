@@ -57,6 +57,23 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
   /// Không emit Loading để tránh mất dữ liệu đang hiển thị.
   /// Screen listener sẽ bắt ActionSuccess/ActionFailure để hiện SnackBar
   /// và dispatch LoadCatalog lại để refresh danh sách.
+  String _getErrorMessage(dynamic e, String defaultMsg) {
+    final errStr = e.toString();
+    if (errStr.contains('409')) {
+      return 'Môn học này đã được đăng ký trước đó hoặc lịch học bị trùng!';
+    }
+    if (errStr.contains('401') || errStr.contains('403')) {
+      return 'Phiên làm việc hết hạn hoặc bạn không có quyền thực hiện.';
+    }
+    if (errStr.contains('404')) {
+      return 'Không tìm thấy môn học hoặc dữ liệu tương ứng.';
+    }
+    if (errStr.contains('connection') || errStr.contains('timeout') || errStr.contains('502') || errStr.contains('503')) {
+      return 'Không kết nối được tới máy chủ. Vui lòng thử lại sau.';
+    }
+    return '$defaultMsg: $e';
+  }
+
   Future<void> _onEnrollSubject(
     EnrollSubject event,
     Emitter<EnrollmentState> emit,
@@ -65,7 +82,7 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
       await _repository.enrollSubject(event.subjectId);
       emit(EnrollmentActionSuccess('Đăng ký môn học thành công.'));
     } catch (e) {
-      emit(EnrollmentActionFailure('Đăng ký thất bại: $e'));
+      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Đăng ký thất bại')));
     }
   }
 
@@ -78,7 +95,7 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
       await _repository.unenrollSubject(event.subjectId);
       emit(EnrollmentActionSuccess('Hủy đăng ký thành công.'));
     } catch (e) {
-      emit(EnrollmentActionFailure('Hủy đăng ký thất bại: $e'));
+      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Hủy đăng ký thất bại')));
     }
   }
 }

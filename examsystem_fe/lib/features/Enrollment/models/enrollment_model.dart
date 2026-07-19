@@ -38,4 +38,16 @@ class EnrollmentModel {
       'enrolledAt': enrolledAt?.toIso8601String(),
     };
   }
+
+  String get courseCode {
+    final index = subjectName.indexOf(' - ');
+    if (index != -1) return subjectName.substring(0, index).trim();
+    return 'SUBJ$subjectId';
+  }
+
+  String get courseNameOnly {
+    final index = subjectName.indexOf(' - ');
+    if (index != -1) return subjectName.substring(index + 3).trim();
+    return subjectName;
+  }
 }

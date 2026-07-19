@@ -1,7 +1,6 @@
+import 'dart:convert';
+
 /// SubjectModel — Đại diện cho 1 môn học trong hệ thống.
-///
-/// Đồng bộ với BE: SubjectResponseDto
-///   { subjectId, subjectName, description, isActive, createdAt, updatedAt }
 class SubjectModel {
   final int subjectId;
   final String subjectName;
@@ -18,6 +17,61 @@ class SubjectModel {
     this.createdAt,
     this.updatedAt,
   });
+
+  // ─── Getters cho trường mở rộng định dạng ───────────────────────────────
+
+  String get courseCode {
+    final index = subjectName.indexOf(' - ');
+    if (index != -1) {
+      return subjectName.substring(0, index).trim();
+    }
+    return 'SUBJ$subjectId';
+  }
+
+  String get courseNameOnly {
+    final index = subjectName.indexOf(' - ');
+    if (index != -1) {
+      return subjectName.substring(index + 3).trim();
+    }
+    return subjectName;
+  }
+
+  int get courseCredits {
+    final data = _parseJsonDescription();
+    if (data != null && data['credits'] != null) {
+      return int.tryParse(data['credits'].toString()) ?? 3;
+    }
+    return 3;
+  }
+
+  String get courseCategory {
+    final data = _parseJsonDescription();
+    if (data != null && data['category'] != null) {
+      return data['category'].toString();
+    }
+    return 'Core';
+  }
+
+  String get cleanDescription {
+    final data = _parseJsonDescription();
+    if (data != null && data['description'] != null) {
+      return data['description'].toString();
+    }
+    return description ?? '';
+  }
+
+  Map<String, dynamic>? _parseJsonDescription() {
+    if (description == null) return null;
+    final trimmed = description!.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        return jsonDecode(trimmed) as Map<String, dynamic>;
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  // ─── JSON Serialization ──────────────────────────────────────────────────
 
   factory SubjectModel.fromJson(Map<String, dynamic> json) {
     return SubjectModel(
@@ -45,3 +99,4 @@ class SubjectModel {
     };
   }
 }
+
