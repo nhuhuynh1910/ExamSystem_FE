@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/routes/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // main.dart — Điểm khởi đầu của ứng dụng ExamSystem FE.
@@ -50,8 +51,9 @@ class ExamSystemApp extends StatelessWidget {
       // Thành viên phụ trách theme sẽ bổ sung ThemeData đầy đủ vào lib/core/theme/
       // và import vào đây sau.
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppTheme.primary),
         useMaterial3: true,
+        scaffoldBackgroundColor: AppTheme.lightBg,
       ),
 
       // ── Kết nối với GoRouter từ AppRouter ─────────────────────────────────

@@ -11,100 +11,99 @@ import '../../features/common/feature_hub_screen.dart';
 import '../../features/Enrollment/screens/course_registration_catalog_screen.dart';
 import '../../features/Enrollment/screens/my_registered_courses_screen.dart';
 import '../../features/Teacher_phat/screens/teacher_assigned_courses_screen.dart';
+import '../../features/common/student_dashboard_screen.dart';
 import '../../features/Teacher_phat/screens/teacher_course_roster_screen.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/register_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
-// AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
+// AppRouter — Hệ thống điều hướng + bảo vệ theo Role.
 //
-// NGUYÊN TẮC:
-//   - KHÔNG ai được tự thêm route vào main.dart hay bất kỳ Widget nào khác.
-//   - MỌI route mới phải khai báo tại đây (thêm hằng tên route + GoRoute).
-//   - Dùng context.go('/path') hoặc context.push('/path') để điều hướng,
-//     KHÔNG dùng Navigator.push truyền thống.
+// GUARD LOGIC:
+//   Chưa đăng nhập              → redirect về /login
+//   Đã đăng nhập, vào /login    → redirect về trang chủ theo role
+//   Admin cố vào /student/*     → redirect về /admin/courses
+//   Student cố vào /admin/*     → redirect về /student/courses/catalog
+//   Teacher cố vào /admin/*     → redirect về /teacher/courses
 //
-// LUỒNG ĐIỀU HƯỚNG (theo file phân chia việc PRM393_Group3_Backlog.xlsx):
-//   - Người dùng chưa đăng nhập → InitialLocation = '/login'
-//   - Đăng nhập thành công      → GoRouter Guard tự redirect về '/exams'
-//   - Đã đăng nhập, mở app lại  → GoRouter Guard tự redirect về '/exams'
+// LUỒNG SAU KHI ĐĂNG NHẬP:
+//   Admin   → /feature-hub      (truy cập được /admin/*)
+//   Teacher → /teacher/courses  (chỉ truy cập /teacher/*)
+//   Student → /student/courses/catalog  (chỉ truy cập /student/*)
 // ════════════════════════════════════════════════════════════════════════════
 class AppRouter {
-  // ── Hằng định nghĩa tên đường dẫn (dùng khi navigate, tránh hard-code string) ──
-
-  /// Màn hình đăng nhập — màn hình đầu tiên khi chưa có phiên đăng nhập.
-  static const String login = '/login';
-
-  /// Màn hình đăng ký tài khoản mới.
-  static const String register = '/register';
-
-  /// Màn hình danh sách đề thi (trang chủ sau khi đăng nhập).
-  static const String examList = '/exams';
-
-  /// Màn hình chi tiết một đề thi theo ID.
-  /// Dùng: context.go('/exams/123') hoặc context.go(AppRouter.examDetail(123))
-  static const String examDetailPath = '/exams/:id';
-
-  /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
-  static String examDetail(int id) => '/exams/$id';
-
-  static const String featureHub = '/feature-hub';
-  static const String adminCourses = '/admin/courses';
+  // ── Hằng route ───────────────────────────────────────────────────────────
+  static const String login          = '/login';
+  static const String register       = '/register';
+  static const String featureHub     = '/feature-hub';
+  static const String adminCourses   = '/admin/courses';
   static const String studentCatalog = '/student/courses/catalog';
   static const String studentRegistered = '/student/courses/registered';
+  static const String studentDashboard = '/student/dashboard';
   static const String teacherCourses = '/teacher/courses';
+  static const String examList       = '/exams';
+  static const String examDetailPath = '/exams/:id';
 
-  // ── Khởi tạo GoRouter chính ─────────────────────────────────────────────
+  static String examDetail(int id) => '/exams/$id';
+
+  // ── GoRouter chính ───────────────────────────────────────────────────────
   static final GoRouter router = GoRouter(
-    // Màn hình đầu tiên khi mở app: trang Feature Hub để test các flow mới.
-    initialLocation: featureHub,
-
-    // Hàm guard: kiểm tra xác thực trước mỗi lần điều hướng.
+    // Bắt đầu từ /login, guard sẽ redirect nếu đã đăng nhập
+    initialLocation: login,
     redirect: _guardRedirect,
 
-    // Danh sách tất cả các route của app.
     routes: [
+      // ── Auth ──────────────────────────────────────────────────────────────
+      GoRoute(
+        path: login,
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: register,
+        name: 'register',
+        builder: (context, state) => const RegisterScreen(),
+      ),
+
+      // ── Feature Hub (Admin landing) ───────────────────────────────────────
       GoRoute(
         path: featureHub,
         name: 'featureHub',
-        builder: (BuildContext context, GoRouterState state) {
-          return const FeatureHubScreen();
-        },
+        builder: (context, state) => const FeatureHubScreen(),
       ),
 
+      // ── Admin: Quản lý Môn học ────────────────────────────────────────────
       GoRoute(
         path: adminCourses,
         name: 'adminCourses',
-        builder: (BuildContext context, GoRouterState state) {
-          return const AdminCourseManagementScreen();
-        },
+        builder: (context, state) => const AdminCourseManagementScreen(),
         routes: [
           GoRoute(
             path: 'create',
             name: 'adminCreateCourse',
-            builder: (BuildContext context, GoRouterState state) {
-              return const AdminCreateCourseScreen();
-            },
+            builder: (context, state) => const AdminCreateCourseScreen(),
           ),
           GoRoute(
             path: ':code',
             name: 'adminCourseDetail',
-            builder: (BuildContext context, GoRouterState state) {
-              final code = state.pathParameters['code'] ?? 'PRN231';
+            builder: (context, state) {
+              final code = state.pathParameters['code'] ?? '0';
               return CourseDetailsEditScreen(courseCode: code);
             },
             routes: [
               GoRoute(
                 path: 'students',
                 name: 'adminCourseStudents',
-                builder: (BuildContext context, GoRouterState state) {
-                  final code = state.pathParameters['code'] ?? 'PRN231';
+                builder: (context, state) {
+                  final code = state.pathParameters['code'] ?? '0';
                   return CourseStudentListScreen(courseCode: code);
                 },
               ),
               GoRoute(
                 path: 'assign-teacher',
                 name: 'adminAssignTeacher',
-                builder: (BuildContext context, GoRouterState state) {
-                  final code = state.pathParameters['code'] ?? 'IOT301';
+                builder: (context, state) {
+                  final code = state.pathParameters['code'] ?? '0';
                   return AssignTeacherScreen(courseCode: code);
                 },
               ),
@@ -113,92 +112,57 @@ class AppRouter {
         ],
       ),
 
+      // ── Student: Đăng ký Môn học ──────────────────────────────────────────
+      GoRoute(
+        path: studentDashboard,
+        name: 'studentDashboard',
+        builder: (context, state) => const StudentDashboardScreen(),
+      ),
       GoRoute(
         path: studentCatalog,
         name: 'studentCatalog',
-        builder: (BuildContext context, GoRouterState state) {
-          return const CourseRegistrationCatalogScreen();
-        },
+        builder: (context, state) => const CourseRegistrationCatalogScreen(),
       ),
-
       GoRoute(
         path: studentRegistered,
         name: 'studentRegistered',
-        builder: (BuildContext context, GoRouterState state) {
-          return const MyRegisteredCoursesScreen();
-        },
+        builder: (context, state) => const MyRegisteredCoursesScreen(),
       ),
 
+      // ── Teacher: Quản lý Lớp ─────────────────────────────────────────────
       GoRoute(
         path: teacherCourses,
         name: 'teacherCourses',
-        builder: (BuildContext context, GoRouterState state) {
-          return const TeacherAssignedCoursesScreen();
-        },
+        builder: (context, state) => const TeacherAssignedCoursesScreen(),
         routes: [
           GoRoute(
             path: ':code/roster',
             name: 'teacherCourseRoster',
-            builder: (BuildContext context, GoRouterState state) {
-              final code = state.pathParameters['code'] ?? 'PRN231';
+            builder: (context, state) {
+              final code = state.pathParameters['code'] ?? '0';
               return TeacherCourseRosterScreen(courseCode: code);
             },
           ),
         ],
       ),
 
-      // ── Route: Đăng nhập ─────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
-      GoRoute(
-        path: login,
-        name: 'login',
-        builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Login Screen',
-            routePath: '/login',
-            assignee: 'Thành viên phụ trách: Auth Feature',
-          );
-        },
-      ),
-
-      // ── Route: Đăng ký ───────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
-      GoRoute(
-        path: register,
-        name: 'register',
-        builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Register Screen',
-            routePath: '/register',
-            assignee: 'Thành viên phụ trách: Auth Feature',
-          );
-        },
-      ),
-
-      // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
+      // ── Exam (placeholder, sẽ được thành viên khác implement) ───────────
       GoRoute(
         path: examList,
         name: 'examList',
-        builder: (BuildContext context, GoRouterState state) {
-          return const _PlaceholderScreen(
-            routeName: 'Exam List Screen',
-            routePath: '/exams',
-            assignee: 'Thành viên phụ trách: Exam Feature',
-          );
-        },
-
-        // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
-        // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
+        builder: (context, state) => const _PlaceholderScreen(
+          routeName: 'Exam List Screen',
+          routePath: '/exams',
+          assignee: 'Thành viên phụ trách: Exam Feature',
+        ),
         routes: [
           GoRoute(
-            path: ':id', // Đường dẫn đầy đủ: /exams/:id
+            path: ':id',
             name: 'examDetail',
-            builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter.
+            builder: (context, state) {
               final examId = state.pathParameters['id'] ?? '';
               return _PlaceholderScreen(
-                routeName: 'Exam Detail Screen (id: $examId)',
+                routeName: 'Exam Detail (id: $examId)',
                 routePath: '/exams/$examId',
                 assignee: 'Thành viên phụ trách: Exam Detail Feature',
               );
@@ -208,73 +172,94 @@ class AppRouter {
       ),
     ],
 
-    // Callback khi GoRouter gặp lỗi (ví dụ: truy cập route không tồn tại).
-    errorBuilder: (BuildContext context, GoRouterState state) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Lỗi điều hướng')),
-        body: Center(
-          child: Text(
-            'Không tìm thấy trang: ${state.uri.path}',
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-      );
-    },
+    errorBuilder: (context, state) => Scaffold(
+      appBar: AppBar(title: const Text('Lỗi điều hướng')),
+      body: Center(
+        child: Text('Không tìm thấy trang: ${state.uri.path}'),
+      ),
+    ),
   );
 
-  // ── Hàm guard điều hướng (authentication gate) ──────────────────────────
-  /// Được GoRouter gọi trước MỌI lần chuyển màn hình.
-  ///
-  /// Logic:
-  ///   - Chưa đăng nhập + cố vào trang cần auth → redirect về /login.
-  ///   - Đã đăng nhập + đang ở trang public (login/register) → redirect về /exams.
-  ///   - Các trường hợp còn lại → cho đi bình thường (return null).
+  // ── Guard: kiểm tra auth + role trước mỗi lần điều hướng ────────────────
   static Future<String?> _guardRedirect(
     BuildContext context,
     GoRouterState state,
   ) async {
-    // Kiểm tra trạng thái đăng nhập từ StorageManager.
     final bool isLoggedIn = await StorageManager.isLoggedIn();
+    final String location = state.matchedLocation;
 
-    // Xác định route hiện tại có phải trang public không (không cần auth).
-    final bool isPublicRoute =
-        state.matchedLocation == login ||
-        state.matchedLocation == register ||
-        state.matchedLocation == featureHub;
+    // Các route không cần đăng nhập
+    final bool isPublicRoute = location == login || location == register;
 
-    // Chưa đăng nhập và cố vào trang cần auth → về Login.
+    // ── Chưa đăng nhập → về login ──────────────────────────────────────────
     if (!isLoggedIn && !isPublicRoute) {
       return login;
     }
 
-    // Đã đăng nhập và đang ở trang public → vào thẳng trang chủ.
+    // ── Đã đăng nhập + đang ở trang public → redirect về trang chủ ─────────
     if (isLoggedIn && isPublicRoute) {
-      return state.matchedLocation == featureHub ? featureHub : examList;
+      final role = await StorageManager.getRole() ?? 'Student';
+      return _homeForRole(role);
     }
 
-    // Mọi trường hợp còn lại → điều hướng bình thường.
-    return null;
+    // ── Đã đăng nhập → kiểm tra role có quyền vào route không ──────────────
+    if (isLoggedIn) {
+      final role = await StorageManager.getRole() ?? 'Student';
+      final String? denied = _checkRoleAccess(location, role);
+      if (denied != null) return denied;
+    }
+
+    return null; // cho phép điều hướng bình thường
+  }
+
+  /// Trả về trang chủ phù hợp theo role.
+  static String _homeForRole(String role) {
+    switch (role) {
+      case 'Admin':
+        return featureHub;
+      case 'Teacher':
+        return teacherCourses;
+      default: // Student
+        return studentDashboard;
+    }
+  }
+
+  /// Kiểm tra role có quyền vào route không.
+  /// Trả về redirect path nếu bị từ chối, null nếu được phép.
+  static String? _checkRoleAccess(String location, String role) {
+    // Route chỉ dành cho Admin
+    final bool isAdminRoute = location.startsWith('/admin/');
+    // Route chỉ dành cho Teacher
+    final bool isTeacherRoute = location.startsWith('/teacher/');
+    // Route chỉ dành cho Student
+    final bool isStudentRoute = location.startsWith('/student/');
+    // Feature hub chỉ dành cho Admin
+    final bool isFeatureHub = location == featureHub;
+
+    switch (role) {
+      case 'Admin':
+        // Admin được truy cập mọi route (feature-hub, /admin/*, và cả /student/*, /teacher/*)
+        return null;
+
+      case 'Teacher':
+        if (isAdminRoute || isStudentRoute || isFeatureHub) {
+          return teacherCourses; // redirect về trang Teacher
+        }
+        return null;
+
+      default: // Student
+        if (isAdminRoute || isTeacherRoute || isFeatureHub) {
+          return studentCatalog; // redirect về trang Student
+        }
+        return null;
+    }
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// _PlaceholderScreen — Màn hình tạm thời, tối giản để dự án compile được.
-//
-// Mục đích:
-//   - Giữ cho app không bị lỗi compile trong khi các thành viên chưa code xong UI.
-//   - Hiển thị thông tin route để dễ nhận biết đang ở màn hình nào khi test.
-//
-// Thành viên phụ trách tính năng sẽ XÓA class này khỏi import và
-// THAY THẾ builder trong GoRoute bằng màn hình thật của mình.
-// ════════════════════════════════════════════════════════════════════════════
+// ── Placeholder cho các màn hình chưa implement ──────────────────────────────
 class _PlaceholderScreen extends StatelessWidget {
-  /// Tên màn hình (để hiển thị cho dễ nhận biết).
   final String routeName;
-
-  /// Đường dẫn route (để debug).
   final String routePath;
-
-  /// Thành viên phụ trách implement màn hình này.
   final String assignee;
 
   const _PlaceholderScreen({
@@ -297,32 +282,27 @@ class _PlaceholderScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.build_circle_outlined,
-                size: 64,
-                color: Colors.indigo,
-              ),
+              const Icon(Icons.build_circle_outlined, size: 64, color: Colors.indigo),
               const SizedBox(height: 16),
               Text(
                 routeName,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Route: $routePath',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.grey[600]),
               ),
               const SizedBox(height: 16),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.amber[50],
                   border: Border.all(color: Colors.amber),
