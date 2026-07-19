@@ -15,6 +15,19 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ─── CORS: Cho phép Flutter Web và các client dev gọi API ────────────────────
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FlutterDev", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)   // Cho phép mọi origin (chỉ dùng khi dev)
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -193,8 +206,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Chỉ redirect HTTP→HTTPS ở môi trường Production.
+// Development: tắt để Android Emulator gọi HTTP không bị 307 redirect.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
+app.UseCors("FlutterDev");   // ← CORS phải đặt trước Authentication
 app.UseAuthentication();
 app.UseAuthorization();
 
