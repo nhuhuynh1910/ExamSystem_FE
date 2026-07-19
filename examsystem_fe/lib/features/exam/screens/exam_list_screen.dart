@@ -46,16 +46,38 @@ class _ExamGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    
+    // Dynamic columns based on screen width
+    final int crossAxisCount;
+    if (screenWidth < 600) {
+      crossAxisCount = 2; // mobile
+    } else if (screenWidth < 900) {
+      crossAxisCount = 3; // tablet / small web
+    } else if (screenWidth < 1200) {
+      crossAxisCount = 4; // standard desktop web
+    } else {
+      crossAxisCount = 5; // wide screen desktop web
+    }
+
+    // Dynamic child aspect ratio to keep cards square and avoid excessive vertical stretching
+    final double childAspectRatio = screenWidth < 600 ? 0.75 : 0.85;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: exams.length,
+          itemBuilder: (context, index) => _ExamCard(exam: exams[index]),
+        ),
       ),
-      itemCount: exams.length,
-      itemBuilder: (context, index) => _ExamCard(exam: exams[index]),
     );
   }
 }
@@ -67,6 +89,10 @@ class _ExamCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isWeb = screenWidth >= 600;
+    final imageHeight = isWeb ? 110.0 : 80.0;
+
     return GestureDetector(
       onTap: () => context.push('/exams/${exam.examId}'),
       child: Container(
@@ -89,21 +115,21 @@ class _ExamCard extends StatelessWidget {
               child: exam.examImageUrl != null
                   ? Image.network(
                       exam.examImageUrl!,
-                      height: 80,
+                      height: imageHeight,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _FallbackImage(exam: exam),
+                      errorBuilder: (context, error, stackTrace) => _FallbackImage(exam: exam, height: imageHeight),
                     )
-                  : _FallbackImage(exam: exam),
+                  : _FallbackImage(exam: exam, height: imageHeight),
             ),
             const SizedBox(height: 10),
             Text(
               exam.examName,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: isWeb ? 14 : 13,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -138,12 +164,13 @@ class _ExamCard extends StatelessWidget {
 // ── Fallback image ──
 class _FallbackImage extends StatelessWidget {
   final ExamModel exam;
-  const _FallbackImage({required this.exam});
+  final double height;
+  const _FallbackImage({required this.exam, required this.height});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
+      height: height,
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: const LinearGradient(

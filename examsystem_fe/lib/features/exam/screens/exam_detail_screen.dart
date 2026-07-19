@@ -99,6 +99,326 @@ class _DetailBody extends StatelessWidget {
   final ExamModel exam;
   const _DetailBody({required this.exam});
 
+  Widget _buildWebLayout(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 6,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 240,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(13),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
+                            ? Image.network(exam.examImageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const _BannerFallback())
+                            : const _BannerFallback(),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.black.withAlpha(178), Colors.black.withAlpha(25)],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(color: const Color(0xFFD14307), borderRadius: BorderRadius.circular(6)),
+                                child: const Text('ACADEMIC SESSION 2026', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                exam.examName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (exam.description.isNotEmpty) ...[
+                  const Row(
+                    children: [
+                      Icon(Icons.description_outlined, color: Color(0xFFF15A22), size: 20),
+                      SizedBox(width: 8),
+                      Text('Instructions', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2BFB4).withAlpha(127)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4))]),
+                    child: Text(exam.description, style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 14, height: 1.6)),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFBA1A1A).withAlpha(38))),
+                  child: const Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.warning_rounded, color: Color(0xFFBA1A1A), size: 24),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Important Notice', style: TextStyle(color: Color(0xFF93000A), fontWeight: FontWeight.bold, fontSize: 14)),
+                            SizedBox(height: 6),
+                            Text('Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.', style: TextStyle(color: Color(0xFF93000A), fontSize: 13, height: 1.4)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 4,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20),
+                    SizedBox(width: 8),
+                    Text('Exam Information', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                GridView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.4),
+                  children: [
+                    _BentoCard(icon: Icons.schedule_outlined, title: 'Duration', value: '${exam.durationMinutes} Mins'),
+                    _BentoCard(icon: Icons.quiz_outlined, title: 'Total Score', value: '${exam.totalScore} Pts'),
+                    _BentoCard(icon: Icons.grade_outlined, title: 'Passing Score', value: '${exam.passingScore} Pts'),
+                    _BentoCard(icon: Icons.replay_outlined, title: 'Max Attempts', value: '${exam.maxAttempts} Times'),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDCE9FF))),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Your Status', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 14),
+                      _StatusRow(label: 'Allowed Attempts', value: '${exam.maxAttempts}'),
+                      const Divider(color: Color(0xFFDCE9FF), height: 24),
+                      const _StatusRow(label: 'Last Attempt Score', value: 'N/A'),
+                      const Divider(color: Color(0xFFDCE9FF), height: 24),
+                      _StatusRow(
+                        label: 'Access Status',
+                        valueWidget: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(exam.isPrivate ? Icons.lock_outline : Icons.verified_user_outlined, size: 16, color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32)),
+                            const SizedBox(width: 4),
+                            Text(exam.isPrivate ? 'Private' : 'Verified', style: TextStyle(color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.withAlpha(51)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 8, offset: const Offset(0, 4))]),
+                  child: Column(
+                    children: [
+                      BlocProvider(create: (_) => StartExamCubit(), child: _JoinButton(exam: exam)),
+                      const SizedBox(height: 12),
+                      const Text('By clicking, you agree to the Academic Integrity Policy', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF485F84), fontSize: 11, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 180,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 8, offset: const Offset(0, 2))]),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty ? Image.network(exam.examImageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const _BannerFallback()) : const _BannerFallback(),
+                      Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withAlpha(178), Colors.black.withAlpha(25)], begin: Alignment.bottomCenter, end: Alignment.topCenter))),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: const Color(0xFFD14307), borderRadius: BorderRadius.circular(6)), child: const Text('ACADEMIC SESSION 2026', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1))),
+                            const SizedBox(height: 8),
+                            Text(exam.examName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Row(children: [Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20), SizedBox(width: 8), Text('Exam Information', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold))]),
+              const SizedBox(height: 12),
+              GridView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5),
+                children: [
+                  _BentoCard(icon: Icons.schedule_outlined, title: 'Duration', value: '${exam.durationMinutes} Mins'),
+                  _BentoCard(icon: Icons.quiz_outlined, title: 'Total Score', value: '${exam.totalScore} Pts'),
+                  _BentoCard(icon: Icons.grade_outlined, title: 'Passing Score', value: '${exam.passingScore} Pts'),
+                  _BentoCard(icon: Icons.replay_outlined, title: 'Max Attempts', value: '${exam.maxAttempts} Times'),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDCE9FF))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Your Status', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    _StatusRow(label: 'Allowed Attempts', value: '${exam.maxAttempts}'),
+                    const Divider(color: Color(0xFFDCE9FF), height: 24),
+                    const _StatusRow(label: 'Last Attempt Score', value: 'N/A'),
+                    const Divider(color: Color(0xFFDCE9FF), height: 24),
+                    _StatusRow(
+                      label: 'Access Status',
+                      valueWidget: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(exam.isPrivate ? Icons.lock_outline : Icons.verified_user_outlined, size: 16, color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32)),
+                          const SizedBox(width: 4),
+                          Text(exam.isPrivate ? 'Private' : 'Verified', style: TextStyle(color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              if (exam.description.isNotEmpty) ...[
+                const Row(
+                  children: [
+                    Icon(Icons.description_outlined, color: Color(0xFFF15A22), size: 20),
+                    SizedBox(width: 8),
+                    Text('Instructions', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2BFB4).withAlpha(127)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: Text(exam.description, style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 13, height: 1.5)),
+                ),
+                const SizedBox(height: 24),
+              ],
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFBA1A1A).withAlpha(38))),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_rounded, color: Color(0xFFBA1A1A), size: 24),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Important Notice', style: TextStyle(color: Color(0xFF93000A), fontWeight: FontWeight.bold, fontSize: 14)),
+                          SizedBox(height: 4),
+                          Text('Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.', style: TextStyle(color: Color(0xFF93000A), fontSize: 13, height: 1.4)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey.withAlpha(51), width: 0.5)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, -4))]),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BlocProvider(create: (_) => StartExamCubit(), child: _JoinButton(exam: exam)),
+                  const SizedBox(height: 8),
+                  const Text('By clicking, you agree to the Academic Integrity Policy', style: TextStyle(color: Color(0xFF485F84), fontSize: 11, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,336 +460,19 @@ class _DetailBody extends StatelessWidget {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Banner Illustration
-                Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(13),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
-                            ? Image.network(
-                                exam.examImageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, s) => const _BannerFallback(),
-                              )
-                            : const _BannerFallback(),
-                        // Gradient Overlay
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withAlpha(178),
-                                Colors.black.withAlpha(25),
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            ),
-                          ),
-                        ),
-                        // Badge + Title
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFD14307),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'ACADEMIC SESSION 2026',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                exam.examName,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Exam Information Section Title
-                const Row(
-                  children: [
-                    Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Exam Information',
-                      style: TextStyle(
-                        color: Color(0xFF0B1C30),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Bento Grid for Exam Details
-                GridView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.5,
-                  ),
-                  children: [
-                    _BentoCard(
-                      icon: Icons.schedule_outlined,
-                      title: 'Duration',
-                      value: '${exam.durationMinutes} Mins',
-                    ),
-                    _BentoCard(
-                      icon: Icons.quiz_outlined,
-                      title: 'Total Score',
-                      value: '${exam.totalScore} Pts',
-                    ),
-                    _BentoCard(
-                      icon: Icons.grade_outlined,
-                      title: 'Passing Score',
-                      value: '${exam.passingScore} Pts',
-                    ),
-                    _BentoCard(
-                      icon: Icons.replay_outlined,
-                      title: 'Max Attempts',
-                      value: '${exam.maxAttempts} Times',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Your Status Card
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEFF4FF),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFDCE9FF)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your Status',
-                        style: TextStyle(
-                          color: Color(0xFF0B1C30),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _StatusRow(
-                        label: 'Allowed Attempts',
-                        value: '${exam.maxAttempts}',
-                      ),
-                      const Divider(color: Color(0xFFDCE9FF), height: 24),
-                      const _StatusRow(
-                        label: 'Last Attempt Score',
-                        value: 'N/A',
-                      ),
-                      const Divider(color: Color(0xFFDCE9FF), height: 24),
-                      _StatusRow(
-                        label: 'Access Status',
-                        valueWidget: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              exam.isPrivate ? Icons.lock_outline : Icons.verified_user_outlined,
-                              size: 16,
-                              color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              exam.isPrivate ? 'Private' : 'Verified',
-                              style: TextStyle(
-                                color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Instructions Section
-                if (exam.description.isNotEmpty) ...[
-                  const Row(
-                    children: [
-                      Icon(Icons.description_outlined, color: Color(0xFFF15A22), size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Instructions',
-                        style: TextStyle(
-                          color: Color(0xFF0B1C30),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2BFB4).withAlpha(127)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(8),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      exam.description,
-                      style: const TextStyle(
-                        color: Color(0xFF0B1C30),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Important Notice warning box
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFDAD6),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFBA1A1A).withAlpha(38)),
-                  ),
-                  child: const Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.warning_rounded, color: Color(0xFFBA1A1A), size: 24),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Important Notice',
-                              style: TextStyle(
-                                color: Color(0xFF93000A),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.',
-                              style: TextStyle(
-                                color: Color(0xFF93000A),
-                                fontSize: 13,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(
-                    color: Colors.grey.withAlpha(51),
-                    width: 0.5,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(8),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth >= 850) {
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: _buildWebLayout(context),
               ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    BlocProvider(
-                      create: (_) => StartExamCubit(),
-                      child: _JoinButton(exam: exam),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'By clicking, you agree to the Academic Integrity Policy',
-                      style: TextStyle(
-                        color: Color(0xFF485F84),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+            );
+          } else {
+            return _buildMobileLayout(context);
+          }
+        },
       ),
     );
   }
