@@ -38,20 +38,23 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => StartExamCubit(),
+      // BlocConsumer quản lý cả UI (builder) và các tác vụ điều hướng (listener)
       child: BlocConsumer<StartExamCubit, StartExamState>(
         listener: (context, state) {
+          // THÀNH CÔNG: Đã check-access thành công và server đã tạo/khôi phục lượt thi
           if (state is StartExamSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   state.startResponse.isResume
-                      ? '🔄 Resuming previous attempt...'
-                      : '✅ Exam started successfully!',
+                      ? '🔄 Resuming previous attempt...' // Tiếp tục lượt thi cũ
+                      : '✅ Exam started successfully!', // Bắt đầu lượt thi mới tinh
                 ),
                 backgroundColor: const Color(0xFF2E7D32),
               ),
             );
 
+            // Chuyển hướng sang phòng thi và xóa màn hình nhập mật mã này khỏi Navigation Stack
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -66,18 +69,19 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
               ),
             );
           }
+          // THẤT BẠI: Mật mã sai hoặc xảy ra lỗi kết nối
           if (state is StartExamFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
+                content: Text(state.message), // Hiển thị thông báo lỗi đã dịch
                 backgroundColor: const Color(0xFFBA1A1A),
               ),
             );
-            context.read<StartExamCubit>().reset();
+            context.read<StartExamCubit>().reset(); // Reset trạng thái Cubit về ban đầu
           }
         },
         builder: (context, state) {
-          final loading = state is StartExamLoading;
+          final loading = state is StartExamLoading; // Kiểm tra xem có đang gửi API check hay không
 
           return Scaffold(
             backgroundColor: const Color(0xFFFAFAFA),
@@ -89,7 +93,7 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
                 onPressed: () => context.pop(),
               ),
               title: const Text(
-                'Nhập mã truy cập',
+                'Enter Access Code',
                 style: TextStyle(
                   color: Color(0xFFF15A22),
                   fontWeight: FontWeight.bold,
@@ -149,7 +153,7 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
 
                           // Subheading
                           const Text(
-                            'Yêu cầu mã truy cập',
+                            'Access Code Required',
                             style: TextStyle(
                               color: Color(0xFF0B1C30),
                               fontSize: 22,
@@ -160,7 +164,7 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
 
                           // Instructions
                           const Text(
-                            'Vui lòng nhập mã truy cập được cung cấp bởi giảng viên hoặc phòng đào tạo để bắt đầu bài thi này.',
+                            'Please enter the access code provided by your instructor or exam administrator to start this exam.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Color(0xFF5A4139),
@@ -190,7 +194,7 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
                               children: [
                                 // Access Code Label
                                 const Text(
-                                  'MÃ TRUY CẬP',
+                                  'ACCESS CODE',
                                   style: TextStyle(
                                     color: Color(0xFF1D3557),
                                     fontSize: 12,
@@ -301,14 +305,14 @@ class _EnterAccessCodeScreenState extends State<EnterAccessCodeScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      'Gặp sự cố? ',
+                                      'Having issues? ',
                                       style: TextStyle(
                                         color: Color(0xFF5A4139),
                                         fontSize: 12,
                                       ),
                                     ),
                                     Text(
-                                      'Liên hệ bộ phận hỗ trợ',
+                                      'Contact support',
                                       style: TextStyle(
                                         color: Color(0xFFF15A22),
                                         fontWeight: FontWeight.bold,

@@ -7,6 +7,7 @@ import '../block/exam_list_state.dart';
 import '../models/exam_model.dart';
 
 /// Màn hình danh sách đề thi - route /exams
+/// Sử dụng BlocBuilder để theo dõi trạng thái tải danh sách đề thi (ExamListCubit).
 class ExamListScreen extends StatelessWidget {
   const ExamListScreen({super.key});
 
@@ -22,24 +23,29 @@ class ExamListScreen extends StatelessWidget {
         backgroundColor: const Color(0xFF1A1A2E),
         elevation: 0,
       ),
+      // BlocBuilder theo dõi trạng thái tải danh sách đề thi
       body: BlocBuilder<ExamListCubit, ExamListState>(
         builder: (context, state) => switch (state) {
+          // Trạng thái khởi tạo - Chưa làm gì
           ExamListInitial()  => const SizedBox.shrink(),
+          // Trạng thái đang tải dữ liệu - Hiển thị vòng xoay chờ loading
           ExamListLoading()  => const Center(child: CircularProgressIndicator(color: Color(0xFFE94560))),
+          // Trạng thái xảy ra lỗi - Hiển thị màn hình báo lỗi và nút Thử lại (Retry)
           ExamListError(:final message) => _ErrorView(
               message: message,
               onRetry: () => context.read<ExamListCubit>().loadExams(),
             ),
+          // Trạng thái đã tải xong dữ liệu thành công
           ExamListLoaded(:final paginated) => paginated.items.isEmpty
-              ? const _EmptyView()
-              : _ExamGrid(exams: paginated.items),
+              ? const _EmptyView() // Trả về màn hình trống nếu không có đề thi nào
+              : _ExamGrid(exams: paginated.items), // Trả về lưới danh sách đề thi
         },
       ),
     );
   }
 }
 
-// ── Grid ──
+// ── Lưới danh sách đề thi (Grid Layout) ──
 class _ExamGrid extends StatelessWidget {
   final List<ExamModel> exams;
   const _ExamGrid({required this.exams});

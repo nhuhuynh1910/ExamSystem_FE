@@ -9,6 +9,7 @@ import '../models/exam_start_response.dart';
 import '../models/paginated_exams.dart';
 import '../models/question_model.dart';
 import '../models/attempt_details_response.dart';
+import '../models/exam_submit_response.dart';
 
 /// Repository cho toàn bộ Exam feature.
 /// Dùng DioClient.instance — token được tự động gắn bởi interceptor.
@@ -63,9 +64,7 @@ class ExamRepository {
   }) async {
     final response = await _dio.post(
       ApiConstants.examStart(examId),
-      data: {
-        'accessCode': accessCode,
-      },
+      data: {'accessCode': accessCode},
     );
     return ExamStartResponse.fromJson(response.data as Map<String, dynamic>);
   }
@@ -75,14 +74,18 @@ class ExamRepository {
   Future<List<QuestionModel>> getExamQuestions(int examId) async {
     final response = await _dio.get(ApiConstants.examQuestions(examId));
     final rawList = response.data as List<dynamic>? ?? [];
-    return rawList.map((e) => QuestionModel.fromJson(e as Map<String, dynamic>)).toList();
+    return rawList
+        .map((e) => QuestionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // ── GET /api/attempts/{attemptId} ───────────────────────────────────────────
   /// Lấy thông tin chi tiết một lượt thi (gồm câu hỏi & câu trả lời đã lưu).
   Future<AttemptDetailsResponse> getAttemptDetails(int attemptId) async {
     final response = await _dio.get(ApiConstants.attemptDetails(attemptId));
-    return AttemptDetailsResponse.fromJson(response.data as Map<String, dynamic>);
+    return AttemptDetailsResponse.fromJson(
+      response.data as Map<String, dynamic>,
+    );
   }
 
   // ── POST /api/attempts/{attemptId}/answers ──────────────────────────────────
@@ -94,25 +97,21 @@ class ExamRepository {
   }) async {
     await _dio.post(
       ApiConstants.attemptAnswers(attemptId),
-      data: {
-        'questionId': questionId,
-        'selectedOptionIds': selectedOptionIds,
-      },
+      data: {'questionId': questionId, 'selectedOptionIds': selectedOptionIds},
     );
   }
 
   // ── POST /api/attempts/{attemptId}/submit ───────────────────────────────────
   /// Nộp bài và kết thúc lượt thi.
-  Future<void> submitAttempt({
+  Future<ExamSubmitResponse> submitAttempt({
     required int attemptId,
     required bool isAutoSubmitted,
   }) async {
-    await _dio.post(
+    final response = await _dio.post(
       ApiConstants.attemptSubmit(attemptId),
-      data: {
-        'isAutoSubmitted': isAutoSubmitted,
-      },
+      data: {'isAutoSubmitted': isAutoSubmitted},
     );
+    return ExamSubmitResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
   // ── GET /api/exams/{examId}/result ─────────────────────────────────────────

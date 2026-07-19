@@ -9,7 +9,6 @@ import '../block/exam_detail_state.dart';
 import '../models/exam_model.dart';
 import 'exam_taking_screen.dart';
 
-/// Màn hình chi tiết đề thi — phong cách giao diện FPT University Exam Preview.
 class ExamDetailScreen extends StatelessWidget {
   final int examId;
   const ExamDetailScreen({super.key, required this.examId});
@@ -21,7 +20,10 @@ class ExamDetailScreen extends StatelessWidget {
         ExamDetailInitial() => const _LoadingScaffold(),
         ExamDetailLoading() => const _LoadingScaffold(),
         ExamDetailError(:final message) => _ErrorScaffold(message: message),
-        ExamDetailLoaded(:final exam) => _DetailBody(exam: exam),
+        ExamDetailLoaded(:final exam, :final lastAttemptScore) => _DetailBody(
+          exam: exam,
+          lastAttemptScore: lastAttemptScore,
+        ),
       },
     );
   }
@@ -35,9 +37,7 @@ class _LoadingScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFFFAFAFA),
-      body: Center(
-        child: CircularProgressIndicator(color: Color(0xFFF15A22)),
-      ),
+      body: Center(child: CircularProgressIndicator(color: Color(0xFFF15A22))),
     );
   }
 }
@@ -59,8 +59,11 @@ class _ErrorScaffold extends StatelessWidget {
           onPressed: () => context.pop(),
         ),
         title: const Text(
-          'Lỗi tải đề thi',
-          style: TextStyle(color: Color(0xFF0B1C30), fontWeight: FontWeight.bold),
+          'Error Loading Exam',
+          style: TextStyle(
+            color: Color(0xFF0B1C30),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Center(
@@ -69,7 +72,11 @@ class _ErrorScaffold extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 64, color: Color(0xFFBA1A1A)),
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 64,
+                color: Color(0xFFBA1A1A),
+              ),
               const SizedBox(height: 16),
               Text(
                 message,
@@ -81,10 +88,12 @@ class _ErrorScaffold extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF15A22),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () => context.pop(),
-                child: const Text('Quay lại'),
+                child: const Text('Go Back'),
               ),
             ],
           ),
@@ -97,7 +106,8 @@ class _ErrorScaffold extends StatelessWidget {
 // ── Main Detail Body ──────────────────────────────────────────────────────────
 class _DetailBody extends StatelessWidget {
   final ExamModel exam;
-  const _DetailBody({required this.exam});
+  final String lastAttemptScore;
+  const _DetailBody({required this.exam, required this.lastAttemptScore});
 
   Widget _buildWebLayout(BuildContext context) {
     return Row(
@@ -127,13 +137,22 @@ class _DetailBody extends StatelessWidget {
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
-                        exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
-                            ? Image.network(exam.examImageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const _BannerFallback())
+                        exam.examImageUrl != null &&
+                                exam.examImageUrl!.isNotEmpty
+                            ? Image.network(
+                                exam.examImageUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) =>
+                                    const _BannerFallback(),
+                              )
                             : const _BannerFallback(),
                         Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.black.withAlpha(178), Colors.black.withAlpha(25)],
+                              colors: [
+                                Colors.black.withAlpha(178),
+                                Colors.black.withAlpha(25),
+                              ],
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                             ),
@@ -146,16 +165,34 @@ class _DetailBody extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(color: const Color(0xFFD14307), borderRadius: BorderRadius.circular(6)),
-                                child: const Text('ACADEMIC SESSION 2026', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFD14307),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'ACADEMIC SESSION 2026',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1,
+                                  ),
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 exam.examName,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -168,34 +205,89 @@ class _DetailBody extends StatelessWidget {
                 if (exam.description.isNotEmpty) ...[
                   const Row(
                     children: [
-                      Icon(Icons.description_outlined, color: Color(0xFFF15A22), size: 20),
+                      Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFFF15A22),
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
-                      Text('Instructions', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Instructions',
+                        style: TextStyle(
+                          color: Color(0xFF0B1C30),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2BFB4).withAlpha(127)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4))]),
-                    child: Text(exam.description, style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 14, height: 1.6)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: const Color(0xFFE2BFB4).withAlpha(127),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      exam.description,
+                      style: const TextStyle(
+                        color: Color(0xFF0B1C30),
+                        fontSize: 14,
+                        height: 1.6,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFBA1A1A).withAlpha(38))),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFDAD6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFBA1A1A).withAlpha(38),
+                    ),
+                  ),
                   child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning_rounded, color: Color(0xFFBA1A1A), size: 24),
+                      Icon(
+                        Icons.warning_rounded,
+                        color: Color(0xFFBA1A1A),
+                        size: 24,
+                      ),
                       SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Important Notice', style: TextStyle(color: Color(0xFF93000A), fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(
+                              'Important Notice',
+                              style: TextStyle(
+                                color: Color(0xFF93000A),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                             SizedBox(height: 6),
-                            Text('Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.', style: TextStyle(color: Color(0xFF93000A), fontSize: 13, height: 1.4)),
+                            Text(
+                              'Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.',
+                              style: TextStyle(
+                                color: Color(0xFF93000A),
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -215,44 +307,110 @@ class _DetailBody extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20),
+                    Icon(
+                      Icons.gavel_rounded,
+                      color: Color(0xFFF15A22),
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
-                    Text('Exam Information', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Exam Information',
+                      style: TextStyle(
+                        color: Color(0xFF0B1C30),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 GridView(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.4),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.4,
+                  ),
                   children: [
-                    _BentoCard(icon: Icons.schedule_outlined, title: 'Duration', value: '${exam.durationMinutes} Mins'),
-                    _BentoCard(icon: Icons.quiz_outlined, title: 'Total Score', value: '${exam.totalScore} Pts'),
-                    _BentoCard(icon: Icons.grade_outlined, title: 'Passing Score', value: '${exam.passingScore} Pts'),
-                    _BentoCard(icon: Icons.replay_outlined, title: 'Max Attempts', value: '${exam.maxAttempts} Times'),
+                    _BentoCard(
+                      icon: Icons.schedule_outlined,
+                      title: 'Duration',
+                      value: '${exam.durationMinutes} Mins',
+                    ),
+                    _BentoCard(
+                      icon: Icons.quiz_outlined,
+                      title: 'Total Score',
+                      value: '${exam.totalScore} Pts',
+                    ),
+                    _BentoCard(
+                      icon: Icons.grade_outlined,
+                      title: 'Passing Score',
+                      value: '${exam.passingScore} Pts',
+                    ),
+                    _BentoCard(
+                      icon: Icons.replay_outlined,
+                      title: 'Max Attempts',
+                      value: '${exam.maxAttempts} Times',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDCE9FF))),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF4FF),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFDCE9FF)),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Your Status', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Your Status',
+                        style: TextStyle(
+                          color: Color(0xFF0B1C30),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 14),
-                      _StatusRow(label: 'Allowed Attempts', value: '${exam.maxAttempts}'),
+                      _StatusRow(
+                        label: 'Allowed Attempts',
+                        value: '${exam.maxAttempts}',
+                      ),
                       const Divider(color: Color(0xFFDCE9FF), height: 24),
-                      const _StatusRow(label: 'Last Attempt Score', value: 'N/A'),
+                      _StatusRow(
+                        label: 'Last Attempt Score',
+                        value: lastAttemptScore,
+                      ),
                       const Divider(color: Color(0xFFDCE9FF), height: 24),
                       _StatusRow(
                         label: 'Access Status',
                         valueWidget: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(exam.isPrivate ? Icons.lock_outline : Icons.verified_user_outlined, size: 16, color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32)),
+                            Icon(
+                              exam.isPrivate
+                                  ? Icons.lock_outline
+                                  : Icons.verified_user_outlined,
+                              size: 16,
+                              color: exam.isPrivate
+                                  ? const Color(0xFFD14307)
+                                  : const Color(0xFF2E7D32),
+                            ),
                             const SizedBox(width: 4),
-                            Text(exam.isPrivate ? 'Private' : 'Verified', style: TextStyle(color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                            Text(
+                              exam.isPrivate ? 'Private' : 'Verified',
+                              style: TextStyle(
+                                color: exam.isPrivate
+                                    ? const Color(0xFFD14307)
+                                    : const Color(0xFF2E7D32),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -262,12 +420,34 @@ class _DetailBody extends StatelessWidget {
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.withAlpha(51)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(5), blurRadius: 8, offset: const Offset(0, 4))]),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.grey.withAlpha(51)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     children: [
-                      BlocProvider(create: (_) => StartExamCubit(), child: _JoinButton(exam: exam)),
+                      BlocProvider(
+                        create: (_) => StartExamCubit(),
+                        child: _JoinButton(exam: exam),
+                      ),
                       const SizedBox(height: 12),
-                      const Text('By clicking, you agree to the Academic Integrity Policy', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF485F84), fontSize: 11, fontWeight: FontWeight.w500)),
+                      const Text(
+                        'By clicking, you agree to the Academic Integrity Policy',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF485F84),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -283,29 +463,88 @@ class _DetailBody extends StatelessWidget {
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 120),
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: 120,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
                 height: 180,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withAlpha(13), blurRadius: 8, offset: const Offset(0, 2))]),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(13),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty ? Image.network(exam.examImageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const _BannerFallback()) : const _BannerFallback(),
-                      Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.black.withAlpha(178), Colors.black.withAlpha(25)], begin: Alignment.bottomCenter, end: Alignment.topCenter))),
+                      exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
+                          ? Image.network(
+                              exam.examImageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (c, e, s) =>
+                                  const _BannerFallback(),
+                            )
+                          : const _BannerFallback(),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withAlpha(178),
+                              Colors.black.withAlpha(25),
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: const Color(0xFFD14307), borderRadius: BorderRadius.circular(6)), child: const Text('ACADEMIC SESSION 2026', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1))),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD14307),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'ACADEMIC SESSION 2026',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 8),
-                            Text(exam.examName, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                            Text(
+                              exam.examName,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -314,40 +553,108 @@ class _DetailBody extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Row(children: [Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20), SizedBox(width: 8), Text('Exam Information', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold))]),
+              const Row(
+                children: [
+                  Icon(Icons.gavel_rounded, color: Color(0xFFF15A22), size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Exam Information',
+                    style: TextStyle(
+                      color: Color(0xFF0B1C30),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               GridView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.5),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.5,
+                ),
                 children: [
-                  _BentoCard(icon: Icons.schedule_outlined, title: 'Duration', value: '${exam.durationMinutes} Mins'),
-                  _BentoCard(icon: Icons.quiz_outlined, title: 'Total Score', value: '${exam.totalScore} Pts'),
-                  _BentoCard(icon: Icons.grade_outlined, title: 'Passing Score', value: '${exam.passingScore} Pts'),
-                  _BentoCard(icon: Icons.replay_outlined, title: 'Max Attempts', value: '${exam.maxAttempts} Times'),
+                  _BentoCard(
+                    icon: Icons.schedule_outlined,
+                    title: 'Duration',
+                    value: '${exam.durationMinutes} Mins',
+                  ),
+                  _BentoCard(
+                    icon: Icons.quiz_outlined,
+                    title: 'Total Score',
+                    value: '${exam.totalScore} Pts',
+                  ),
+                  _BentoCard(
+                    icon: Icons.grade_outlined,
+                    title: 'Passing Score',
+                    value: '${exam.passingScore} Pts',
+                  ),
+                  _BentoCard(
+                    icon: Icons.replay_outlined,
+                    title: 'Max Attempts',
+                    value: '${exam.maxAttempts} Times',
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: const Color(0xFFEFF4FF), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDCE9FF))),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF4FF),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFDCE9FF)),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Your Status', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Your Status',
+                      style: TextStyle(
+                        color: Color(0xFF0B1C30),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    _StatusRow(label: 'Allowed Attempts', value: '${exam.maxAttempts}'),
+                    _StatusRow(
+                      label: 'Allowed Attempts',
+                      value: '${exam.maxAttempts}',
+                    ),
                     const Divider(color: Color(0xFFDCE9FF), height: 24),
-                    const _StatusRow(label: 'Last Attempt Score', value: 'N/A'),
+                    _StatusRow(
+                      label: 'Last Attempt Score',
+                      value: lastAttemptScore,
+                    ),
                     const Divider(color: Color(0xFFDCE9FF), height: 24),
                     _StatusRow(
                       label: 'Access Status',
                       valueWidget: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(exam.isPrivate ? Icons.lock_outline : Icons.verified_user_outlined, size: 16, color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32)),
+                          Icon(
+                            exam.isPrivate
+                                ? Icons.lock_outline
+                                : Icons.verified_user_outlined,
+                            size: 16,
+                            color: exam.isPrivate
+                                ? const Color(0xFFD14307)
+                                : const Color(0xFF2E7D32),
+                          ),
                           const SizedBox(width: 4),
-                          Text(exam.isPrivate ? 'Private' : 'Verified', style: TextStyle(color: exam.isPrivate ? const Color(0xFFD14307) : const Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(
+                            exam.isPrivate ? 'Private' : 'Verified',
+                            style: TextStyle(
+                              color: exam.isPrivate
+                                  ? const Color(0xFFD14307)
+                                  : const Color(0xFF2E7D32),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -358,34 +665,89 @@ class _DetailBody extends StatelessWidget {
               if (exam.description.isNotEmpty) ...[
                 const Row(
                   children: [
-                    Icon(Icons.description_outlined, color: Color(0xFFF15A22), size: 20),
+                    Icon(
+                      Icons.description_outlined,
+                      color: Color(0xFFF15A22),
+                      size: 20,
+                    ),
                     SizedBox(width: 8),
-                    Text('Instructions', style: TextStyle(color: Color(0xFF0B1C30), fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Instructions',
+                      style: TextStyle(
+                        color: Color(0xFF0B1C30),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2BFB4).withAlpha(127)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, 4))]),
-                  child: Text(exam.description, style: const TextStyle(color: Color(0xFF0B1C30), fontSize: 13, height: 1.5)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFFE2BFB4).withAlpha(127),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(8),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    exam.description,
+                    style: const TextStyle(
+                      color: Color(0xFF0B1C30),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
               ],
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: const Color(0xFFFFDAD6), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFBA1A1A).withAlpha(38))),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFDAD6),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFBA1A1A).withAlpha(38),
+                  ),
+                ),
                 child: const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.warning_rounded, color: Color(0xFFBA1A1A), size: 24),
+                    Icon(
+                      Icons.warning_rounded,
+                      color: Color(0xFFBA1A1A),
+                      size: 24,
+                    ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Important Notice', style: TextStyle(color: Color(0xFF93000A), fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(
+                            'Important Notice',
+                            style: TextStyle(
+                              color: Color(0xFF93000A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                           SizedBox(height: 4),
-                          Text('Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.', style: TextStyle(color: Color(0xFF93000A), fontSize: 13, height: 1.4)),
+                          Text(
+                            'Once you start, the timer cannot be paused. Ensure you have a stable internet connection and uninterrupted time.',
+                            style: TextStyle(
+                              color: Color(0xFF93000A),
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -401,15 +763,37 @@ class _DetailBody extends StatelessWidget {
           right: 0,
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey.withAlpha(51), width: 0.5)), boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 10, offset: const Offset(0, -4))]),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                top: BorderSide(color: Colors.grey.withAlpha(51), width: 0.5),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(8),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
             child: SafeArea(
               top: false,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  BlocProvider(create: (_) => StartExamCubit(), child: _JoinButton(exam: exam)),
+                  BlocProvider(
+                    create: (_) => StartExamCubit(),
+                    child: _JoinButton(exam: exam),
+                  ),
                   const SizedBox(height: 8),
-                  const Text('By clicking, you agree to the Academic Integrity Policy', style: TextStyle(color: Color(0xFF485F84), fontSize: 11, fontWeight: FontWeight.w500)),
+                  const Text(
+                    'By clicking, you agree to the Academic Integrity Policy',
+                    style: TextStyle(
+                      color: Color(0xFF485F84),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -546,11 +930,7 @@ class _StatusRow extends StatelessWidget {
   final String? value;
   final Widget? valueWidget;
 
-  const _StatusRow({
-    required this.label,
-    this.value,
-    this.valueWidget,
-  });
+  const _StatusRow({required this.label, this.value, this.valueWidget});
 
   @override
   Widget build(BuildContext context) {
@@ -559,10 +939,7 @@ class _StatusRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Color(0xFF485F84),
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Color(0xFF485F84), fontSize: 14),
         ),
         if (valueWidget != null)
           valueWidget!
@@ -611,7 +988,9 @@ class _JoinButton extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
               const Icon(Icons.lock_outline_rounded, color: Color(0xFFF15A22)),
@@ -660,23 +1039,28 @@ class _JoinButton extends StatelessWidget {
               },
               child: const Text(
                 'Cancel',
-                style: TextStyle(color: Color(0xFF485F84), fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: Color(0xFF485F84),
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF15A22),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: () {
                 final code = codeController.text.trim();
                 if (code.isNotEmpty) {
                   Navigator.of(dialogContext).pop();
                   parentContext.read<StartExamCubit>().checkAndStartExam(
-                        examId: exam.examId,
-                        accessCode: code,
-                      );
+                    examId: exam.examId,
+                    accessCode: code,
+                  );
                 }
               },
               child: const Text('Confirm'),
@@ -691,6 +1075,7 @@ class _JoinButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<StartExamCubit, StartExamState>(
       listener: (context, state) {
+        // THÀNH CÔNG: Người dùng có quyền truy cập trực tiếp, chuyển sang phòng thi
         if (state is StartExamSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -702,7 +1087,7 @@ class _JoinButton extends StatelessWidget {
               backgroundColor: const Color(0xFF2E7D32),
             ),
           );
-          
+
           final cubit = context.read<StartExamCubit>();
           // Điều hướng Student sang màn hình làm bài thi chính thức
           Navigator.push(
@@ -718,14 +1103,18 @@ class _JoinButton extends StatelessWidget {
               ),
             ),
           ).then((_) {
-            cubit.reset();
+            if (context.mounted && !cubit.isClosed) {
+              cubit.reset();
+            }
           });
         }
-        
+
+        // YÊU CẦU MẬT MÃ: Hiển thị hộp thoại Dialog để nhập Access Code
         if (state is StartExamCodeRequired) {
           _showAccessCodeDialog(context, state.errorMessage);
         }
-        
+
+        // THẤT BẠI: Hiện lỗi (không có quyền, hết hạn đăng ký) và reset trạng thái Cubit
         if (state is StartExamFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -738,7 +1127,9 @@ class _JoinButton extends StatelessWidget {
       },
       builder: (context, state) {
         final loading = state is StartExamLoading;
-        final statusMsg = state is StartExamLoading ? state.statusMessage : 'Start Exam';
+        final statusMsg = state is StartExamLoading
+            ? state.statusMessage
+            : 'Start Exam';
 
         final buttonStyle = ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFF15A22),
@@ -759,9 +1150,9 @@ class _JoinButton extends StatelessWidget {
                 : () {
                     // Bước 1: Gọi check-access với accessCode = null
                     context.read<StartExamCubit>().checkAndStartExam(
-                          examId: exam.examId,
-                          accessCode: null,
-                        );
+                      examId: exam.examId,
+                      accessCode: null,
+                    );
                   },
             child: loading
                 ? Row(
@@ -778,7 +1169,10 @@ class _JoinButton extends StatelessWidget {
                       const SizedBox(width: 12),
                       Text(
                         statusMsg,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   )
@@ -787,7 +1181,10 @@ class _JoinButton extends StatelessWidget {
                     children: [
                       Text(
                         'Start Exam',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       SizedBox(width: 8),
                       Icon(Icons.play_arrow, size: 20),

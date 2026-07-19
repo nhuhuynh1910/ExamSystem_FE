@@ -15,7 +15,8 @@ class ExamDetailLoading extends ExamDetailState {
 
 class ExamDetailLoaded extends ExamDetailState {
   final ExamModel exam;
-  const ExamDetailLoaded({required this.exam});
+  final String lastAttemptScore;
+  const ExamDetailLoaded({required this.exam, this.lastAttemptScore = 'N/A'});
 }
 
 class ExamDetailError extends ExamDetailState {

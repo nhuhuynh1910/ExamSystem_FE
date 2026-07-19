@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/exam_repository.dart';
@@ -15,7 +16,24 @@ class ExamDetailCubit extends Cubit<ExamDetailState> {
     emit(const ExamDetailLoading());
     try {
       final exam = await _repository.getExamById(examId);
-      emit(ExamDetailLoaded(exam: exam));
+      
+      String lastAttemptScore = 'N/A';
+      try {
+        final result = await _repository.getExamResult(examId);
+        if (result is Map) {
+          final score = result['score'];
+          final totalScore = result['totalScore'];
+          if (score != null && totalScore != null) {
+            lastAttemptScore = '$score / $totalScore';
+          }
+        }
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) {
+          // Ignore non-404 errors so the screen can still load with 'N/A'
+        }
+      } catch (_) {}
+
+      emit(ExamDetailLoaded(exam: exam, lastAttemptScore: lastAttemptScore));
     } catch (e) {
       emit(ExamDetailError(message: e.toString()));
     }

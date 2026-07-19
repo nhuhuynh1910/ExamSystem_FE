@@ -12,8 +12,10 @@ class ExamTakingCubit extends Cubit<ExamTakingState> {
     required this.attemptId,
     Map<int, List<int>> initialAnswers = const {},
     ExamRepository? repository,
-  })  : _repository = repository ?? ExamRepository(),
-        super(ExamTakingInProgress(currentQuestionIndex: 0, answers: initialAnswers));
+  }) : _repository = repository ?? ExamRepository(),
+       super(
+         ExamTakingInProgress(currentQuestionIndex: 0, answers: initialAnswers),
+       );
 
   void selectQuestion(int index) {
     final currentState = state;
@@ -22,7 +24,10 @@ class ExamTakingCubit extends Cubit<ExamTakingState> {
     }
   }
 
-  Future<void> selectOption({required int questionId, required int optionId}) async {
+  Future<void> selectOption({
+    required int questionId,
+    required int optionId,
+  }) async {
     final currentState = state;
     if (currentState is! ExamTakingInProgress) return;
 
@@ -30,11 +35,13 @@ class ExamTakingCubit extends Cubit<ExamTakingState> {
     final updatedAnswers = Map<int, List<int>>.from(currentState.answers);
     updatedAnswers[questionId] = [optionId];
 
-    emit(currentState.copyWith(
-      answers: updatedAnswers,
-      isSaving: true,
-      saveError: null,
-    ));
+    emit(
+      currentState.copyWith(
+        answers: updatedAnswers,
+        isSaving: true,
+        saveError: null,
+      ),
+    );
 
     // Gọi API lưu câu trả lời ngầm lên Server
     try {
@@ -45,26 +52,30 @@ class ExamTakingCubit extends Cubit<ExamTakingState> {
       );
       emit((state as ExamTakingInProgress).copyWith(isSaving: false));
     } on DioException catch (e) {
-      emit((state as ExamTakingInProgress).copyWith(
-        isSaving: false,
-        saveError: 'Failed to save answer: ${e.message}',
-      ));
+      emit(
+        (state as ExamTakingInProgress).copyWith(
+          isSaving: false,
+          saveError: 'Failed to save answer: ${e.message}',
+        ),
+      );
     } catch (e) {
-      emit((state as ExamTakingInProgress).copyWith(
-        isSaving: false,
-        saveError: 'Error saving answer: ${e.toString()}',
-      ));
+      emit(
+        (state as ExamTakingInProgress).copyWith(
+          isSaving: false,
+          saveError: 'Error saving answer: ${e.toString()}',
+        ),
+      );
     }
   }
 
   Future<void> submitExam({bool isAutoSubmitted = false}) async {
     emit(const ExamTakingSubmitting());
     try {
-      await _repository.submitAttempt(
+      final response = await _repository.submitAttempt(
         attemptId: attemptId,
         isAutoSubmitted: isAutoSubmitted,
       );
-      emit(const ExamTakingSubmitted());
+      emit(ExamTakingSubmitted(response));
     } on DioException catch (e) {
       final code = e.response?.statusCode;
       final msg = switch (code) {
@@ -72,7 +83,7 @@ class ExamTakingCubit extends Cubit<ExamTakingState> {
         401 => 'Session expired.',
         403 => 'Permission denied or exam time has passed.',
         404 => 'Exam attempt not found.',
-        _   => e.message ?? 'An error occurred while submitting the exam.',
+        _ => e.message ?? 'An error occurred while submitting the exam.',
       };
       emit(ExamTakingFailure(msg));
     } catch (e) {

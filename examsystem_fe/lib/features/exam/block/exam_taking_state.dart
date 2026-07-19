@@ -1,3 +1,4 @@
+import '../models/exam_submit_response.dart';
 
 sealed class ExamTakingState {
   const ExamTakingState();
@@ -41,7 +42,8 @@ class ExamTakingSubmitting extends ExamTakingState {
 }
 
 class ExamTakingSubmitted extends ExamTakingState {
-  const ExamTakingSubmitted();
+  final ExamSubmitResponse response;
+  const ExamTakingSubmitted(this.response);
 }
 
 class ExamTakingFailure extends ExamTakingState {
