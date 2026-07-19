@@ -20,9 +20,9 @@ class ExamRepository {
   Future<ExamModel> createExam(ExamCreateRequest req) => _examApi.createExam(req);
   Future<ExamModel> updateExam(int id, ExamUpdateRequest req) => _examApi.updateExam(id, req);
   Future<void> deleteExam(int id) => _examApi.deleteExam(id);
-  Future<void> restoreExam(int id) => _examApi.restoreExam(id);
-  Future<void> publishExam(int id) => _examApi.publishExam(id);
-  Future<void> closeExam(int id) => _examApi.closeExam(id);
+  Future<ExamModel> restoreExam(int id) => _examApi.restoreExam(id);
+  Future<ExamModel> publishExam(int id) => _examApi.publishExam(id);
+  Future<ExamModel> closeExam(int id) => _examApi.closeExam(id);
 
   Future<List<ExamQuestionModel>> getExamQuestions(int id) => _examApi.getExamQuestions(id);
   Future<void> addQuestionToExam(int id, AddExamQuestionRequest req) => _examApi.addQuestion(id, req);

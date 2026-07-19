@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
+import '../models/add_exam_question_request.dart';
 import '../models/exam_create_request.dart';
 import '../models/subject_model.dart';
 import '../../question/bloc/question_bloc.dart';
@@ -52,7 +53,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ExamBloc>().add(LoadSubjectsEvent());
+    context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
   }
 
   @override
@@ -137,7 +138,16 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
         examImageName: _selectedImageName,
       );
 
-      context.read<ExamBloc>().add(CreateExamEvent(request));
+      final List<AddExamQuestionRequest> questions = _selectedQuestionIds.asMap().entries.map((entry) {
+        final qId = entry.value;
+        return AddExamQuestionRequest(
+          questionId: qId,
+          questionOrder: entry.key + 1,
+          score: _questionScores[qId] ?? 0.0,
+        );
+      }).toList();
+
+      context.read<ExamBloc>().add(CreateExamEvent(request, questions: questions));
     }
   }
 
@@ -222,7 +232,6 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
   Widget _buildInfoStep() {
     return BlocBuilder<ExamBloc, ExamState>(
       builder: (context, state) {
-        final subjects = state.subjects ?? [];
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -231,13 +240,13 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
               const Text('BASIC INFORMATION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFFF97316), letterSpacing: 1.1)),
               const SizedBox(height: 20),
               DropdownButtonFormField<int>(
-                value: _subjectId,
+                initialValue: _subjectId,
                 isExpanded: true,
                 menuMaxHeight: 400,
                 decoration: InputDecoration(
                   labelText: state.isLoading 
                       ? 'Loading Subjects...' 
-                      : 'Subject (${state.subjects?.length ?? 0} assigned)',
+                      : 'Subject (${state.subjects.length} assigned)',
                   prefixIcon: Icon(Icons.book_outlined, color: _subjectId == null ? Colors.grey : const Color(0xFFF97316)),
                   filled: true,
                   fillColor: Colors.white,
@@ -245,28 +254,27 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
                   enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey[200]!)),
                   suffixIcon: state.isLoading ? const SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2))) : null,
                 ),
-                items: (state.subjects == null || state.subjects!.isEmpty)
+                items: state.subjects.isEmpty
                     ? []
-                    : state.subjects!.fold<List<SubjectModel>>([], (list, s) {
-                        if (!list.any((item) => item.subjectId == s.subjectId)) list.add(s);
-                        return list;
-                      }).map((s) => DropdownMenuItem(
+                    : state.subjects.map((s) => DropdownMenuItem(
                           value: s.subjectId,
                           child: Text(s.subjectName, style: const TextStyle(fontSize: 14, color: Colors.black87)),
                         )).toList(),
                 onChanged: state.isLoading ? null : (v) {
                   setState(() {
                     _subjectId = v;
+                    _selectedQuestionIds.clear(); // Xóa câu hỏi cũ khi đổi môn
+                    _questionScores.clear();
                   });
                   if (v != null) {
                     context.read<QuestionBloc>().add(qe.LoadQuestionsEvent(
-                      queryParameters: {'SubjectId': v, 'Status': 'Published'}
+                      queryParameters: {'subjectId': v, 'status': 'Published'}
                     ));
                   }
                 },
                 validator: (v) => v == null ? 'Please select a subject' : null,
                 hint: Text(
-                  (state.subjects == null || state.subjects!.isEmpty) 
+                  state.subjects.isEmpty
                       ? (state.isLoading ? 'Loading...' : 'No subjects assigned to you') 
                       : 'Select a subject',
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -311,7 +319,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
       child: Container(
         height: 160,
         width: double.infinity,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)]),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[200]!), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10)]),
         child: _selectedImageBytes != null
             ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.memory(_selectedImageBytes!, fit: BoxFit.cover))
             : Column(
@@ -443,7 +451,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
     );
   }
 
-  Widget _buildTextField(controller, label, icon) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,

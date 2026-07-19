@@ -8,6 +8,7 @@ class QuestionService {
   QuestionService(this._repository);
 
   Future<List<SubjectModel>> getSubjects() => _repository.getSubjects();
+  Future<List<SubjectModel>> getTeacherSubjects() => _repository.getTeacherSubjects();
 
   Future<List<QuestionModel>> getQuestions({Map<String, dynamic>? queryParameters}) {
     return _repository.getQuestions(queryParameters: queryParameters);

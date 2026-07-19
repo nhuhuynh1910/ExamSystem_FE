@@ -7,6 +7,7 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/exam/models/exam_model.dart';
 import '../../features/exam/screens/exam_list_screen.dart'; 
 import '../../features/exam/screens/exam_detail_screen.dart'; 
+import '../../features/notification/screens/notification_list_screen.dart';
 import '../../features/question/screens/question_list_screen.dart';
 import '../utils/token_storage.dart';
 
@@ -42,6 +43,9 @@ class AppRouter {
 
   /// Màn hình ngân hàng câu hỏi.
   static const String questionBank = '/questions';
+
+  /// Màn hình thông báo.
+  static const String notifications = '/notifications';
 
   /// Màn hình phòng chờ thi.
   static const String waitingRoom = '/waiting-room';
@@ -115,6 +119,15 @@ class AppRouter {
         name: 'questionBank',
         builder: (BuildContext context, GoRouterState state) {
           return const QuestionListScreen();
+        },
+      ),
+
+      // ── Route: Thông báo ──────────────────────────────────────────────────
+      GoRoute(
+        path: notifications,
+        name: 'notifications',
+        builder: (BuildContext context, GoRouterState state) {
+          return const NotificationListScreen();
         },
       ),
 

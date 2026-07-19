@@ -4,8 +4,8 @@ import '../../../core/network/api_constants.dart';
 import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
-import '../../question/bloc/question_bloc.dart';
-import '../../question/bloc/question_state.dart' as q;
+import '../models/exam_model.dart';
+import '../models/exam_question_model.dart';
 import '../widgets/question_tile.dart';
 import 'add_question_screen.dart';
 import 'update_exam_screen.dart';
@@ -43,7 +43,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     return BlocBuilder<ExamBloc, ExamState>(
       builder: (context, state) {
         final exam = state.selectedExam;
-        final questions = state.examQuestions ?? [];
+        final questions = state.examQuestions;
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -74,7 +74,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildCustomBody(exam, List questions) {
+  Widget _buildCustomBody(ExamModel exam, List<ExamQuestionModel> questions) {
     final String? imageUrl = exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
         ? (exam.examImageUrl!.startsWith('http') ? exam.examImageUrl : "${ApiConstants.baseUrl.replaceAll('/api', '')}${exam.examImageUrl}")
         : null;
@@ -113,7 +113,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.black.withOpacity(0.3), Colors.transparent, Colors.black.withOpacity(0.7)],
+                      colors: [Colors.black.withValues(alpha: 0.3), Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                     ),
                   ),
                 ),
@@ -131,7 +131,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF97316).withOpacity(0.1),
+                        color: const Color(0xFFF97316).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -176,7 +176,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildOverviewTab(exam) {
+  Widget _buildOverviewTab(ExamModel exam) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -216,7 +216,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildQuestionsTab(exam, List questions) {
+  Widget _buildQuestionsTab(ExamModel exam, List<ExamQuestionModel> questions) {
     if (questions.isEmpty) {
       return Center(
         child: Column(
@@ -225,15 +225,19 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
             Icon(Icons.quiz_outlined, size: 64, color: Colors.grey[300]),
             const SizedBox(height: 16),
             const Text('No questions added yet', style: TextStyle(color: Colors.grey)),
-            if (exam.status == 'Draft')
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => AddQuestionScreen(examId: exam.examId, subjectId: exam.subjectId)),
-                  ).then((_) => _loadDetail()),
-                  icon: const Icon(Icons.add),
+              if (exam.status == 'Draft')
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AddQuestionScreen(
+                        examId: exam.examId, 
+                        subjectId: exam.subjectId,
+                        existingQuestionIds: questions.map((q) => q.questionId).toList().cast<int>(),
+                      )),
+                    ).then((_) => _loadDetail()),
+                    icon: const Icon(Icons.add),
                   label: const Text('Add Questions'),
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF97316), foregroundColor: Colors.white),
                 ),
@@ -253,7 +257,11 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
             child: OutlinedButton.icon(
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => AddQuestionScreen(examId: exam.examId, subjectId: exam.subjectId)),
+                MaterialPageRoute(builder: (_) => AddQuestionScreen(
+                  examId: exam.examId, 
+                  subjectId: exam.subjectId,
+                  existingQuestionIds: questions.map((q) => q.questionId).toList().cast<int>(),
+                )),
               ).then((_) => _loadDetail()),
               icon: const Icon(Icons.add),
               label: const Text('ADD MORE QUESTIONS'),
@@ -284,7 +292,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
       child: Text(status.toUpperCase(), style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
@@ -329,7 +337,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     );
   }
 
-  Widget _buildBottomAction(exam) {
+  Widget _buildBottomAction(ExamModel exam) {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -337,7 +345,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () => _confirmPublish(exam.examId),
+                onPressed: () => _confirmPublish(exam),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF97316),
                   foregroundColor: Colors.white,
@@ -358,7 +366,7 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
             const SizedBox(width: 12),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF97316).withOpacity(0.1),
+                color: const Color(0xFFF97316).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: IconButton(
@@ -375,18 +383,44 @@ class _ExamDetailScreenState extends State<ExamDetailScreen> with SingleTickerPr
     );
   }
 
-  void _confirmPublish(int id) {
+  void _confirmPublish(ExamModel exam) {
+    final now = DateTime.now();
+    if (now.isAfter(exam.startTime)) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Cannot Publish'),
+          content: const Text('The start time has already passed. Please update the exam schedule before publishing.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => UpdateExamScreen(exam: exam)),
+                ).then((_) => _loadDetail());
+              },
+              child: const Text('Update Schedule', style: TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold)),
+            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ],
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Publish Exam?'),
-        content: const Text('Once published, students can start taking this exam. You can still manage questions until it\'s closed.'),
+        content: const Text('Once published, students can start taking this exam at the scheduled time.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
           TextButton(
             onPressed: () {
-              context.read<ExamBloc>().add(PublishExamEvent(id));
+              context.read<ExamBloc>().add(PublishExamEvent(exam.examId));
               Navigator.pop(ctx);
             },
             child: const Text('Publish', style: TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold)),

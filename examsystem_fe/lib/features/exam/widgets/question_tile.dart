@@ -25,7 +25,7 @@ class QuestionTile extends StatelessWidget {
       child: ExpansionTile(
         shape: const RoundedRectangleBorder(side: BorderSide.none),
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFF97316).withOpacity(0.1),
+          backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.1),
           child: Text('$index', style: const TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold, fontSize: 14)),
         ),
         title: Text(
@@ -89,7 +89,7 @@ class QuestionTile extends StatelessWidget {
   Widget _buildSmallBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
       child: Text(text, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.bold)),
     );
   }

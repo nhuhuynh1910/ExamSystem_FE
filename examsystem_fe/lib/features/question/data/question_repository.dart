@@ -6,6 +6,7 @@ class QuestionRepository {
   final QuestionApi _api = QuestionApi();
 
   Future<List<SubjectModel>> getSubjects() => _api.getSubjects();
+  Future<List<SubjectModel>> getTeacherSubjects() => _api.getTeacherSubjects();
 
   Future<List<QuestionModel>> getQuestions({Map<String, dynamic>? queryParameters}) {
     return _api.getQuestions(queryParameters: queryParameters);

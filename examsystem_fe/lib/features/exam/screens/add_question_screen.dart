@@ -11,23 +11,41 @@ import '../models/add_exam_question_request.dart';
 class AddQuestionScreen extends StatefulWidget {
   final int examId;
   final int subjectId;
-  const AddQuestionScreen({super.key, required this.examId, required this.subjectId});
+  final List<int> existingQuestionIds; // Thêm trường này
+  const AddQuestionScreen({
+    super.key, 
+    required this.examId, 
+    required this.subjectId,
+    this.existingQuestionIds = const [], // Mặc định rỗng
+  });
 
   @override
   State<AddQuestionScreen> createState() => _AddQuestionScreenState();
 }
 
-class _AddQuestionScreenState extends State<AddQuestionScreen> {
+class _AddQuestionScreenState extends State<AddQuestionScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final List<int> _selectedIds = [];
-  final Map<int, double> _scores = {};
+  final Map<int, double> _questionScores = {};
   final Map<int, int> _orders = {};
 
   @override
   void initState() {
     super.initState();
-    context.read<QuestionBloc>().add(LoadQuestionsEvent(
-      queryParameters: {'SubjectId': widget.subjectId, 'Status': 'Published'}
+    _tabController = TabController(length: 2, vsync: this);
+    _selectedIds.addAll(widget.existingQuestionIds);
+    
+    // Gọi event tải ngân hàng câu hỏi để phân tách Đã chọn / Chưa chọn
+    context.read<ExamBloc>().add(LoadBankQuestionsForExamEvent(
+      examId: widget.examId,
+      subjectId: widget.subjectId,
     ));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,137 +53,119 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Add Questions', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Manage Questions', style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: const Color(0xFFF97316),
+          indicatorColor: const Color(0xFFF97316),
+          tabs: const [
+            Tab(text: 'AVAILABLE'),
+            Tab(text: 'IN EXAM'),
+          ],
+        ),
       ),
       body: MultiBlocListener(
         listeners: [
           BlocListener<ExamBloc, ExamState>(
             listener: (context, state) {
               if (state is ExamOperationSuccess && state.message != null && state.message!.toLowerCase().contains('thêm câu hỏi')) {
-                Navigator.pop(context);
+                // Có thể không cần pop ngay để GV thêm tiếp
               }
             },
           ),
         ],
-        child: BlocBuilder<QuestionBloc, q.QuestionState>(
+        child: BlocBuilder<ExamBloc, ExamState>(
           builder: (context, state) {
-            final questions = state.questions ?? [];
-            
-            if (state.isLoading) return const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)));
+            if (state.isLoading && state.tempBankQuestions.isEmpty) {
+              return const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)));
+            }
 
-            return Column(
+            return TabBarView(
+              controller: _tabController,
               children: [
-                _buildHeader(),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: questions.length,
-                    itemBuilder: (context, index) {
-                      final qItem = questions[index];
-                      final isSelected = _selectedIds.contains(qItem.questionId);
-                      
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: isSelected ? const Color(0xFFF97316) : Colors.grey[200]!, width: isSelected ? 2 : 1),
-                        ),
-                        child: CheckboxListTile(
-                          value: isSelected,
-                          activeColor: const Color(0xFFF97316),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          onChanged: (v) {
-                            setState(() {
-                              if (v!) {
-                                _selectedIds.add(qItem.questionId);
-                                _scores[qItem.questionId] = qItem.score;
-                                _orders[qItem.questionId] = _selectedIds.length;
-                              } else {
-                                _selectedIds.remove(qItem.questionId);
-                              }
-                            });
-                          },
-                          title: Text(qItem.content, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Row(
-                              children: [
-                                _badge(qItem.difficulty, Colors.blue),
-                                const SizedBox(width: 8),
-                                _badge('${qItem.score} pts', Colors.orange),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                _buildQuestionList(state.unselectedQuestions, isAvailable: true),
+                _buildQuestionList(state.selectedQuestions, isAvailable: false),
               ],
             );
           },
         ),
       ),
-      bottomNavigationBar: _selectedIds.isNotEmpty ? _buildBottomBar() : null,
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
-  Widget _buildHeader() {
-    double totalScore = 0;
-    for (var id in _selectedIds) { totalScore += _scores[id] ?? 0; }
-    
-    return Container(
+  Widget _buildQuestionList(List<dynamic> questions, {required bool isAvailable}) {
+    if (questions.isEmpty) {
+      return Center(child: Text(isAvailable ? 'No more questions available' : 'No questions in this exam yet'));
+    }
+
+    return ListView.builder(
       padding: const EdgeInsets.all(20),
-      color: Colors.grey[50],
-      child: Row(
-        children: [
-          _stat('Selected', '${_selectedIds.length}'),
-          const SizedBox(width: 24),
-          _stat('Total Score', '$totalScore'),
-          const Spacer(),
-          IconButton(icon: const Icon(Icons.search, color: Color(0xFFF97316)), onPressed: () {}),
-          IconButton(icon: const Icon(Icons.filter_list_rounded, color: Color(0xFFF97316)), onPressed: () {}),
-        ],
-      ),
+      itemCount: questions.length,
+      itemBuilder: (context, index) {
+        final qItem = questions[index];
+        final isSelected = _selectedIds.contains(qItem.questionId);
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: isSelected ? const Color(0xFFF97316) : Colors.grey[200]!, width: isSelected ? 2 : 1),
+          ),
+          child: CheckboxListTile(
+            value: isSelected,
+            activeColor: const Color(0xFFF97316),
+            onChanged: isAvailable ? (v) {
+              setState(() {
+                if (v!) {
+                  _selectedIds.add(qItem.questionId);
+                  _questionScores[qItem.questionId] = (qItem.score as num?)?.toDouble() ?? 0.0;
+                } else {
+                  _selectedIds.remove(qItem.questionId);
+                }
+              });
+            } : null,
+            title: Text(qItem.content ?? '', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+            subtitle: Text('${qItem.difficulty} • ${qItem.score} pts'),
+          ),
+        );
+      },
     );
   }
-
-  Widget _stat(l, v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(l, style: const TextStyle(color: Colors.grey, fontSize: 11)), Text(v, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))]);
-
-  Widget _badge(t, c) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Text(t, style: TextStyle(color: c, fontSize: 9, fontWeight: FontWeight.bold)));
 
   Widget _buildBottomBar() {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: ElevatedButton(
-          onPressed: () {
-            for (var id in _selectedIds) {
-              final req = AddExamQuestionRequest(questionId: id, questionOrder: _orders[id], score: _scores[id]);
-              context.read<ExamBloc>().add(AddQuestionToExamEvent(widget.examId, req));
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF97316),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 54),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 0,
-          ),
-          child: BlocBuilder<ExamBloc, ExamState>(
-            builder: (context, state) {
-              if (state.isLoading) {
-                return const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                );
-              }
-              return const Text('ADD SELECTED QUESTIONS', style: TextStyle(fontWeight: FontWeight.bold));
-            },
-          ),
+        child: Row(
+          children: [
+            if (_tabController.index == 0)
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  final newSelection = _selectedIds.where((id) => !widget.existingQuestionIds.contains(id)).toList();
+                  if (newSelection.isEmpty) {
+                    Navigator.pop(context);
+                    return;
+                  }
+                  for (var id in newSelection) {
+                    final req = AddExamQuestionRequest(questionId: id, questionOrder: 0, score: _questionScores[id]);
+                    context.read<ExamBloc>().add(AddQuestionToExamEvent(widget.examId, req));
+                  }
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF97316),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('ADD TO EXAM', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
         ),
       ),
     );

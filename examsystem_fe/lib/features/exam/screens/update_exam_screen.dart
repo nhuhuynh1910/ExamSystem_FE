@@ -57,7 +57,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     _shuffleQuestions = widget.exam.shuffleQuestions;
     _showAnswerAfterSubmit = widget.exam.showAnswerAfterSubmit;
     
-    context.read<ExamBloc>().add(LoadSubjectsEvent());
+    context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
   }
 
   @override
@@ -239,7 +239,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
               DropdownButtonFormField<int>(
                 value: _subjectId,
                 decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
-                items: subjects.map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName))).toList(),
+                items: state.subjects.map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName))).toList(),
                 onChanged: (v) => setState(() => _subjectId = v!),
                 validator: (v) => v == null ? 'Please select a subject' : null,
               ),
@@ -323,7 +323,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     );
   }
 
-  Widget _buildTextField(controller, label, icon) {
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -400,7 +400,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     );
   }
 
-  Widget _previewRow(l, v) => Padding(padding: const EdgeInsets.only(bottom: 12), child: Row(children: [Text('$l:', style: const TextStyle(color: Colors.grey)), const SizedBox(width: 8), Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right))]));
+  Widget _previewRow(String l, String v) => Padding(padding: const EdgeInsets.only(bottom: 12), child: Row(children: [Text('$l:', style: const TextStyle(color: Colors.grey)), const SizedBox(width: 8), Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right))]));
 
   Widget _buildFooter() {
     return SafeArea(

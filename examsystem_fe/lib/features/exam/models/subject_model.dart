@@ -13,10 +13,10 @@ class SubjectModel {
 
   factory SubjectModel.fromJson(Map<String, dynamic> json) {
     return SubjectModel(
-      subjectId: json['subjectId'] ?? json['SubjectId'] ?? 0,
-      subjectName: json['subjectName'] ?? json['SubjectName'] ?? 'Unknown Subject',
+      subjectId: json['subjectId'] ?? json['SubjectId'] ?? json['id'] ?? json['Id'] ?? 0,
+      subjectName: json['subjectName'] ?? json['SubjectName'] ?? json['name'] ?? json['Name'] ?? 'Unknown Subject',
       description: json['description'] ?? json['Description'],
-      isActive: json['isActive'] ?? json['IsActive'] ?? false,
+      isActive: json['isActive'] ?? json['IsActive'] ?? true,
     );
   }
 }

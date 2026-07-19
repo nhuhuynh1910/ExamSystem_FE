@@ -12,6 +12,9 @@ import 'features/question/bloc/question_bloc.dart';
 import 'features/question/data/question_repository.dart';
 import 'features/question/domain/question_service.dart';
 
+import 'features/notification/bloc/notification_bloc.dart';
+import 'features/notification/data/notification_repository.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPreferences.getInstance();
@@ -33,6 +36,9 @@ class ExamSystemApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => AttemptBloc(AttemptRepository()),
+        ),
+        BlocProvider(
+          create: (context) => NotificationBloc(NotificationRepository()),
         ),
       ],
       child: MaterialApp.router(

@@ -5,18 +5,23 @@ import 'status_chip.dart';
 
 class ExamCard extends StatelessWidget {
   final ExamModel exam;
+  final int? currentUserId;
+  final String? userRole;
   final VoidCallback onTap;
   final Function(String) onAction;
 
   const ExamCard({
     super.key,
     required this.exam,
+    this.currentUserId,
+    this.userRole,
     required this.onTap,
     required this.onAction,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool canManage = userRole == 'Admin' || currentUserId == exam.teacherId;
     final String? imageUrl = exam.examImageUrl != null && exam.examImageUrl!.isNotEmpty
         ? (exam.examImageUrl!.startsWith('http') ? exam.examImageUrl : "${ApiConstants.baseUrl.replaceAll('/api', '')}${exam.examImageUrl}")
         : null;
@@ -29,7 +34,7 @@ class ExamCard extends StatelessWidget {
         border: Border.all(color: Colors.grey[100]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -51,7 +56,7 @@ class ExamCard extends StatelessWidget {
                     width: 52,
                     height: 52,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF97316).withOpacity(0.1),
+                      color: const Color(0xFFF97316).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: imageUrl != null
@@ -60,7 +65,7 @@ class ExamCard extends StatelessWidget {
                             child: Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.assignment_outlined, color: Color(0xFFF97316)),
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.assignment_outlined, color: Color(0xFFF97316)),
                             ),
                           )
                         : const Icon(Icons.assignment_outlined, color: Color(0xFFF97316)),
@@ -103,48 +108,49 @@ class ExamCard extends StatelessWidget {
               ),
               Row(
                 children: [
-                  _buildInfoItem(Icons.help_outline_rounded, '12 questions'),
+                  _buildInfoItem(Icons.help_outline_rounded, '${exam.questionCount ?? 0} questions'),
                   const SizedBox(width: 16),
-                  _buildInfoItem(Icons.people_outline_rounded, '${exam.maxAttempts} attempts'),
+                  _buildInfoItem(Icons.people_outline_rounded, '${exam.attemptCount ?? 0} attempts'),
                   const Spacer(),
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_horiz, color: Colors.grey, size: 22),
-                    onSelected: onAction,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 150),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    itemBuilder: (context) => [
-                      if (exam.status == 'Draft') ...[
+                  if (canManage)
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_horiz, color: Colors.grey, size: 22),
+                      onSelected: onAction,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 150),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      itemBuilder: (context) => [
+                        if (exam.status == 'Draft') ...[
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 10), Text('Edit Exam')]),
+                          ),
+                          const PopupMenuItem(
+                            value: 'publish',
+                            child: Row(children: [Icon(Icons.publish_outlined, size: 18), SizedBox(width: 10), Text('Publish Now')]),
+                          ),
+                        ],
+                        if (exam.status == 'Published')
+                          const PopupMenuItem(
+                            value: 'close',
+                            child: Row(children: [Icon(Icons.lock_outline, size: 18), SizedBox(width: 10), Text('Close Access')]),
+                          ),
+                        if (exam.status == 'Closed')
+                          const PopupMenuItem(
+                            value: 'restore',
+                            child: Row(children: [Icon(Icons.refresh_rounded, size: 18), SizedBox(width: 10), Text('Re-open (Draft)')]),
+                          ),
+                        if (exam.status == 'Deleted')
+                          const PopupMenuItem(
+                            value: 'restore',
+                            child: Row(children: [Icon(Icons.restore, size: 18), SizedBox(width: 10), Text('Restore Exam')]),
+                          ),
                         const PopupMenuItem(
-                          value: 'edit',
-                          child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 10), Text('Edit Exam')]),
-                        ),
-                        const PopupMenuItem(
-                          value: 'publish',
-                          child: Row(children: [Icon(Icons.publish_outlined, size: 18), SizedBox(width: 10), Text('Publish Now')]),
+                          value: 'delete',
+                          child: Row(children: [Icon(Icons.delete_outline, size: 18, color: Colors.red), SizedBox(width: 10), Text('Delete', style: TextStyle(color: Colors.red))]),
                         ),
                       ],
-                      if (exam.status == 'Published')
-                        const PopupMenuItem(
-                          value: 'close',
-                          child: Row(children: [Icon(Icons.lock_outline, size: 18), SizedBox(width: 10), Text('Close Access')]),
-                        ),
-                      if (exam.status == 'Closed')
-                        const PopupMenuItem(
-                          value: 'restore',
-                          child: Row(children: [Icon(Icons.refresh_rounded, size: 18), SizedBox(width: 10), Text('Re-open (Draft)')]),
-                        ),
-                      if (exam.status == 'Deleted')
-                        const PopupMenuItem(
-                          value: 'restore',
-                          child: Row(children: [Icon(Icons.restore, size: 18), SizedBox(width: 10), Text('Restore Exam')]),
-                        ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(children: [Icon(Icons.delete_outline, size: 18, color: Colors.red), SizedBox(width: 10), Text('Delete', style: TextStyle(color: Colors.red))]),
-                      ),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ],

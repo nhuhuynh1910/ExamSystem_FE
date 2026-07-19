@@ -13,9 +13,9 @@ class AddExamQuestionRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'questionId': questionId,
-      if (questionOrder != null) 'questionOrder': questionOrder,
-      if (score != null) 'score': score,
+      'QuestionId': questionId,
+      if (questionOrder != null) 'QuestionOrder': questionOrder,
+      if (score != null) 'Score': score,
     };
   }
 

@@ -3,15 +3,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/utils/storage_manager.dart';
 import '../../../core/utils/token_storage.dart';
 import '../../question/bloc/question_bloc.dart';
 import '../../question/bloc/question_event.dart' as qe;
 import '../../question/bloc/question_state.dart';
+import '../../notification/bloc/notification_bloc.dart';
+import '../../notification/bloc/notification_state.dart' as ns;
 import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
 import '../models/exam_model.dart';
-import '../models/subject_model.dart';
 import '../widgets/exam_card.dart';
 import '../widgets/status_chip.dart';
 import 'create_exam_screen.dart';
@@ -30,6 +32,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   List<String> _statuses = ['All', 'Draft', 'Published', 'Closed'];
   String? _userRole;
   String? _userName;
+  int? _currentUserId;
 
   // Filters
   final TextEditingController _searchController = TextEditingController();
@@ -60,19 +63,32 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
         _tabController.addListener(_onTabChanged);
       });
     }
-    _loadExams();
+
     if (mounted) {
-      context.read<ExamBloc>().add(const LoadSubjectsEvent());
+      final normalizedRole = _userRole?.toLowerCase();
+      if (normalizedRole == 'student') {
+        final userId = await TokenStorage.getUserId() ?? 0;
+        context.read<ExamBloc>().add(LoadStudentSubjectsEvent(userId));
+      } else if (normalizedRole == 'teacher' || normalizedRole == 'admin') {
+        context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
+      } else {
+        context.read<ExamBloc>().add(const LoadExamsEvent());
+      }
+      
+      _loadExams();
       _loadQuestionCount();
     }
   }
 
   Future<void> _loadUserInfo() async {
     final role = await TokenStorage.getRole();
+    final userId = await TokenStorage.getUserId();
+    final fullName = await TokenStorage.getFullName();
     if (mounted) {
       setState(() {
         _userRole = role;
-        _userName = role == 'Admin' ? 'Admin' : (role == 'Teacher' ? 'Teacher' : 'Student');
+        _currentUserId = userId;
+        _userName = fullName ?? (role == 'Admin' ? 'Admin' : (role == 'Teacher' ? 'Teacher' : 'Student'));
       });
     }
   }
@@ -103,8 +119,10 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
             ),
           );
     } else {
-      // Student view: Load all exams and filter in UI based on enrolled subjects
-      context.read<ExamBloc>().add(const LoadExamsEvent());
+      // Student view: Load exams for all or selected subject
+      context.read<ExamBloc>().add(LoadExamsEvent(
+            subjectId: _selectedSubjectId,
+          ));
     }
   }
 
@@ -129,6 +147,13 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   Widget _buildTeacherAdminView() {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: _buildDrawer(),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF97316),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('Exam Management', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
       body: BlocListener<ExamBloc, ExamState>(
         listener: (context, state) {
           if (state is ExamOperationSuccess) {
@@ -169,7 +194,14 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
           ],
           body: BlocBuilder<ExamBloc, ExamState>(
             builder: (context, state) {
-              var exams = state.exams ?? [];
+              var exams = state.exams;
+
+              // Only apply filtering for non-admins if subjects are loaded
+              // For Teachers, we trust the Backend's /teacher/exams filtering
+              if (_userRole == 'Student' && state.subjects.isNotEmpty) {
+                final allowedSubjectIds = state.subjects.map((s) => s.subjectId).toSet();
+                exams = exams.where((e) => allowedSubjectIds.contains(e.subjectId)).toList();
+              }
 
               if (_userRole == 'Admin' && _statuses[_tabController.index] != 'All') {
                 exams = exams.where((e) => e.status == _statuses[_tabController.index]).toList();
@@ -217,7 +249,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: Colors.white.withOpacity(0.2),
+                backgroundColor: Colors.white.withValues(alpha: 0.2),
                 child: const Icon(Icons.person, color: Colors.white),
               ),
               const SizedBox(width: 14),
@@ -230,22 +262,39 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
                   ],
                 ),
               ),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.notifications_none_rounded, color: Colors.white)),
+              IconButton(
+                onPressed: () => context.push(AppRouter.notifications), 
+                icon: BlocBuilder<NotificationBloc, ns.NotificationState>(
+                  builder: (context, state) {
+                    final unreadCount = state.notifications.where((n) => !n.isRead).length;
+                    return Badge(
+                      label: unreadCount > 0 ? Text('$unreadCount') : null,
+                      isLabelVisible: unreadCount > 0,
+                      backgroundColor: Colors.redAccent,
+                      child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
           BlocBuilder<ExamBloc, ExamState>(
-            builder: (context, examState) => BlocBuilder<QuestionBloc, QuestionState>(
-              builder: (context, qState) => Row(
+            builder: (context, examState) {
+              final exams = examState.exams ?? [];
+              final totalQuestions = exams.fold<int>(0, (sum, e) => sum + (e.questionCount ?? 0));
+              final totalAttempts = exams.fold<int>(0, (sum, e) => sum + (e.attemptCount ?? 0));
+              
+              return Row(
                 children: [
-                  _buildStatCard((qState.questions?.length ?? 0).toString(), 'Questions', Icons.help_outline),
+                  _buildStatCard(totalQuestions.toString(), 'Questions', Icons.help_outline),
                   const SizedBox(width: 12),
-                  _buildStatCard((examState.exams?.length ?? 0).toString(), 'Exams', Icons.assignment_outlined),
+                  _buildStatCard(exams.length.toString(), 'Exams', Icons.assignment_outlined),
                   const SizedBox(width: 12),
-                  _buildStatCard(examState.exams?.where((e) => e.status == 'Published').length.toString() ?? '0', 'Active', Icons.bolt),
+                  _buildStatCard(totalAttempts.toString(), 'Attempts', Icons.people_alt_outlined),
                 ],
-              ),
-            ),
+              );
+            },
           ),
           const SizedBox(height: 24),
           _buildQuickActions(),
@@ -322,9 +371,11 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   Widget _buildStudentView() {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: _buildDrawer(),
       appBar: AppBar(
         backgroundColor: const Color(0xFFF97316),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: _isSearchVisible
             ? TextField(
                 controller: _searchController,
@@ -348,31 +399,29 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
       body: Column(
         children: [
           _buildStudentTabs(),
+          _buildFilterSection(), // Thêm bộ lọc môn học cho Sinh viên
           Expanded(
             child: BlocBuilder<ExamBloc, ExamState>(
               builder: (context, state) {
-                if (state.isLoading) return const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)));
+                if (state.isLoading && state.exams.isEmpty) return const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)));
 
-                var exams = state.exams ?? [];
-                final enrolledIds = (state.subjects ?? []).map((s) => s.subjectId).toSet();
-
-                // 1. Filter by enrolled subjects
-                exams = exams.where((e) => enrolledIds.contains(e.subjectId)).toList();
-
-                // 2. Search filter
+                var exams = state.exams;
+                
+                // 1. Search filter
                 if (_searchController.text.isNotEmpty) {
                   exams = exams.where((e) => e.examName.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
                 }
 
-                // 3. Tab status filter
+                // 2. Tab status filter
                 exams = _filterByStudentTab(exams);
 
                 if (exams.isEmpty) return _buildEmptyState();
 
                 return RefreshIndicator(
                   onRefresh: () async => _loadExams(),
+                  color: const Color(0xFFF97316),
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     itemCount: exams.length,
                     itemBuilder: (context, index) => _buildStudentExamCard(exams[index]),
                   ),
@@ -421,7 +470,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 15, offset: const Offset(0, 8))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 15, offset: const Offset(0, 8))],
       ),
       child: InkWell(
         onTap: () => _onExamTap(exam),
@@ -432,7 +481,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: const Color(0xFFF97316).withOpacity(0.1),
+                backgroundColor: const Color(0xFFF97316).withValues(alpha: 0.1),
                 child: Text(exam.examName.isNotEmpty ? exam.examName[0].toUpperCase() : 'E', style: const TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold, fontSize: 20)),
               ),
               const SizedBox(width: 16),
@@ -473,6 +522,66 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   }
 
   // ─── SHARED WIDGETS ────────────────────────────────────────────────────────
+  Widget _buildDrawer() {
+    final bool isStudent = _userRole == 'Student';
+    final bool isTeacher = _userRole == 'Teacher';
+    final bool isAdmin = _userRole == 'Admin';
+
+    return Drawer(
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: Color(0xFFF97316)),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(
+                isAdmin ? Icons.admin_panel_settings : (isTeacher ? Icons.school : Icons.person),
+                size: 40,
+                color: const Color(0xFFF97316),
+              ),
+            ),
+            accountName: Text(_userName ?? 'User', style: const TextStyle(fontWeight: FontWeight.bold)),
+            accountEmail: Text(_userRole ?? 'Role'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.assignment_outlined, color: Color(0xFFF97316)),
+            title: const Text('Exams'),
+            selected: true,
+            onTap: () => Navigator.pop(context),
+          ),
+          if (!isStudent)
+            ListTile(
+              leading: const Icon(Icons.quiz_outlined, color: Color(0xFFF97316)),
+              title: const Text('Question Bank'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(AppRouter.questionBank);
+              },
+            ),
+          ListTile(
+            leading: const Icon(Icons.notifications_outlined, color: Color(0xFFF97316)),
+            title: const Text('Notifications'),
+            onTap: () {
+              Navigator.pop(context);
+              context.push(AppRouter.notifications);
+            },
+          ),
+          const Divider(),
+          const Spacer(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.redAccent),
+            title: const Text('Logout'),
+            onTap: () async {
+              await StorageManager.clearAll();
+              if (mounted) context.go(AppRouter.login);
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterSection() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
@@ -490,7 +599,10 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
                       builder: (context, state) => DropdownButton<int>(
                         value: _selectedSubjectId,
                         hint: const Text('Filter Subject', style: TextStyle(fontSize: 13)),
-                        items: [const DropdownMenuItem(value: null, child: Text('All Subjects')), ...(state.subjects ?? []).map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName)))],
+                        items: [
+                          const DropdownMenuItem(value: null, child: Text('All Subjects')),
+                          ...state.subjects.map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName)))
+                        ],
                         onChanged: (v) => setState(() {
                           _selectedSubjectId = v;
                           _loadExams();
@@ -506,7 +618,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
                 height: 42,
                 width: 42,
                 decoration: BoxDecoration(
-                  color: _isSearchVisible ? const Color(0xFFF97316).withOpacity(0.1) : Colors.white,
+                  color: _isSearchVisible ? const Color(0xFFF97316).withValues(alpha: 0.1) : Colors.white,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _isSearchVisible ? const Color(0xFFF97316) : Colors.grey[200]!),
                 ),
@@ -526,7 +638,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
               padding: const EdgeInsets.only(top: 10),
               child: Container(
                 height: 42,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF97316).withOpacity(0.5))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.5))),
                 child: TextField(
                   controller: _searchController,
                   autofocus: true,
@@ -554,6 +666,8 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
         final exam = exams[index] as ExamModel;
         return ExamCard(
           exam: exam,
+          currentUserId: _currentUserId,
+          userRole: _userRole,
           onTap: () => _onExamTap(exam),
           onAction: (action) => _handleExamAction(exam, action),
         );
@@ -580,7 +694,12 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
         Navigator.push(context, MaterialPageRoute(builder: (_) => UpdateExamScreen(exam: exam))).then((_) => _loadExams());
         break;
       case 'publish':
-        context.read<ExamBloc>().add(PublishExamEvent(exam.examId));
+        final now = DateTime.now();
+        if (now.isAfter(exam.startTime)) {
+          _showTimeError(exam);
+        } else {
+          context.read<ExamBloc>().add(PublishExamEvent(exam.examId));
+        }
         break;
       case 'close':
         context.read<ExamBloc>().add(CloseExamEvent(exam.examId));
@@ -592,6 +711,27 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
         _confirmDelete(context, exam.examId);
         break;
     }
+  }
+
+  void _showTimeError(ExamModel exam) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Cannot Publish'),
+        content: const Text('The start time has already passed. Please update the exam schedule before publishing.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => UpdateExamScreen(exam: exam))).then((_) => _loadExams());
+            },
+            child: const Text('Update Schedule', style: TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold)),
+          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+        ],
+      ),
+    );
   }
 
   void _confirmDelete(BuildContext context, int id) {

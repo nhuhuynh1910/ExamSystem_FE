@@ -17,6 +17,8 @@ class ExamModel {
   final bool shuffleQuestions;
   final bool showAnswerAfterSubmit;
   final String status;
+  final int? questionCount;
+  final int? attemptCount;
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -39,6 +41,8 @@ class ExamModel {
     required this.shuffleQuestions,
     required this.showAnswerAfterSubmit,
     required this.status,
+    this.questionCount,
+    this.attemptCount,
     required this.createdAt,
     this.updatedAt,
   });
@@ -63,6 +67,8 @@ class ExamModel {
       shuffleQuestions: json['shuffleQuestions'] ?? false,
       showAnswerAfterSubmit: json['showAnswerAfterSubmit'] ?? false,
       status: json['status'] ?? '',
+      questionCount: json['questionCount'] ?? json['QuestionCount'],
+      attemptCount: json['attemptCount'] ?? json['AttemptCount'],
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
@@ -87,6 +93,8 @@ class ExamModel {
     'shuffleQuestions': shuffleQuestions,
     'showAnswerAfterSubmit': showAnswerAfterSubmit,
     'status': status,
+    'questionCount': questionCount,
+    'attemptCount': attemptCount,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
   };

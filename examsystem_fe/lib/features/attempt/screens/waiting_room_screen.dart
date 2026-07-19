@@ -52,7 +52,7 @@ class _WaitingRoomScreenState extends State<WaitingRoomScreen> {
             );
           }
           if (state is AttemptStarted) {
-            // Chuyển sang màn hình làm bài (Sẽ code ở bước sau)
+            // Chuyển sang màn hình làm bài
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Bắt đầu làm bài!'), backgroundColor: Colors.green),
             );

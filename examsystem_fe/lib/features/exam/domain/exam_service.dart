@@ -21,9 +21,9 @@ class ExamService {
   Future<ExamModel> createExam(ExamCreateRequest req) => _repository.createExam(req);
   Future<ExamModel> updateExam(int id, ExamUpdateRequest req) => _repository.updateExam(id, req);
   Future<void> deleteExam(int id) => _repository.deleteExam(id);
-  Future<void> restoreExam(int id) => _repository.restoreExam(id);
-  Future<void> publishExam(int id) => _repository.publishExam(id);
-  Future<void> closeExam(int id) => _repository.closeExam(id);
+  Future<ExamModel> restoreExam(int id) => _repository.restoreExam(id);
+  Future<ExamModel> publishExam(int id) => _repository.publishExam(id);
+  Future<ExamModel> closeExam(int id) => _repository.closeExam(id);
 
   Future<List<ExamQuestionModel>> getExamQuestions(int id) => _repository.getExamQuestions(id);
   Future<void> addQuestionToExam(int id, AddExamQuestionRequest req) => _repository.addQuestionToExam(id, req);

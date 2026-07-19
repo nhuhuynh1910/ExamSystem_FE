@@ -6,7 +6,7 @@ class ExamCreateRequest {
   final String examName;
   final String? description;
   final String? examImagePath;
-  final Uint8List? examImageBytes; // Hỗ trợ Web và Mobile
+  final Uint8List? examImageBytes;
   final String? examImageName;
   final int durationMinutes;
   final DateTime startTime;
@@ -40,19 +40,19 @@ class ExamCreateRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'subjectId': subjectId,
-      'examName': examName,
-      'description': description,
-      'durationMinutes': durationMinutes,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
-      'totalScore': totalScore,
-      'passingScore': passingScore,
-      'maxAttempts': maxAttempts,
-      'isPrivate': isPrivate,
-      'accessCode': accessCode,
-      'shuffleQuestions': shuffleQuestions,
-      'showAnswerAfterSubmit': showAnswerAfterSubmit,
+      'SubjectId': subjectId,
+      'ExamName': examName,
+      'Description': description,
+      'DurationMinutes': durationMinutes,
+      'StartTime': startTime.toIso8601String(),
+      'EndTime': endTime.toIso8601String(),
+      'TotalScore': totalScore,
+      'PassingScore': passingScore,
+      'MaxAttempts': maxAttempts,
+      'IsPrivate': isPrivate,
+      'AccessCode': accessCode,
+      'ShuffleQuestions': shuffleQuestions,
+      'ShowAnswerAfterSubmit': showAnswerAfterSubmit,
     };
   }
 
