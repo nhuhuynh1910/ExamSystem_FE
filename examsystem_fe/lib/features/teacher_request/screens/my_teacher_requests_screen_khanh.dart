@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-// import '../../../core/utils/storage_manager.dart';
 import '../data/teacher_request_api_khanh.dart';
 import '../models/teacher_request_model_khanh.dart';
 
@@ -16,33 +15,19 @@ class MyTeacherRequestsScreenKhanh extends StatefulWidget {
 
 class _MyTeacherRequestsScreenKhanhState
     extends State<MyTeacherRequestsScreenKhanh> {
-  static const Color primaryColor = Color(0xfff15a22);
-  static const Color backgroundColor = Color(0xfff6f7fb);
+  final TextEditingController _searchController = TextEditingController();
+
+  static const Color primaryColor = Color(0xfff45a24);
+  static const Color backgroundColor = Color(0xfff7f8fc);
   static const Color darkColor = Color(0xff183153);
 
   late Future<List<TeacherRequestModelKhanh>> _future;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _future = _initializeAndLoad();
-  // }
   @override
   void initState() {
     super.initState();
     _future = TeacherRequestApiKhanh().getMyRequests();
   }
-
-  /* Save temporary token before loading requests. */
-  // Future<List<TeacherRequestModelKhanh>> _initializeAndLoad() async {
-  //   await StorageManager.saveTokens(
-  //     accessToken:
-  //     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiTmhpMTIzIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoibmhpQGV4YW1wbGUuY29tIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiU3R1ZGVudCIsImV4cCI6MTc4NDAwNDYyMSwiaXNzIjoiRXhhbVN5c3RlbSIsImF1ZCI6IlVzZXJFeGFtU3lzdGVtIn0.X0eXiiURlxl7FI32-AEZz4VihifZ9NwjwBEK46qmWoY',
-  //     refreshToken: '',
-  //   );
-  //
-  //   return TeacherRequestApiKhanh().getMyRequests();
-  // }
 
   /* Reload requests from server. */
   Future<void> _reload() async {
@@ -55,42 +40,73 @@ class _MyTeacherRequestsScreenKhanhState
     await newFuture;
   }
 
+  List<TeacherRequestModelKhanh> _filterRequests(
+      List<TeacherRequestModelKhanh> requests,
+      ) {
+    final keyword = _searchController.text.trim().toLowerCase();
+
+    if (keyword.isEmpty) {
+      return requests;
+    }
+
+    return requests.where((request) {
+      final id = request.teacherRequestId.toString();
+      final subject = request.subjectName.toLowerCase();
+      final reason = (request.reason ?? '').toLowerCase();
+      final status = request.status.toLowerCase();
+
+      return id.contains(keyword) ||
+          subject.contains(keyword) ||
+          reason.contains(keyword) ||
+          status.contains(keyword);
+    }).toList();
+  }
+
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
-        return Colors.green;
+        return const Color(0xff27a94f);
+
       case 'rejected':
-        return Colors.red;
+        return const Color(0xffe64b4b);
+
       case 'cancelled':
         return Colors.grey;
+
       default:
-        return Colors.orange;
+        return const Color(0xffff8a00);
     }
   }
 
   Color _statusBackground(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
-        return const Color(0xffe8f8ee);
+        return const Color(0xffe6f8eb);
+
       case 'rejected':
         return const Color(0xffffe8e8);
+
       case 'cancelled':
         return const Color(0xffeeeeee);
+
       default:
-        return const Color(0xfffff3e0);
+        return const Color(0xfffff1df);
     }
   }
 
   IconData _statusIcon(String status) {
     switch (status.toLowerCase()) {
       case 'approved':
-        return Icons.check_circle_outline;
+        return Icons.check_circle_outline_rounded;
+
       case 'rejected':
         return Icons.cancel_outlined;
+
       case 'cancelled':
         return Icons.remove_circle_outline;
+
       default:
-        return Icons.schedule_outlined;
+        return Icons.schedule_rounded;
     }
   }
 
@@ -114,7 +130,7 @@ class _MyTeacherRequestsScreenKhanhState
     context.go('/teacher-request/available-subjects');
   }
 
-  /* Show request detail bottom sheet. */
+  /* Show complete request information. */
   void _showRequestDetail(TeacherRequestModelKhanh request) {
     final bool hasCertificate = request.certificationUrl != null &&
         request.certificationUrl!.trim().isNotEmpty;
@@ -139,237 +155,69 @@ class _MyTeacherRequestsScreenKhanhState
           maxChildSize: 0.95,
           expand: false,
           builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-              ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 10),
-                  Container(
-                    width: 44,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: const Color(0xffd9dde5),
-                      borderRadius: BorderRadius.circular(20),
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 680),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(26),
                     ),
                   ),
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-                      children: [
-                        Row(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: const Color(0xffd9dde5),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.fromLTRB(
+                            20,
+                            20,
+                            20,
+                            32,
+                          ),
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: const Color(0xffffeee8),
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: const Icon(
-                                Icons.assignment_outlined,
-                                color: primaryColor,
-                                size: 25,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Request #${request.teacherRequestId}',
-                                    style: const TextStyle(
-                                      color: darkColor,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Teaching registration details',
-                                    style: TextStyle(
-                                      color: Colors.blueGrey,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Close',
-                              onPressed: () {
-                                Navigator.pop(bottomSheetContext);
-                              },
-                              icon: const Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(15),
-                          decoration: BoxDecoration(
-                            color: statusBackground,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _statusIcon(request.status),
-                                color: statusColor,
-                              ),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Current status',
-                                style: TextStyle(
-                                  color: Colors.blueGrey,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                request.status,
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        const _DetailSectionTitleKhanh(
-                          icon: Icons.menu_book_outlined,
-                          title: 'Request information',
-                        ),
-                        const SizedBox(height: 12),
-                        _DetailCardKhanh(
-                          children: [
-                            _DetailRowKhanh(
-                              label: 'Subject',
-                              value: request.subjectName,
-                            ),
-                            const Divider(height: 24),
-                            _DetailRowKhanh(
-                              label: 'Reason',
-                              value: request.reason?.trim().isNotEmpty == true
-                                  ? request.reason!
-                                  : 'No reason provided',
-                            ),
-                            const Divider(height: 24),
-                            _DetailRowKhanh(
-                              label: 'Created date',
-                              value: _formatDate(request.createdAt),
-                            ),
-                          ],
-                        ),
-                        if (hasReviewer || request.reviewedAt != null) ...[
-                          const SizedBox(height: 22),
-                          const _DetailSectionTitleKhanh(
-                            icon: Icons.fact_check_outlined,
-                            title: 'Review information',
-                          ),
-                          const SizedBox(height: 12),
-                          _DetailCardKhanh(
-                            children: [
-                              if (hasReviewer)
-                                _DetailRowKhanh(
-                                  label: 'Reviewed by',
-                                  value: request.reviewerName!,
-                                ),
-                              if (hasReviewer &&
-                                  request.reviewedAt != null)
-                                const Divider(height: 24),
-                              if (request.reviewedAt != null)
-                                _DetailRowKhanh(
-                                  label: 'Reviewed date',
-                                  value: _formatDate(request.reviewedAt),
-                                ),
-                            ],
-                          ),
-                        ],
-                        if (hasAdminNote) ...[
-                          const SizedBox(height: 22),
-                          const _DetailSectionTitleKhanh(
-                            icon: Icons.info_outline,
-                            title: 'Admin note',
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(15),
-                            decoration: BoxDecoration(
-                              color: const Color(0xfffff8f4),
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(
-                                color: const Color(0xffffd7c7),
-                              ),
-                            ),
-                            child: Text(
-                              request.adminNote!,
-                              style: const TextStyle(
-                                color: darkColor,
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (hasCertificate) ...[
-                          const SizedBox(height: 22),
-                          const _DetailSectionTitleKhanh(
-                            icon: Icons.attach_file,
-                            title: 'Certification',
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xfff6f7fb),
-                              borderRadius: BorderRadius.circular(15),
-                              border: Border.all(
-                                color: const Color(0xffe6e9ef),
-                              ),
-                            ),
-                            child: Row(
+                            Row(
                               children: [
                                 Container(
-                                  width: 42,
-                                  height: 42,
+                                  width: 46,
+                                  height: 46,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xffffeee8),
-                                    borderRadius: BorderRadius.circular(12),
+                                    color: const Color(0xffffebe4),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: const Icon(
-                                    Icons.description_outlined,
+                                    Icons.assignment_outlined,
                                     color: primaryColor,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Expanded(
+                                Expanded(
                                   child: Column(
                                     crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Certification attached',
-                                        style: TextStyle(
+                                        'Request #'
+                                            '${request.teacherRequestId}',
+                                        style: const TextStyle(
                                           color: darkColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w800,
+                                          fontSize: 19,
+                                          fontWeight: FontWeight.w900,
                                         ),
                                       ),
-                                      SizedBox(height: 3),
-                                      Text(
-                                        'Copy the certification path',
+                                      const SizedBox(height: 3),
+                                      const Text(
+                                        'Teaching registration details',
                                         style: TextStyle(
                                           color: Colors.blueGrey,
                                           fontSize: 12,
@@ -379,41 +227,229 @@ class _MyTeacherRequestsScreenKhanhState
                                   ),
                                 ),
                                 IconButton(
-                                  tooltip: 'Copy certification path',
-                                  onPressed: () async {
-                                    await Clipboard.setData(
-                                      ClipboardData(
-                                        text: request.certificationUrl!,
-                                      ),
-                                    );
-
-                                    if (!mounted) {
-                                      return;
-                                    }
-
-                                    ScaffoldMessenger.of(this.context)
-                                        .showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Certification path copied.',
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
+                                  tooltip: 'Close',
+                                  onPressed: () {
+                                    Navigator.pop(bottomSheetContext);
                                   },
-                                  icon: const Icon(
-                                    Icons.copy_outlined,
-                                    color: primaryColor,
-                                  ),
+                                  icon: const Icon(Icons.close_rounded),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
+                            const SizedBox(height: 18),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: statusBackground,
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _statusIcon(request.status),
+                                    color: statusColor,
+                                    size: 21,
+                                  ),
+                                  const SizedBox(width: 9),
+                                  const Text(
+                                    'Current status',
+                                    style: TextStyle(
+                                      color: Colors.blueGrey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    request.status,
+                                    style: TextStyle(
+                                      color: statusColor,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 21),
+                            const _DetailTitleKhanh(
+                              icon: Icons.menu_book_outlined,
+                              title: 'Request information',
+                            ),
+                            const SizedBox(height: 10),
+                            _DetailCardKhanh(
+                              children: [
+                                _DetailRowKhanh(
+                                  label: 'Subject',
+                                  value: request.subjectName,
+                                ),
+                                const Divider(height: 24),
+                                _DetailRowKhanh(
+                                  label: 'Reason',
+                                  value:
+                                  request.reason?.trim().isNotEmpty == true
+                                      ? request.reason!
+                                      : 'No reason provided',
+                                ),
+                                const Divider(height: 24),
+                                _DetailRowKhanh(
+                                  label: 'Created date',
+                                  value: _formatDate(request.createdAt),
+                                ),
+                              ],
+                            ),
+                            if (hasReviewer ||
+                                request.reviewedAt != null) ...[
+                              const SizedBox(height: 21),
+                              const _DetailTitleKhanh(
+                                icon: Icons.fact_check_outlined,
+                                title: 'Review information',
+                              ),
+                              const SizedBox(height: 10),
+                              _DetailCardKhanh(
+                                children: [
+                                  if (hasReviewer)
+                                    _DetailRowKhanh(
+                                      label: 'Reviewed by',
+                                      value: request.reviewerName!,
+                                    ),
+                                  if (hasReviewer &&
+                                      request.reviewedAt != null)
+                                    const Divider(height: 24),
+                                  if (request.reviewedAt != null)
+                                    _DetailRowKhanh(
+                                      label: 'Reviewed date',
+                                      value: _formatDate(
+                                        request.reviewedAt,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                            if (hasAdminNote) ...[
+                              const SizedBox(height: 21),
+                              const _DetailTitleKhanh(
+                                icon: Icons.info_outline_rounded,
+                                title: 'Admin note',
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xfffff8f4),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xffffd7c7),
+                                  ),
+                                ),
+                                child: Text(
+                                  request.adminNote!,
+                                  style: const TextStyle(
+                                    color: darkColor,
+                                    fontSize: 13,
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (hasCertificate) ...[
+                              const SizedBox(height: 21),
+                              const _DetailTitleKhanh(
+                                icon: Icons.attach_file_rounded,
+                                title: 'Certification',
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(13),
+                                decoration: BoxDecoration(
+                                  color: backgroundColor,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xffe5e8ef),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xffffebe4),
+                                        borderRadius:
+                                        BorderRadius.circular(11),
+                                      ),
+                                      child: const Icon(
+                                        Icons.description_outlined,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 11),
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Certification attached',
+                                            style: TextStyle(
+                                              color: darkColor,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          SizedBox(height: 3),
+                                          Text(
+                                            'Copy certification path',
+                                            style: TextStyle(
+                                              color: Colors.blueGrey,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Copy certification path',
+                                      onPressed: () async {
+                                        await Clipboard.setData(
+                                          ClipboardData(
+                                            text:
+                                            request.certificationUrl!,
+                                          ),
+                                        );
+
+                                        if (!mounted) {
+                                          return;
+                                        }
+
+                                        ScaffoldMessenger.of(
+                                          this.context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Certification path copied.',
+                                            ),
+                                            behavior:
+                                            SnackBarBehavior.floating,
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.copy_outlined,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -421,99 +457,225 @@ class _MyTeacherRequestsScreenKhanhState
       },
     );
   }
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 900,
+      appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        foregroundColor: darkColor,
+        leading: IconButton(
+          tooltip: 'Back',
+          onPressed: _goBack,
+          icon: const Icon(
+            Icons.arrow_back_rounded,
+            size: 21,
+          ),
+        ),
+        titleSpacing: 0,
+        title: const Text(
+          'My Teacher Requests',
+          style: TextStyle(
+            color: darkColor,
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh requests',
+            onPressed: _reload,
+            icon: const Icon(
+              Icons.refresh_rounded,
+              color: primaryColor,
             ),
-            child: Column(
-              children: [
-                _HeaderKhanh(
-                  onBack: _goBack,
-                  onRefresh: _reload,
-                ),
-                Expanded(
-                  child: FutureBuilder<List<TeacherRequestModelKhanh>>(
-                    future: _future,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            color: primaryColor,
-                          ),
-                        );
-                      }
+          ),
+          const SizedBox(width: 5),
+        ],
+      ),
+body: SafeArea(
+top: false,
+child: LayoutBuilder(
+builder: (context, constraints) {
+final bool isDesktop = constraints.maxWidth >= 900;
 
-                      if (snapshot.hasError) {
-                        return _ErrorStateKhanh(
-                          message: snapshot.error.toString(),
-                          onRetry: _reload,
-                        );
-                      }
+return Padding(
+padding: EdgeInsets.symmetric(
+horizontal: isDesktop ? 28 : 0,
+),
+child: FutureBuilder<List<TeacherRequestModelKhanh>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: primaryColor,
+                    ),
+                  );
+                }
 
-                      final List<TeacherRequestModelKhanh> requests =
-                          snapshot.data ?? [];
+                if (snapshot.hasError) {
+                  return _ErrorStateKhanh(
+                    message: snapshot.error.toString(),
+                    onRetry: _reload,
+                  );
+                }
 
-                      if (requests.isEmpty) {
-                        return _EmptyStateKhanh(
-                          onRefresh: _reload,
-                        );
-                      }
+                final allRequests = snapshot.data ?? [];
+                final filteredRequests =
+                _filterRequests(allRequests);
 
-                      return RefreshIndicator(
+                return Column(
+                  children: [
+                    _PageHeaderKhanh(
+                      searchController: _searchController,
+                      onSearchChanged: () {
+                        setState(() {});
+                      },
+                    ),
+                    Expanded(
+                      child: allRequests.isEmpty
+                          ? _EmptyStateKhanh(
+                        isSearching: false,
+                        onRefresh: _reload,
+                      )
+                          : filteredRequests.isEmpty
+                          ? _EmptyStateKhanh(
+                        isSearching: true,
+                        onRefresh: _reload,
+                      )
+
+                          : RefreshIndicator(
                         color: primaryColor,
                         onRefresh: _reload,
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(
-                            16,
-                            16,
-                            16,
-                            70,
-                          ),
-                          itemCount: requests.length,
-                          itemBuilder: (context, index) {
-                            final request = requests[index];
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final int columnCount =
+                            constraints.maxWidth >= 1200
+                                ? 3
+                                : constraints.maxWidth >= 800
+                                ? 2
+                                : 1;
 
-                            return _RequestCardKhanh(
-                              request: request,
-                              statusColor: _statusColor(request.status),
-                              statusBackground:
-                              _statusBackground(request.status),
-                              createdAt: _formatDate(request.createdAt),
-                              onViewDetails: () {
-                                _showRequestDetail(request);
+                            if (columnCount == 1) {
+                              return ListView.builder(
+                                physics:
+                                const AlwaysScrollableScrollPhysics(),
+                                padding:
+                                const EdgeInsets.fromLTRB(
+                                  14,
+                                  8,
+                                  14,
+                                  90,
+                                ),
+                                itemCount:
+                                filteredRequests.length,
+                                itemBuilder: (context, index) {
+                                  final request =
+                                  filteredRequests[index];
+
+                                  return _RequestCardKhanh(
+                                    request: request,
+                                    statusColor:
+                                    _statusColor(
+                                      request.status,
+                                    ),
+                                    statusBackground:
+                                    _statusBackground(
+                                      request.status,
+                                    ),
+                                    createdAt: _formatDate(
+                                      request.createdAt,
+                                    ),
+                                    onViewDetails: () {
+                                      _showRequestDetail(
+                                        request,
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            }
+
+                            return GridView.builder(
+                              physics:
+                              const AlwaysScrollableScrollPhysics(),
+                              padding:
+                              const EdgeInsets.fromLTRB(
+                                14,
+                                8,
+                                14,
+                                90,
+                              ),
+                              itemCount:
+                              filteredRequests.length,
+                              gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount:
+                                columnCount,
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                childAspectRatio: 1.45,
+                              ),
+                              itemBuilder: (context, index) {
+                                final request =
+                                filteredRequests[index];
+
+                                return _RequestCardKhanh(
+                                  request: request,
+                                  statusColor:
+                                  _statusColor(
+                                    request.status,
+                                  ),
+                                  statusBackground:
+                                  _statusBackground(
+                                    request.status,
+                                  ),
+                                  createdAt: _formatDate(
+                                    request.createdAt,
+                                  ),
+                                  onViewDetails: () {
+                                    _showRequestDetail(
+                                      request,
+                                    );
+
+                                        },
+                                );
                               },
                             );
                           },
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+),
+);
+},
+),
+),
     );
   }
 }
 
-class _HeaderKhanh extends StatelessWidget {
-  final VoidCallback onBack;
-  final Future<void> Function() onRefresh;
+class _PageHeaderKhanh extends StatelessWidget {
+  final TextEditingController searchController;
+  final VoidCallback onSearchChanged;
 
-  const _HeaderKhanh({
-    required this.onBack,
-    required this.onRefresh,
+  const _PageHeaderKhanh({
+    required this.searchController,
+    required this.onSearchChanged,
   });
 
   static const Color darkColor = Color(0xff183153);
@@ -522,70 +684,67 @@ class _HeaderKhanh extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(8, 8, 14, 18),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(22),
-          bottomRight: Radius.circular(22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 16,
-            offset: Offset(0, 5),
-            color: Color(0x10000000),
-          ),
-        ],
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(
+        14,
+        17,
+        14,
+        14,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              IconButton(
-                tooltip: 'Back to available subjects',
-                onPressed: onBack,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: darkColor,
-                  size: 20,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                tooltip: 'Refresh requests',
-                onPressed: onRefresh,
-                icon: const Icon(
-                  Icons.refresh_rounded,
-                  color: darkColor,
-                  size: 25,
-                ),
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'My Teacher Requests',
-              style: TextStyle(
-                color: darkColor,
-                fontSize: 25,
-                height: 1.15,
-                fontWeight: FontWeight.w900,
-              ),
+          const Text(
+            'My Teacher Requests',
+            style: TextStyle(
+              color: darkColor,
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'View and track the status of your teaching requests.',
-              style: TextStyle(
+          const SizedBox(height: 4),
+          const Text(
+            'Track your teaching registration requests.',
+            style: TextStyle(
+              color: Colors.blueGrey,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: searchController,
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              hintText: 'Search by ID or subject...',
+              prefixIcon: const Icon(
+                Icons.search_rounded,
                 color: Colors.blueGrey,
-                fontSize: 13,
-                height: 1.4,
+              ),
+              suffixIcon: searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                tooltip: 'Clear search',
+                onPressed: () {
+                  searchController.clear();
+                  onSearchChanged();
+                },
+                icon: const Icon(
+                  Icons.close_rounded,
+                ),
+              ),
+              filled: true,
+              fillColor: const Color(0xfff4f6fa),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 11,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
             ),
+            onChanged: (_) {
+              onSearchChanged();
+            },
           ),
         ],
       ),
@@ -608,34 +767,31 @@ class _RequestCardKhanh extends StatelessWidget {
     required this.onViewDetails,
   });
 
-  static const Color primaryColor = Color(0xfff15a22);
+  static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
 
   @override
   Widget build(BuildContext context) {
-    final bool hasAdminNote =
-        request.adminNote != null && request.adminNote!.trim().isNotEmpty;
-
     final bool hasCertificate = request.certificationUrl != null &&
         request.certificationUrl!.trim().isNotEmpty;
 
-    final bool hasReviewer =
-        request.reviewerName != null && request.reviewerName!.trim().isNotEmpty;
+    final bool hasAdminNote =
+        request.adminNote != null && request.adminNote!.trim().isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xffe8ebf1),
+          color: const Color(0xffffddd1),
         ),
         boxShadow: const [
           BoxShadow(
-            blurRadius: 12,
-            offset: Offset(0, 5),
             color: Color(0x0d000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -644,27 +800,32 @@ class _RequestCardKhanh extends StatelessWidget {
         children: [
           Row(
             children: [
-              _BadgeKhanh(
-                text: 'Request #${request.teacherRequestId}',
-                color: primaryColor,
-                background: const Color(0xffffeee8),
+              Text(
+                'REQ-${request.teacherRequestId.toString().padLeft(4, '0')}',
+                style: const TextStyle(
+                  color: primaryColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.4,
+                ),
               ),
               const Spacer(),
-              _BadgeKhanh(
+              _StatusBadgeKhanh(
                 text: request.status,
                 color: statusColor,
                 background: statusBackground,
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Text(
             request.subjectName,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: darkColor,
-              fontSize: 18,
+              fontSize: 15,
+              height: 1.3,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -673,96 +834,68 @@ class _RequestCardKhanh extends StatelessWidget {
             request.reason?.trim().isNotEmpty == true
                 ? request.reason!
                 : 'No reason provided',
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.blueGrey,
-              fontSize: 13,
-              height: 1.4,
+              fontSize: 11,
+              height: 1.45,
             ),
           ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 16,
-            runSpacing: 9,
-            children: [
-              _CompactInfoKhanh(
-                icon: Icons.calendar_today_outlined,
-                text: 'Created: $createdAt',
-              ),
-              if (hasCertificate)
-                const _CompactInfoKhanh(
-                  icon: Icons.attach_file,
-                  text: 'Certification attached',
-                ),
-              if (hasReviewer)
-                _CompactInfoKhanh(
-                  icon: Icons.person_outline,
-                  text: 'Reviewed by ${request.reviewerName}',
-                ),
-            ],
+          const SizedBox(height: 11),
+          _SmallInfoKhanh(
+            icon: Icons.calendar_today_outlined,
+            text: 'Created on: $createdAt',
           ),
+          if (hasCertificate) ...[
+            const SizedBox(height: 7),
+            const _SmallInfoKhanh(
+              icon: Icons.attach_file_rounded,
+              text: 'Certification attached',
+            ),
+          ],
           if (hasAdminNote) ...[
-            const SizedBox(height: 13),
+            const SizedBox(height: 9),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(11),
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
-                color: const Color(0xfffff8f4),
-                borderRadius: BorderRadius.circular(11),
-                border: Border.all(
-                  color: const Color(0xffffded2),
-                ),
+                color: const Color(0xfffff7f2),
+                borderRadius: BorderRadius.circular(9),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.info_outline,
-                    color: primaryColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      request.adminNote!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: darkColor,
-                        fontSize: 12,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                request.adminNote!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: darkColor,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
               ),
             ),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: ElevatedButton(
               onPressed: onViewDetails,
-              icon: const Icon(
-                Icons.visibility_outlined,
-                size: 18,
-              ),
-              label: const Text(
-                'View Details',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xffffeee8),
-                foregroundColor: primaryColor,
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
-                  vertical: 12,
+                  vertical: 11,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
+              child: const Text(
+                'View Details',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -773,11 +906,46 @@ class _RequestCardKhanh extends StatelessWidget {
   }
 }
 
-class _CompactInfoKhanh extends StatelessWidget {
+class _StatusBadgeKhanh extends StatelessWidget {
+  final String text;
+  final Color color;
+  final Color background;
+
+  const _StatusBadgeKhanh({
+    required this.text,
+    required this.color,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 8,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallInfoKhanh extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _CompactInfoKhanh({
+  const _SmallInfoKhanh({
     required this.icon,
     required this.text,
   });
@@ -785,25 +953,21 @@ class _CompactInfoKhanh extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
-          size: 15,
+          size: 13,
           color: Colors.blueGrey,
         ),
         const SizedBox(width: 5),
-        ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 240,
-          ),
+        Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.blueGrey,
-              fontSize: 12,
+              fontSize: 10,
             ),
           ),
         ),
@@ -812,16 +976,16 @@ class _CompactInfoKhanh extends StatelessWidget {
   }
 }
 
-class _DetailSectionTitleKhanh extends StatelessWidget {
+class _DetailTitleKhanh extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  const _DetailSectionTitleKhanh({
+  const _DetailTitleKhanh({
     required this.icon,
     required this.title,
   });
 
-  static const Color primaryColor = Color(0xfff15a22);
+  static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
 
   @override
@@ -831,14 +995,14 @@ class _DetailSectionTitleKhanh extends StatelessWidget {
         Icon(
           icon,
           color: primaryColor,
-          size: 20,
+          size: 19,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 7),
         Text(
           title,
           style: const TextStyle(
             color: darkColor,
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -858,12 +1022,12 @@ class _DetailCardKhanh extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xfff8f9fc),
-        borderRadius: BorderRadius.circular(15),
+        color: const Color(0xfff7f8fc),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xffe8ebf1),
+          color: const Color(0xffe7eaf0),
         ),
       ),
       child: Column(
@@ -894,8 +1058,8 @@ class _DetailRowKhanh extends StatelessWidget {
           label,
           style: const TextStyle(
             color: Colors.blueGrey,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 5),
@@ -903,8 +1067,8 @@ class _DetailRowKhanh extends StatelessWidget {
           value,
           style: const TextStyle(
             color: darkColor,
-            fontSize: 14,
-            height: 1.4,
+            fontSize: 13,
+            height: 1.45,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -913,48 +1077,16 @@ class _DetailRowKhanh extends StatelessWidget {
   }
 }
 
-class _BadgeKhanh extends StatelessWidget {
-  final String text;
-  final Color color;
-  final Color background;
-
-  const _BadgeKhanh({
-    required this.text,
-    required this.color,
-    required this.background,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
 class _EmptyStateKhanh extends StatelessWidget {
+  final bool isSearching;
   final Future<void> Function() onRefresh;
 
   const _EmptyStateKhanh({
+    required this.isSearching,
     required this.onRefresh,
   });
 
-  static const Color primaryColor = Color(0xfff15a22);
+  static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
 
   @override
@@ -966,39 +1098,45 @@ class _EmptyStateKhanh extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 80,
+          vertical: 75,
         ),
         children: [
           Center(
             child: Container(
-              width: 90,
-              height: 90,
+              width: 82,
+              height: 82,
               decoration: const BoxDecoration(
-                color: Color(0xffffeee8),
+                color: Color(0xffffebe4),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.assignment_outlined,
+              child: Icon(
+                isSearching
+                    ? Icons.search_off_rounded
+                    : Icons.assignment_outlined,
                 color: primaryColor,
-                size: 42,
+                size: 39,
               ),
             ),
           ),
-          const SizedBox(height: 22),
-          const Text(
-            'No teacher requests yet',
+          const SizedBox(height: 20),
+          Text(
+            isSearching
+                ? 'No matching requests'
+                : 'No teacher requests yet',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: darkColor,
-              fontSize: 20,
+              fontSize: 19,
               fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Your teaching registration requests will appear here after submission.',
+          Text(
+            isSearching
+                ? 'Try searching with another request ID or subject.'
+                : 'Your teaching registration requests will appear here after submission.',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.blueGrey,
               fontSize: 13,
               height: 1.5,
@@ -1019,7 +1157,7 @@ class _ErrorStateKhanh extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const Color primaryColor = Color(0xfff15a22);
+  static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
 
   @override
@@ -1030,16 +1168,16 @@ class _ErrorStateKhanh extends StatelessWidget {
         child: Column(
           children: [
             const Icon(
-              Icons.error_outline,
+              Icons.error_outline_rounded,
               color: Colors.red,
-              size: 52,
+              size: 48,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             const Text(
               'Unable to load requests',
               style: TextStyle(
                 color: darkColor,
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1047,27 +1185,23 @@ class _ErrorStateKhanh extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              maxLines: 5,
+              maxLines: 6,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Colors.blueGrey,
+                color: Colors.red,
                 fontSize: 13,
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 17),
             ElevatedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 13,
-                ),
               ),
             ),
           ],

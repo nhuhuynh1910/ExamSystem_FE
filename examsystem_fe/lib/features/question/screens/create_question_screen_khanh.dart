@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 
 import '../data/question_api_khanh.dart';
-import '../models/subject_model_khanh.dart';
-
+import '../../subject/models/subject_model_khanh.dart';
+import '../../subject/data/subject_api_khanh.dart';
+import 'package:dio/dio.dart';
 class CreateQuestionScreenKhanh extends StatefulWidget {
 const CreateQuestionScreenKhanh({super.key});
 
@@ -23,6 +24,9 @@ final TextEditingController _questionController =
 TextEditingController();
 final TextEditingController _explanationController =
 TextEditingController();
+final SubjectApiKhanh _subjectApi = SubjectApiKhanh();
+
+
 
 final List<TextEditingController> _optionControllers = [
 TextEditingController(),
@@ -58,7 +62,8 @@ _subjectLoadError = null;
 });
 
 try {
-final subjects = await _api.getSubjects();
+  final subjects =
+  await _subjectApi.getAssignedTeachingSubjects();
 
 if (!mounted) return;
 
@@ -138,83 +143,109 @@ return options.toSet().length != options.length;
 
 /* Create the question and then create its options. */
 Future<void> _saveQuestion() async {
-if (_isSaving) return;
+  if (_isSaving) return;
 
-FocusScope.of(context).unfocus();
+  FocusScope.of(context).unfocus();
 
-final isValid =
-_formKey.currentState?.validate() ?? false;
+  final isValid =
+      _formKey.currentState?.validate() ?? false;
 
-if (!isValid) return;
+  if (!isValid) return;
 
-if (_selectedSubject == null) {
-_showMessage(
-'Please select subject',
-isError: true,
-);
-return;
+  if (_selectedSubject == null) {
+    _showMessage(
+      'Please select subject',
+      isError: true,
+    );
+    return;
+  }
+
+  if (_hasDuplicateOptions()) {
+    _showMessage(
+      'Answer options must not be duplicated',
+      isError: true,
+    );
+    return;
+  }
+
+  setState(() {
+    _isSaving = true;
+  });
+
+  try {
+    final createQuestionBody = <String, dynamic>{
+      'subjectId': _selectedSubject!.subjectId,
+      'content': _questionController.text.trim(),
+      'questionType': 'MultipleChoice',
+      'difficulty': _selectedDifficulty,
+      'score': _score,
+      'explanation': _explanationController.text
+          .trim()
+          .isEmpty
+          ? null
+          : _explanationController.text.trim(),
+    };
+
+
+    final createdQuestion =
+    await _api.createQuestion(createQuestionBody);
+
+    for (int i = 0; i < _optionControllers.length; i++) {
+      final optionBody = <String, dynamic>{
+        'optionText': _optionControllers[i].text.trim(),
+        'isCorrect': i == _correctIndex,
+        'optionOrder': i + 1,
+      };
+
+      await _api.addOption(
+        questionId: createdQuestion.questionId,
+        body: optionBody,
+      );
+    }
+
+    if (!mounted) return;
+
+    Navigator.pop(context, true);
+  } on DioException catch (e) {
+    if (!mounted) return;
+
+    final statusCode = e.response?.statusCode;
+    final responseData = e.response?.data;
+
+    String message = 'Create question failed';
+
+    if (statusCode == 403) {
+      message =
+      'This subject is not assigned to the current teacher.';
+    } else if (statusCode == 500) {
+      message =
+      'This subject may not be assigned to the current teacher.';
+    } else if (responseData is Map<String, dynamic>) {
+      message = responseData['message']?.toString() ??
+          'Create question failed';
+    } else if (e.message != null) {
+      message = e.message!;
+    }
+
+    _showMessage(
+      message,
+      isError: true,
+    );
+  } catch (e) {
+    if (!mounted) return;
+
+    _showMessage(
+      'Create question failed: $e',
+      isError: true,
+    );
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
 }
-
-if (_hasDuplicateOptions()) {
-_showMessage(
-'Answer options must not be duplicated',
-isError: true,
-);
-return;
-}
-
-setState(() {
-_isSaving = true;
-});
-
-try {
-final createQuestionBody = <String, dynamic>{
-'subjectId': _selectedSubject!.subjectId,
-'content': _questionController.text.trim(),
-'questionType': 'MultipleChoice',
-  'difficulty': _selectedDifficulty,
-  'score': _score,
-  'explanation': _explanationController.text.trim().isEmpty
-      ? null
-      : _explanationController.text.trim(),
-};
-
-
-final createdQuestion =
-await _api.createQuestion(createQuestionBody);
-
-for (int i = 0; i < _optionControllers.length; i++) {
-final optionBody = <String, dynamic>{
-'optionText': _optionControllers[i].text.trim(),
-'isCorrect': i == _correctIndex,
-'optionOrder': i + 1,
-};
-
-await _api.addOption(
-questionId: createdQuestion.questionId,
-body: optionBody,
-);
-}
-
-if (!mounted) return;
-
-Navigator.pop(context, true);
-} catch (e) {
-if (!mounted) return;
-
-_showMessage(
-'Create failed: $e',
-isError: true,
-);
-} finally {
-if (mounted) {
-setState(() {
-_isSaving = false;
-});
-}
-}
-}
-
 void _showMessage(
 String message, {
 bool isError = false,
