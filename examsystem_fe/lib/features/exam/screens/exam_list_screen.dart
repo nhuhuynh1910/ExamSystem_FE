@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/token_storage.dart';
+import '../../common/admin_bottom_nav_bar.dart';
 import '../../notification/bloc/notification_bloc.dart';
 import '../../notification/bloc/notification_state.dart' as ns;
 import '../../question/bloc/question_bloc.dart';
@@ -12,13 +13,13 @@ import '../../question/bloc/question_event.dart' as qe;
 import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
+import '../block/exam_detail_cubit.dart';
 import '../models/exam_model.dart';
 import '../widgets/exam_card.dart';
 import '../widgets/status_chip.dart';
 import 'create_exam_screen.dart';
 import 'exam_detail_screen.dart';
 import 'update_exam_screen.dart';
-import '../../common/admin_bottom_nav_bar.dart';
 
 class ExamListScreen extends StatefulWidget {
   const ExamListScreen({super.key});
@@ -68,6 +69,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
       final normalizedRole = _userRole?.toLowerCase();
       if (normalizedRole == 'student') {
         final userId = await TokenStorage.getUserId() ?? 0;
+        if (!mounted) return;
         context.read<ExamBloc>().add(LoadStudentSubjectsEvent(userId));
       } else if (normalizedRole == 'teacher' || normalizedRole == 'admin') {
         context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
@@ -127,11 +129,18 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   void _onExamTap(ExamModel exam) {
     if (_userRole == 'Student') {
-      context.push(AppRouter.waitingRoom, extra: exam);
+      context.push(AppRouter.examDetail(exam.examId)).then((_) {
+        if (mounted) _loadExams();
+      });
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ExamDetailScreen(examId: exam.examId)),
+        MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => ExamDetailCubit()..loadDetail(exam.examId),
+            child: ExamDetailScreen(examId: exam.examId),
+          ),
+        ),
       ).then((_) => _loadExams());
     }
   }
@@ -598,7 +607,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
                   children: [
                     Text(exam.examName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E293B))),
                     const SizedBox(height: 4),
-                    Text((exam.subjectName ?? 'Subject').toUpperCase(), style: const TextStyle(fontSize: 10, color: Color(0xFFF97316), fontWeight: FontWeight.bold)),
+                    Text(exam.subjectName.isNotEmpty ? exam.subjectName.toUpperCase() : 'SUBJECT', style: const TextStyle(fontSize: 10, color: Color(0xFFF97316), fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Row(
                       children: [

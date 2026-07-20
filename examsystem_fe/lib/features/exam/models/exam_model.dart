@@ -69,19 +69,11 @@ class ExamModel {
       examImageUrl:     json['examImageUrl']      as String?,
       accessCode:       json['accessCode']        as String?,
 
-      // DateTime check null trước khi parse.
-      startTime: json['startTime'] != null
-          ? DateTime.tryParse(json['startTime'] as String)
-          : null,
-      endTime: json['endTime'] != null
-          ? DateTime.tryParse(json['endTime'] as String)
-          : null,
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      // DateTime check null trước khi parse và chuẩn hóa về local.
+      startTime: _parseDateTime(json['startTime'] as String?),
+      endTime: _parseDateTime(json['endTime'] as String?),
+      createdAt: _parseDateTime(json['createdAt'] as String?) ?? DateTime.now(),
+      updatedAt: _parseDateTime(json['updatedAt'] as String?) ?? DateTime.now(),
 
       // Double với fallback.
       totalScore:   (json['totalScore']   as num?)?.toDouble() ?? 0.0,
@@ -118,4 +110,13 @@ class ExamModel {
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
   };
+
+  static DateTime? _parseDateTime(String? str) {
+    if (str == null || str.isEmpty) return null;
+    String timeStr = str;
+    if (!timeStr.endsWith('Z') && !timeStr.contains(RegExp(r'[+-]\d{2}:\d{2}$'))) {
+      timeStr += 'Z';
+    }
+    return DateTime.tryParse(timeStr)?.toLocal();
+  }
 }

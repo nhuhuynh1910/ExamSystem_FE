@@ -35,6 +35,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
   Timer? _countdownTimer;
   late int _remainingSeconds;
   bool _allowPop = false;
+  bool _lifecycleMonitoringActive = false;
 
   @override
   void initState() {
@@ -66,6 +67,14 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
     if (_remainingSeconds < 0) {
       _remainingSeconds = 0;
     }
+
+    // Delay 3 giây sau khi vào thi mới kích hoạt theo dõi lifecycle
+    // (tránh kích hoạt nhầm AppLifecycleState.inactive khi vừa đóng Dialog hoặc lúc transition màn hình)
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _lifecycleMonitoringActive = true;
+      }
+    });
 
     _startTimer(); // Bắt đầu bộ đếm ngược
   }
@@ -134,9 +143,13 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Nếu ứng dụng rơi vào trạng thái ẩn (paused / inactive) - chống gian lận chuyển tab
+    // Bỏ qua nếu chưa qua 3 giây đầu tiên (tránh nhấp nháy focus khi đóng hộp thoại/mới vào màn hình)
+    if (!_lifecycleMonitoringActive) return;
+
+    // Chỉ bắt trạng thái paused (hoặc hidden nếu hỗ trợ),
+    // bỏ qua inactive (vì inactive xảy ra chớp nhoáng khi chuyển focus tab hoặc mở dialog)
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.hidden) {
       _autoSubmitOnExit();
     }
   }
