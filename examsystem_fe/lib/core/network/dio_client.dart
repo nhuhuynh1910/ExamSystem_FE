@@ -62,17 +62,35 @@
           logPrint: (object) => debugPrint('[DioClient] $object'),
         ),
       );
-    }
 
-    // Bỏ qua chứng chỉ SSL cho Localhost/Emulator (chỉ bật trong Debug mode và KHÔNG phải Web)
-    if (kDebugMode && !kIsWeb) {
-      dio.httpClientAdapter = IOHttpClientAdapter(
-        createHttpClient: () {
-          final client = HttpClient();
-          client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-          return client;
-        },
-      );
+      dio.interceptors.add(_buildAuthInterceptor(dio));
+
+      // Bỏ qua chứng chỉ SSL cho Localhost/Emulator (chỉ bật trong Debug mode và KHÔNG phải Web)
+      if (kDebugMode && !kIsWeb) {
+        dio.httpClientAdapter = IOHttpClientAdapter(
+          createHttpClient: () {
+            final client = HttpClient();
+            client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+            return client;
+          },
+        );
+      }
+
+      if (kDebugMode) {
+        dio.interceptors.add(
+          LogInterceptor(
+            request: true,
+            requestHeader: true,
+            requestBody: true,
+            responseHeader: true,
+            responseBody: true,
+            error: true,
+            logPrint: (object) => debugPrint('[DioClient] $object'),
+          ),
+        );
+      }
+
+      return dio;
     }
 
     return dio;
@@ -130,6 +148,12 @@
             await StorageManager.clearAll(); // Xóa dữ liệu cũ.
             return handler.next(error);
           }
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            debugPrint('[DioClient] Nhận 401 — thử refresh token...');
+            final refreshToken = await StorageManager.getRefreshToken();
 
           String newAccessToken = '';
           String newRefreshToken = '';
@@ -145,10 +169,12 @@
               ),
             );
 
-            final refreshResponse = await refreshDio.post(
-              ApiConstants.refreshToken,
-              data: {'refreshToken': refreshToken},
-            );
+            try {
+              final refreshDio = Dio(BaseOptions(baseUrl: _resolveBaseUrl()));
+              final refreshResponse = await refreshDio.post(
+                ApiConstants.refreshToken,
+                data: {'refreshToken': refreshToken},
+              );
 
             // BE trả về JSON dạng camelCase (do .NET mặc định serialize PascalCase → camelCase):
             // { "accessToken": "...", "refreshToken": "..." }
@@ -192,4 +218,3 @@
       },
     );
   }
-}
