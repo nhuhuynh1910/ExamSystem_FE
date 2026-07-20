@@ -1,7 +1,5 @@
-/// Map từ AuthResponse.cs trong BE:
-/// UserId, FullName, Email, Username, Role, AccessToken, RefreshToken
 class AuthResponse {
-  final int    userId;
+  final int userId;
   final String fullName;
   final String email;
   final String username;
@@ -9,7 +7,7 @@ class AuthResponse {
   final String accessToken;
   final String refreshToken;
 
-  const AuthResponse({
+  AuthResponse({
     required this.userId,
     required this.fullName,
     required this.email,
@@ -21,13 +19,13 @@ class AuthResponse {
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
-      userId:       json['userId']       as int,
-      fullName:     json['fullName']     as String,
-      email:        json['email']        as String,
-      username:     json['username']     as String,
-      role:         json['role']         as String,
-      accessToken:  json['accessToken']  as String,
-      refreshToken: json['refreshToken'] as String,
+      userId: json['userId'] ?? 0,
+      fullName: json['fullName'] ?? '',
+      email: json['email'] ?? '',
+      username: json['username'] ?? '',
+      role: json['role'] ?? '',
+      accessToken: json['accessToken'] ?? '',
+      refreshToken: json['refreshToken'] ?? '',
     );
   }
 }

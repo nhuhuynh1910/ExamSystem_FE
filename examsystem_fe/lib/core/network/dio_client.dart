@@ -1,36 +1,25 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+  import 'dart:io';
+  import 'package:dio/dio.dart';
+  import 'package:dio/io.dart';
+  import 'package:flutter/foundation.dart';
 
-import '../utils/storage_manager.dart';
-import 'api_constants.dart';
+  import '../utils/storage_manager.dart';
+  import 'api_constants.dart';
 
-/// ════════════════════════════════════════════════════════════════════════════
-/// DioClient — HTTP client dùng chung cho toàn bộ app.
-///
-/// Cách dùng trong bất kỳ repository nào:
-///   final dio = DioClient.instance;
-///   final response = await dio.get(ApiConstants.exams);
-///
-/// Tính năng tích hợp sẵn:
-///   1. Base URL động theo nền tảng (Android Emulator vs các nền tảng khác).
-///   2. Tự động đính kèm "Authorization: Bearer <accessToken>" vào mọi request.
-///   3. Tự động refresh token một lần khi BE trả về 401 (Unauthorized).
-///   4. LogInterceptor đầy đủ (chỉ bật khi chạy debug mode).
-/// ════════════════════════════════════════════════════════════════════════════
-class DioClient {
-  // ── Singleton: chỉ tạo một instance Dio duy nhất trong suốt vòng đời app ──
-  static Dio? _dio;
+  /// ════════════════════════════════════════════════════════════════════════════
+  /// DioClient — HTTP client dùng chung cho toàn bộ app.
+  /// ════════════════════════════════════════════════════════════════════════════
+  class DioClient {
+    static Dio? _dio;
 
-  /// Truy cập instance Dio từ bất kỳ đâu trong app.
-  static Dio get instance {
-    _dio ??= _createDio();
-    return _dio!;
-  }
+    static Dio get instance {
+      _dio ??= _createDio();
+      return _dio!;
+    }
 
-  /// Giải phóng instance cũ (gọi khi cần reset, ví dụ sau khi logout).
-  static void resetInstance() {
-    _dio = null;
-  }
+    static void resetInstance() {
+      _dio = null;
+    }
 
   // ── Tạo và cấu hình instance Dio ──────────────────────────────────────────
   static Dio _createDio() {
@@ -73,6 +62,35 @@ class DioClient {
           logPrint: (object) => debugPrint('[DioClient] $object'),
         ),
       );
+
+      dio.interceptors.add(_buildAuthInterceptor(dio));
+
+      // Bỏ qua chứng chỉ SSL cho Localhost/Emulator (chỉ bật trong Debug mode và KHÔNG phải Web)
+      if (kDebugMode && !kIsWeb) {
+        dio.httpClientAdapter = IOHttpClientAdapter(
+          createHttpClient: () {
+            final client = HttpClient();
+            client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+            return client;
+          },
+        );
+      }
+
+      if (kDebugMode) {
+        dio.interceptors.add(
+          LogInterceptor(
+            request: true,
+            requestHeader: true,
+            requestBody: true,
+            responseHeader: true,
+            responseBody: true,
+            error: true,
+            logPrint: (object) => debugPrint('[DioClient] $object'),
+          ),
+        );
+      }
+
+      return dio;
     }
 
     return dio;
@@ -130,6 +148,12 @@ class DioClient {
             await StorageManager.clearAll(); // Xóa dữ liệu cũ.
             return handler.next(error);
           }
+          return handler.next(options);
+        },
+        onError: (error, handler) async {
+          if (error.response?.statusCode == 401) {
+            debugPrint('[DioClient] Nhận 401 — thử refresh token...');
+            final refreshToken = await StorageManager.getRefreshToken();
 
           String newAccessToken = '';
           String newRefreshToken = '';
@@ -145,13 +169,12 @@ class DioClient {
               ),
             );
 
-            // Gọi endpoint refresh token của BE.
-            // BE: POST /api/auth/refresh-token
-            // Body: { "refreshToken": "<refreshToken>" }
-            final refreshResponse = await refreshDio.post(
-              ApiConstants.refreshToken,
-              data: {'refreshToken': refreshToken},
-            );
+            try {
+              final refreshDio = Dio(BaseOptions(baseUrl: _resolveBaseUrl()));
+              final refreshResponse = await refreshDio.post(
+                ApiConstants.refreshToken,
+                data: {'refreshToken': refreshToken},
+              );
 
             // BE trả về JSON dạng camelCase (do .NET mặc định serialize PascalCase → camelCase):
             // { "accessToken": "...", "refreshToken": "..." }
@@ -195,4 +218,3 @@ class DioClient {
       },
     );
   }
-}

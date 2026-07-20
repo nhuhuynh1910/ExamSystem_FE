@@ -18,6 +18,8 @@ class ExamModel {
   final bool shuffleQuestions;
   final bool showAnswerAfterSubmit;
   final String status;
+  final int? questionCount;
+  final int? attemptCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -40,6 +42,8 @@ class ExamModel {
     required this.shuffleQuestions,
     required this.showAnswerAfterSubmit,
     required this.status,
+    this.questionCount,
+    this.attemptCount,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -48,10 +52,12 @@ class ExamModel {
     return ExamModel(
       // Dùng num? và toInt() / toDouble() với fallback để tránh hoàn toàn crash do Null.
       examId:           (json['examId']          as num?)?.toInt() ?? 0,
-      subjectId:        (json['subjectId']        as num?)?.toInt() ?? 0,
-      teacherId:        (json['teacherId']        as num?)?.toInt() ?? 0,
-      durationMinutes:  (json['durationMinutes']  as num?)?.toInt() ?? 0,
-      maxAttempts:      (json['maxAttempts']      as num?)?.toInt() ?? 0,
+      subjectId:        (json['subjectId']       as num?)?.toInt() ?? 0,
+      teacherId:        (json['teacherId']       as num?)?.toInt() ?? 0,
+      durationMinutes:  (json['durationMinutes'] as num?)?.toInt() ?? 0,
+      maxAttempts:      (json['maxAttempts']     as num?)?.toInt() ?? 0,
+      questionCount:    (json['questionCount']   as num?)?.toInt() ?? (json['QuestionCount'] as num?)?.toInt(),
+      attemptCount:     (json['attemptCount']    as num?)?.toInt() ?? (json['AttemptCount']  as num?)?.toInt(),
 
       // String với fallback rỗng.
       subjectName:      json['subjectName']       as String? ?? '',
@@ -87,4 +93,29 @@ class ExamModel {
       showAnswerAfterSubmit: json['showAnswerAfterSubmit'] as bool? ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'examId': examId,
+    'subjectId': subjectId,
+    'subjectName': subjectName,
+    'teacherId': teacherId,
+    'examName': examName,
+    'description': description,
+    'examImageUrl': examImageUrl,
+    'durationMinutes': durationMinutes,
+    'startTime': startTime?.toIso8601String(),
+    'endTime': endTime?.toIso8601String(),
+    'totalScore': totalScore,
+    'passingScore': passingScore,
+    'maxAttempts': maxAttempts,
+    'isPrivate': isPrivate,
+    'accessCode': accessCode,
+    'shuffleQuestions': shuffleQuestions,
+    'showAnswerAfterSubmit': showAnswerAfterSubmit,
+    'status': status,
+    'questionCount': questionCount,
+    'attemptCount': attemptCount,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 }

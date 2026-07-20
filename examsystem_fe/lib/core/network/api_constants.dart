@@ -66,6 +66,7 @@ class ApiConstants {
   // ─── Subjects (/api/subjects/...) ────────────────────────────────────────────
   // Đồng bộ với: Controllers/SubjectsController.cs
   static const String subjects = '/subjects'; // GET, POST, PUT, DELETE
+  static const String teacherSubjects = '/teacher-requests/my-requests'; // Sửa lại thành /teacher-requests/my-requests
 
   // ─── Questions (/api/questions/...) ──────────────────────────────────────────
   // Đồng bộ với: Controllers/QuestionController.cs → [Route("api/questions")]

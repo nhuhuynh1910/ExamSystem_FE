@@ -14,7 +14,7 @@ class ExamListCubit extends Cubit<ExamListState> {
   Future<void> loadExams({int? subjectId, int pageNumber = 1, int pageSize = 10}) async {
     emit(const ExamListLoading());
     try {
-      final result = await _repository.getExams(
+      final result = await _repository.getExamsPaginated(
         subjectId: subjectId,
         pageNumber: pageNumber,
         pageSize: pageSize,

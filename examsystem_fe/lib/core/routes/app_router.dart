@@ -31,6 +31,15 @@ import '../../features/exam/block/exam_list_cubit.dart';
 import '../../features/exam/screens/exam_detail_screen.dart';
 import '../../features/exam/screens/exam_list_screen.dart';
 import '../../features/exam/screens/enter_access_code_screen.dart';
+import '../../core/utils/storage_manager.dart';
+import '../../features/attempt/screens/waiting_room_screen.dart';
+import '../../features/auth/screens/login_screen.dart'; 
+import '../../features/exam/models/exam_model.dart';
+import '../../features/exam/screens/exam_list_screen.dart'; 
+import '../../features/exam/screens/exam_detail_screen.dart'; 
+import '../../features/notification/screens/notification_list_screen.dart';
+import '../../features/question/screens/question_list_screen.dart';
+import '../utils/token_storage.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -85,6 +94,15 @@ class AppRouter {
   /// Màn hình chi tiết một đề thi theo ID.
   static const String examDetailPath = '/exams/:id';
 
+  /// Màn hình ngân hàng câu hỏi.
+  static const String questionBank = '/questions';
+
+  /// Màn hình thông báo.
+  static const String notifications = '/notifications';
+
+  /// Màn hình phòng chờ thi.
+  static const String waitingRoom = '/waiting-room';
+
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
 
@@ -136,7 +154,7 @@ class AppRouter {
       ),
 
       // ── Route: Đăng nhập ─────────────────────────────────────────────────
-      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
+      // CẬP NHẬT: Kết nối LoginScreen thật
       GoRoute(
         path: login,
         name: 'login',
@@ -361,6 +379,33 @@ class AppRouter {
           ),
         ],
       ),
+
+      // ── Route: Ngân hàng câu hỏi ──────────────────────────────────────────
+      GoRoute(
+        path: questionBank,
+        name: 'questionBank',
+        builder: (BuildContext context, GoRouterState state) {
+          return const QuestionListScreen();
+        },
+      ),
+
+      // ── Route: Thông báo ──────────────────────────────────────────────────
+      GoRoute(
+        path: notifications,
+        name: 'notifications',
+        builder: (BuildContext context, GoRouterState state) {
+          return const NotificationListScreen();
+        },
+      ),
+
+      GoRoute(
+        path: waitingRoom,
+        name: 'waitingRoom',
+        builder: (BuildContext context, GoRouterState state) {
+          final exam = state.extra as ExamModel;
+          return WaitingRoomScreen(exam: exam);
+        },
+      ),
     ],
 
     // Callback khi GoRouter gặp lỗi.
@@ -428,7 +473,7 @@ class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({
     required this.routeName,
     required this.routePath,
-    required this.assignee,
+    this.assignee = "N/A",
   });
 
   @override
