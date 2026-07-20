@@ -7,4 +7,7 @@ abstract class StudentDashboardRepository {
 
   /// Đếm số thông báo chưa đọc.
   Future<int> getUnreadNotificationCount();
+
+  /// Lấy danh sách môn học sinh viên đã đăng ký
+  Future<List<dynamic>> getStudentSubjects(int studentId);
 }

@@ -27,10 +27,10 @@ import '../../features/teacher_dashboard/bloc/teacher_dashboard_bloc.dart';
 import '../../features/teacher_dashboard/bloc/teacher_dashboard_event.dart';
 import '../../features/teacher_dashboard/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/exam/block/exam_detail_cubit.dart';
+import '../../features/exam/block/start_exam_cubit.dart';
 import '../../features/exam/screens/exam_detail_screen.dart';
 import '../../features/exam/screens/exam_list_screen.dart';
 import '../../features/exam/screens/enter_access_code_screen.dart';
-import '../../features/attempt/screens/waiting_room_screen.dart';
 import '../../features/exam/models/exam_model.dart';
 import '../../features/notification/screens/notification_list_screen.dart';
 import '../../features/question/screens/question_list_screen.dart';
@@ -95,8 +95,6 @@ class AppRouter {
   static const String questionList = '/questions';
   static const String questionBank = '/question-bank';
   static const String notifications = '/notifications';
-  static const String waitingRoom = '/waiting-room';
-
   // ── Tập hợp các route public không cần xác thực ───────────────────────────
   static const Set<String> _publicRoutes = {
     splash,
@@ -342,8 +340,11 @@ class AppRouter {
             name: 'examDetail',
             builder: (context, state) {
               final examId = int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
-              return BlocProvider(
-                create: (_) => ExamDetailCubit()..loadDetail(examId),
+              return MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (_) => ExamDetailCubit()..loadDetail(examId)),
+                  BlocProvider(create: (_) => StartExamCubit()),
+                ],
                 child: ExamDetailScreen(examId: examId),
               );
             },
@@ -397,14 +398,7 @@ class AppRouter {
         name: 'notifications',
         builder: (context, state) => const NotificationListScreen(),
       ),
-      GoRoute(
-        path: waitingRoom,
-        name: 'waitingRoom',
-        builder: (context, state) {
-          final exam = state.extra as ExamModel;
-          return WaitingRoomScreen(exam: exam);
-        },
-      ),
+     
     ],
   );
 

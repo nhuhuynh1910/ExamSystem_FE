@@ -36,6 +36,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
   late int _remainingSeconds;
   bool _allowPop = false;
   bool _lifecycleMonitoringActive = false;
+  late final ExamTakingCubit _cubit;
 
   @override
   void initState() {
@@ -45,10 +46,29 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
     ); // Đăng ký lắng nghe sự kiện vòng đời ứng dụng (như ẩn ứng dụng)
     _pageController = PageController();
 
+    // Tính toán initialAnswers
+    final initialAnswers = <int, List<int>>{};
+    for (var question in widget.questions) {
+      if (question.selectedOptionIds.isNotEmpty) {
+        initialAnswers[question.questionId] = question.selectedOptionIds;
+      } else {
+        final selectedIds = question.options
+            .where((opt) => opt.isSelected)
+            .map((opt) => opt.optionId)
+            .toList();
+        if (selectedIds.isNotEmpty) {
+          initialAnswers[question.questionId] = selectedIds;
+        }
+      }
+    }
+
+    _cubit = ExamTakingCubit(
+      attemptId: widget.attemptId,
+      initialAnswers: initialAnswers,
+    );
+
     // Tính toán thời gian đếm ngược chính xác theo công thức của BE
     // attemptEndTime = attempt.startTime + durationMinutes
-    // 1. Tính thời gian kết thúc dự kiến dựa vào thời điểm bấm nút vào thi + thời lượng làm bài
-
     // 1. Tính thời gian kết thúc dự kiến dựa vào thời điểm bấm nút vào thi + thời lượng làm bài
     final attemptEndTime = widget.attemptStartTime.add(
       Duration(minutes: widget.durationMinutes),
@@ -118,7 +138,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
     setState(() {
       _allowPop = true; // Cho phép thoát màn hình sau khi nộp
     });
-    context.read<ExamTakingCubit>().submitExam(isAutoSubmitted: true);
+    _cubit.submitExam(isAutoSubmitted: true);
   }
 
   /// Tự động nộp bài nếu sinh viên thoát ứng dụng (chuyển tab khác hoặc đóng ứng dụng)
@@ -129,7 +149,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
       _allowPop = true;
     });
 
-    context.read<ExamTakingCubit>().submitExam(isAutoSubmitted: true);
+    _cubit.submitExam(isAutoSubmitted: true);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -320,6 +340,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
 
   @override
   void dispose() {
+    _cubit.close();
     WidgetsBinding.instance.removeObserver(this);
     _countdownTimer?.cancel();
     _pageController.dispose();
@@ -328,26 +349,8 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final initialAnswers = <int, List<int>>{};
-    for (var question in widget.questions) {
-      if (question.selectedOptionIds.isNotEmpty) {
-        initialAnswers[question.questionId] = question.selectedOptionIds;
-      } else {
-        final selectedIds = question.options
-            .where((opt) => opt.isSelected)
-            .map((opt) => opt.optionId)
-            .toList();
-        if (selectedIds.isNotEmpty) {
-          initialAnswers[question.questionId] = selectedIds;
-        }
-      }
-    }
-
-    return BlocProvider(
-      create: (_) => ExamTakingCubit(
-        attemptId: widget.attemptId,
-        initialAnswers: initialAnswers,
-      ),
+    return BlocProvider.value(
+      value: _cubit,
       child: BlocConsumer<ExamTakingCubit, ExamTakingState>(
         listener: (context, state) {
           if (state is ExamTakingSubmitted) {
@@ -442,11 +445,9 @@ class _ExamTakingScreenState extends State<ExamTakingScreen>
                 setState(() {
                   _allowPop = true;
                 });
-                if (context.mounted) {
-                  context.read<ExamTakingCubit>().submitExam(
-                    isAutoSubmitted: true,
-                  );
-                }
+                _cubit.submitExam(
+                  isAutoSubmitted: true,
+                );
               }
             },
             child: Scaffold(

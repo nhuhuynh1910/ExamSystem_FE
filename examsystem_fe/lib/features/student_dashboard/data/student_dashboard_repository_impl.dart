@@ -61,4 +61,13 @@ class StudentDashboardRepositoryImpl implements StudentDashboardRepository {
     }
     return defaultMessage;
   }
+
+  @override
+  Future<List<dynamic>> getStudentSubjects(int studentId) async {
+    try {
+      return await _remoteDataSource.getStudentSubjects(studentId);
+    } catch (e) {
+      return [];
+    }
+  }
 }

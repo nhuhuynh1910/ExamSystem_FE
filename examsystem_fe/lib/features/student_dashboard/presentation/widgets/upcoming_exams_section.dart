@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/routes/app_router.dart';
 import '../../../teacher_dashboard/models/teacher_exam_model.dart';
 
 /// Section "📅 Upcoming Exams" — danh sách đề thi sắp tới lướt ngang.
@@ -126,7 +128,7 @@ class _UpcomingExamCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: Navigate to exam detail / check-access flow
+        context.push(AppRouter.examDetail(exam.examId));
       },
       child: Container(
         width: 200,

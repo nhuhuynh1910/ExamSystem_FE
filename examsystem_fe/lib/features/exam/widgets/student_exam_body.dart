@@ -67,7 +67,7 @@ class _StudentExamBodyState extends State<StudentExamBody>
   }
 
   void _onExamTap(ExamModel exam) {
-    context.push(AppRouter.waitingRoom, extra: exam);
+    context.push(AppRouter.examDetail(exam.examId));
   }
 
   @override

@@ -14,6 +14,7 @@ import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
 import '../block/exam_detail_cubit.dart';
+import '../block/start_exam_cubit.dart';
 import '../models/exam_model.dart';
 import '../widgets/exam_card.dart';
 import '../widgets/status_chip.dart';
@@ -57,7 +58,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   Future<void> _initScreen() async {
     await _loadUserInfo();
-    if (_userRole == 'Admin') {
+    if (_userRole?.toLowerCase() == 'admin') {
       setState(() {
         _statuses = ['All', 'Draft', 'Published', 'Closed', 'Deleted'];
         _tabController = TabController(length: _statuses.length, vsync: this);
@@ -90,7 +91,8 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
       setState(() {
         _userRole = role;
         _currentUserId = userId;
-        _userName = fullName ?? (role == 'Admin' ? 'Admin' : (role == 'Teacher' ? 'Teacher' : 'Student'));
+        final normalized = role?.toLowerCase();
+        _userName = fullName ?? (normalized == 'admin' ? 'Admin' : (normalized == 'teacher' ? 'Teacher' : 'Student'));
       });
     }
   }
@@ -109,11 +111,12 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   void _loadExams() {
     final status = _statuses[_tabController.index];
-    if (_userRole == 'Admin') {
+    final normalizedRole = _userRole?.toLowerCase();
+    if (normalizedRole == 'admin') {
       context.read<ExamBloc>().add(LoadExamsEvent(
             subjectId: _selectedSubjectId,
           ));
-    } else if (_userRole == 'Teacher') {
+    } else if (normalizedRole == 'teacher') {
       context.read<ExamBloc>().add(
             LoadTeacherExamsEvent(
               status: status == 'All' ? null : status,
@@ -128,7 +131,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   }
 
   void _onExamTap(ExamModel exam) {
-    if (_userRole == 'Student') {
+    if (_userRole?.toLowerCase() == 'student') {
       context.push(AppRouter.examDetail(exam.examId)).then((_) {
         if (mounted) _loadExams();
       });
@@ -136,8 +139,11 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => ExamDetailCubit()..loadDetail(exam.examId),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => ExamDetailCubit()..loadDetail(exam.examId)),
+              BlocProvider(create: (_) => StartExamCubit()),
+            ],
             child: ExamDetailScreen(examId: exam.examId),
           ),
         ),
@@ -147,7 +153,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    if (_userRole == 'Student') return _buildStudentView();
+    if (_userRole?.toLowerCase() == 'student') return _buildStudentView();
     return _buildTeacherAdminView();
   }
 
@@ -204,12 +210,13 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
             builder: (context, state) {
               var exams = state.exams;
 
-              if (_userRole == 'Student' && state.subjects.isNotEmpty) {
+              final normalizedRole = _userRole?.toLowerCase();
+              if (normalizedRole == 'student' && state.subjects.isNotEmpty) {
                 final allowedSubjectIds = state.subjects.map((s) => s.subjectId).toSet();
                 exams = exams.where((e) => allowedSubjectIds.contains(e.subjectId)).toList();
               }
 
-              if (_userRole == 'Admin' && _statuses[_tabController.index] != 'All') {
+              if (normalizedRole == 'admin' && _statuses[_tabController.index] != 'All') {
                 exams = exams.where((e) => e.status == _statuses[_tabController.index]).toList();
               }
               if (_selectedSubjectId != null) {
@@ -233,7 +240,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
           ),
         ),
       ),
-      bottomNavigationBar: const AdminBottomNavBar(currentIndex: 2),
+      bottomNavigationBar: _buildExamListBottomNav(),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFFF97316),
         onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateExamScreen())).then((_) => _loadExams()),
@@ -547,6 +554,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
           ),
         ],
       ),
+      bottomNavigationBar: _buildExamListBottomNav(),
     );
   }
 
@@ -639,9 +647,10 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   // ─── SHARED WIDGETS ────────────────────────────────────────────────────────
   Widget _buildDrawer() {
-    final bool isStudent = _userRole == 'Student';
-    final bool isTeacher = _userRole == 'Teacher';
-    final bool isAdmin = _userRole == 'Admin';
+    final normalizedRole = _userRole?.toLowerCase();
+    final bool isStudent = normalizedRole == 'student';
+    final bool isTeacher = normalizedRole == 'teacher';
+    final bool isAdmin = normalizedRole == 'admin';
 
     return Drawer(
       child: Column(
@@ -751,6 +760,109 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
               Navigator.pop(ctx);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExamListBottomNav() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8F9FF),
+        border: Border(
+          top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5),
+        ),
+      ),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _ExamListBottomNavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              isActive: false,
+              onTap: () {
+                final role = _userRole?.toLowerCase();
+                if (role == 'teacher') {
+                  context.go(AppRouter.teacherDashboard);
+                } else if (role == 'student') {
+                  context.go(AppRouter.studentDashboard);
+                } else {
+                  context.go(AppRouter.featureHub);
+                }
+              },
+            ),
+            _ExamListBottomNavItem(
+              icon: Icons.quiz_rounded,
+              label: 'Questions',
+              isActive: false,
+              onTap: () => context.go(AppRouter.questionList),
+            ),
+            _ExamListBottomNavItem(
+              icon: Icons.assignment_rounded,
+              label: 'Exams',
+              isActive: true,
+              onTap: () {},
+            ),
+            _ExamListBottomNavItem(
+              icon: Icons.person_rounded,
+              label: 'Profile',
+              isActive: false,
+              onTap: () => context.go(AppRouter.profile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ExamListBottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _ExamListBottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isActive)
+            Container(
+              width: 48,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF15A22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )
+          else
+            const SizedBox(height: 7),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            ),
           ),
         ],
       ),

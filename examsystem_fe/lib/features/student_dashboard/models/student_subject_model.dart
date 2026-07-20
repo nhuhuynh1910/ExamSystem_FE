@@ -19,8 +19,8 @@ class StudentSubjectModel {
     return StudentSubjectModel(
       subjectId: json['subjectId'] as int? ?? 0,
       subjectName: json['subjectName'] as String? ?? '',
-      teacherName: json['teacherName'] as String? ?? '',
-      studentCount: json['studentCount'] as int? ?? 0,
+      teacherName: json['teacherName'] as String? ?? 'No teacher assigned', // Fallback since API doesn't provide
+      studentCount: json['studentCount'] as int? ?? 0, // Fallback since API doesn't provide
     );
   }
 }

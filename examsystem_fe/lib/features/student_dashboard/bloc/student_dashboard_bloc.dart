@@ -32,45 +32,33 @@ class StudentDashboardBloc
       // Lấy tên sinh viên từ local storage (không gọi API).
       final fullName = await StorageManager.getFullName() ?? 'Student';
 
-      // Gọi API song song: đề thi + notification count.
+      final studentId = await StorageManager.getUserId();
+      if (studentId == null) {
+        throw Exception('User ID not found');
+      }
+
+      // Gọi API song song: đề thi + notification count + danh sách môn học
       final results = await Future.wait([
         _repository.getAvailableExams(),
         _repository.getUnreadNotificationCount(),
+        _repository.getStudentSubjects(studentId),
       ]);
 
       final examResult = results[0] as dynamic;
       final unreadCount = results[1] as int;
+      final rawSubjects = results[2] as List<dynamic>;
 
-      // Mock subjects — BE chưa có API riêng.
-      const mockSubjects = [
-        StudentSubjectModel(
-          subjectId: 1,
-          subjectName: 'Software Engineering',
-          teacherName: 'Dr. Le Van Nam',
-          studentCount: 32,
-        ),
-        StudentSubjectModel(
-          subjectId: 2,
-          subjectName: 'Distributed Systems',
-          teacherName: 'MSc. Hoang Thuy',
-          studentCount: 28,
-        ),
-        StudentSubjectModel(
-          subjectId: 3,
-          subjectName: 'Mobile App Development',
-          teacherName: 'Mr. Nguyen Quang',
-          studentCount: 45,
-        ),
-      ];
+      // Map sang StudentSubjectModel
+      final subjects = rawSubjects.map((s) => StudentSubjectModel.fromJson(s as Map<String, dynamic>)).toList();
 
       emit(StudentDashboardLoaded(
         studentName: fullName,
         unreadNotifications: unreadCount,
-        enrolledCount: mockSubjects.length,
-        examsTakenCount: 12, // Mock — BE chưa có API
-        bestScore: '95%', // Mock — BE chưa có API
+        enrolledCount: subjects.length,
+        examsTakenCount: 0, // Mock — BE chưa có API
+        bestScore: '0%', // Mock — BE chưa có API
         upcomingExams: examResult.items,
-        subjects: mockSubjects,
+        subjects: subjects,
       ));
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');

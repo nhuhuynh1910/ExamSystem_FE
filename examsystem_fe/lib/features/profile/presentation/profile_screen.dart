@@ -13,6 +13,16 @@ import '../bloc/profile_state.dart';
 import '../models/change_password_request.dart';
 import '../models/profile_response.dart';
 import '../models/update_profile_request.dart';
+import '../../notification/screens/notification_list_screen.dart';
+import '../../notification/bloc/notification_bloc.dart';
+import '../../notification/data/notification_repository.dart';
+import '../../teacher_request/screens/my_teacher_requests_screen_khanh.dart';
+import '../../teacher_request/screens/available_teacher_subject_screen_khanh.dart';
+import '../../subject/screens/assigned_subject_screen_khanh.dart';
+import '../../question/screens/question_list_screen.dart';
+import '../../question/bloc/question_bloc.dart';
+import '../../question/domain/question_service.dart';
+import '../../question/data/question_repository.dart';
 import 'widgets/change_password_dialog.dart';
 import 'widgets/edit_profile_dialog.dart';
 import 'widgets/profile_account_info_card.dart';
@@ -153,10 +163,10 @@ class ProfileScreen extends StatelessWidget {
                 onCameraTap: () async {
                   final picker = ImagePicker();
                   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-                  if (pickedFile != null && context.mounted) {
-                    final bytes = await pickedFile.readAsBytes();
-                    context.read<ProfileBloc>().add(AvatarUploadRequested(bytes, pickedFile.name));
-                  }
+                  if (pickedFile == null || !context.mounted) return;
+                  final bytes = await pickedFile.readAsBytes();
+                  if (!context.mounted) return;
+                  context.read<ProfileBloc>().add(AvatarUploadRequested(bytes, pickedFile.name));
                 },
               ),
             ),
@@ -171,25 +181,53 @@ class ProfileScreen extends StatelessWidget {
     final menuConfig = ProfileMenuConfigBuilder(
       profile: profile,
       onNotificationSettings: () {
-        // TODO: Navigate to notification settings
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (_) => NotificationBloc(NotificationRepository()),
+              child: const NotificationListScreen(),
+            ),
+          ),
+        );
       },
       onChangePassword: () => _showChangePasswordDialog(context, profile),
       onMySubjects: () {
-        // TODO: Navigate to my subjects
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AssignedSubjectScreenKhanh(),
+          ),
+        );
       },
       onTeacherRequest: () {
-        // TODO: Navigate to teacher request
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MyTeacherRequestsScreenKhanh(),
+          ),
+        );
       },
       onTeachingSubjects: () {
-        // TODO: Navigate to teaching subjects
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AvailableTeacherSubjectScreenKhanh(),
+          ),
+        );
       },
       onQuestionBank: () {
-        // TODO: Navigate to question bank
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider(
+              create: (_) => QuestionBloc(
+                QuestionService(QuestionRepository()),
+              ),
+              child: const QuestionListScreen(),
+            ),
+          ),
+        );
       },
       onExamManagement: () {
         // TODO: Navigate to exam management

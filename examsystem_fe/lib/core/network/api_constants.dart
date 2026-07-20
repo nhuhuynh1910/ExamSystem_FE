@@ -21,8 +21,8 @@
 /// LƯU Ý về baseUrl:
 ///   Hằng baseUrl bên dưới chỉ là giá trị FALLBACK (localhost).
 ///   DioClient._resolveBaseUrl() sẽ TỰ ĐỘNG chọn đúng URL theo nền tảng:
-///     - Android Emulator → https://10.0.2.2:7004/api
-///     - iOS/macOS/Web/Windows → https://localhost:7004/api
+///     - Android Emulator → https://10.0.2.2:5122/api
+///     - iOS/macOS/Web/Windows → https://localhost:5122/api
 ///   Không cần sửa baseUrl khi chuyển nền tảng.
 /// ════════════════════════════════════════════════════════════════════════════
 class ApiConstants {

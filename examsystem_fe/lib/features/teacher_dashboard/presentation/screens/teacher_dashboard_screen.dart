@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../bloc/teacher_dashboard_bloc.dart';
 import '../../bloc/teacher_dashboard_event.dart';
 import '../../bloc/teacher_dashboard_state.dart';
@@ -9,6 +10,7 @@ import '../widgets/exam_filter_tabs.dart';
 import '../widgets/quick_actions_grid.dart';
 import '../widgets/recent_activity_timeline.dart';
 import '../widgets/stats_strip.dart';
+import '../../../../core/routes/app_router.dart';
 
 import '../../../profile/presentation/profile_screen.dart';
 
@@ -277,40 +279,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               icon: Icons.quiz,
               label: 'Questions',
               isActive: _currentIndex == 1,
-              onTap: () {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: const Text('Coming soon!'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-              },
+              onTap: () => context.go(AppRouter.questionList),
             ),
             // Exams
             _BottomNavItem(
               icon: Icons.assignment,
               label: 'Exams',
               isActive: _currentIndex == 2,
-              onTap: () {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: const Text('Coming soon!'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-              },
+              onTap: () => context.go(AppRouter.examList),
             ),
             // Profile
             _BottomNavItem(

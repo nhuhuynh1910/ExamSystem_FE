@@ -552,10 +552,10 @@
                 leading: IconButton(
                   tooltip: 'Menu',
                   onPressed: () {},
-                  icon: const Icon(
+                        icon: const Icon(
                     Icons.menu_rounded,
                     color: primaryColor,
-                  ),
+                        ),
                 ),
                 titleSpacing: 0,
                 title: const Text(

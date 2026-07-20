@@ -53,4 +53,14 @@ class StudentDashboardRemoteDataSource {
     }
     return 0;
   }
+
+  /// Lấy danh sách môn học của sinh viên
+  Future<List<dynamic>> getStudentSubjects(int studentId) async {
+    final response = await _dio.get('/students/$studentId/subjects');
+    final data = response.data;
+    if (data is List) {
+      return data;
+    }
+    return [];
+  }
 }

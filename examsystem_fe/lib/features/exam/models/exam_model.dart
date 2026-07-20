@@ -113,10 +113,6 @@ class ExamModel {
 
   static DateTime? _parseDateTime(String? str) {
     if (str == null || str.isEmpty) return null;
-    String timeStr = str;
-    if (!timeStr.endsWith('Z') && !timeStr.contains(RegExp(r'[+-]\d{2}:\d{2}$'))) {
-      timeStr += 'Z';
-    }
-    return DateTime.tryParse(timeStr)?.toLocal();
+    return DateTime.tryParse(str)?.toLocal();
   }
 }

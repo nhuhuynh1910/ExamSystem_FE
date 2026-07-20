@@ -49,28 +49,31 @@ class TeacherExamModel {
 
   factory TeacherExamModel.fromJson(Map<String, dynamic> json) {
     return TeacherExamModel(
-      examId: json['examId'] as int,
-      subjectId: json['subjectId'] as int,
+      examId: (json['examId'] as num?)?.toInt() ?? 0,
+      subjectId: (json['subjectId'] as num?)?.toInt() ?? 0,
       subjectName: json['subjectName'] as String?,
-      teacherId: json['teacherId'] as int,
-      examName: json['examName'] as String,
+      teacherId: (json['teacherId'] as num?)?.toInt() ?? 0,
+      examName: json['examName'] as String? ?? '',
       description: json['description'] as String?,
-      examImageUrl: json['examImageUrl'] as String?,
-      durationMinutes: json['durationMinutes'] as int,
-      startTime: DateTime.parse(json['startTime'] as String),
-      endTime: DateTime.parse(json['endTime'] as String),
-      totalScore: (json['totalScore'] as num).toDouble(),
-      passingScore: (json['passingScore'] as num).toDouble(),
-      maxAttempts: json['maxAttempts'] as int,
-      isPrivate: json['isPrivate'] as bool,
+      examImageUrl: json['examImageUrl'] as String?,  
+      durationMinutes: (json['durationMinutes'] as num?)?.toInt() ?? 0,
+      startTime: _parseDateTime(json['startTime'] as String?) ?? DateTime.now(),
+      endTime: _parseDateTime(json['endTime'] as String?) ?? DateTime.now(),
+      totalScore: (json['totalScore'] as num?)?.toDouble() ?? 0.0,
+      passingScore: (json['passingScore'] as num?)?.toDouble() ?? 0.0,
+      maxAttempts: (json['maxAttempts'] as num?)?.toInt() ?? 0,
+      isPrivate: json['isPrivate'] as bool? ?? false,
       accessCode: json['accessCode'] as String?,
-      shuffleQuestions: json['shuffleQuestions'] as bool,
-      showAnswerAfterSubmit: json['showAnswerAfterSubmit'] as bool,
-      status: json['status'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+      shuffleQuestions: json['shuffleQuestions'] as bool? ?? false,
+      showAnswerAfterSubmit: json['showAnswerAfterSubmit'] as bool? ?? false,
+      status: json['status'] as String? ?? 'Draft',
+      createdAt: _parseDateTime(json['createdAt'] as String?) ?? DateTime.now(),
+      updatedAt: _parseDateTime(json['updatedAt'] as String?),
     );
+  }
+
+  static DateTime? _parseDateTime(String? str) {
+    if (str == null || str.isEmpty) return null;
+    return DateTime.tryParse(str)?.toLocal();
   }
 }
