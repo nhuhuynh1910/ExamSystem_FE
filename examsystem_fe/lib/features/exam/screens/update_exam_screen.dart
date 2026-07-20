@@ -52,8 +52,8 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     _attemptsController = TextEditingController(text: widget.exam.maxAttempts.toString());
     _isPrivate = widget.exam.isPrivate;
     _accessCodeController = TextEditingController(text: widget.exam.accessCode);
-    _startTime = widget.exam.startTime;
-    _endTime = widget.exam.endTime;
+    _startTime = widget.exam.startTime ?? DateTime.now();
+    _endTime = widget.exam.endTime ?? DateTime.now().add(const Duration(hours: 1));
     _shuffleQuestions = widget.exam.shuffleQuestions;
     _showAnswerAfterSubmit = widget.exam.showAnswerAfterSubmit;
     

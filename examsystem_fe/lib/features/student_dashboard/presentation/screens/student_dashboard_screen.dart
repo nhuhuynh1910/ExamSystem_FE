@@ -9,17 +9,25 @@ import '../widgets/student_header.dart';
 import '../widgets/student_stats_strip.dart';
 import '../widgets/upcoming_exams_section.dart';
 
+import '../../../../features/exam/widgets/student_exam_body.dart';
+import '../../../../features/results/screens/student_results_body.dart';
 import '../../../profile/presentation/profile_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
-// StudentDashboardScreen — Màn hình chính cho Student.
+// StudentDashboardScreen — Màn hình shell chính cho Student.
 //
-// Gồm:
-//   - Header cam cố định (logo + tên SV + notification)
-//   - Stats Strip (Enrolled, Exams Taken, Best Score)
-//   - Upcoming Exams (horizontal scroll cards)
-//   - My Subjects (vertical list cards)
-//   - Bottom Navigation Bar (Home ↔ Profile tích hợp liền mạch)
+// Kiến trúc: Shared Shell Pattern
+//   - Scaffold DUY NHẤT bọc toàn bộ Student area
+//   - Header cam (StudentHeader) hiển thị cho tab 0, 1, 2
+//   - Profile (tab 3) có header riêng nên không cần SharedHeader
+//   - IndexedStack chứa 4 body: Home | Exams | Results | Profile
+//   - BottomNavigationBar dùng chung
+//
+// Index chuẩn:
+//   0 → Home (Dashboard)
+//   1 → Exams
+//   2 → Results
+//   3 → Profile
 // ════════════════════════════════════════════════════════════════════════════
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -35,23 +43,48 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Column(
         children: [
-          // 0: Home Dashboard
-          _buildHomeBody(context),
-          // 1: Exams (placeholder)
-          _buildPlaceholder('Exams', Icons.assignment),
-          // 2: Results (placeholder)
-          _buildPlaceholder('Results', Icons.leaderboard),
-          // 3: Profile Screen embedded
-          const ProfileScreen(),
+          // ── Shared Header (hiển thị cho tab 0, 1, 2 — Profile tự có header riêng)
+          if (_currentIndex != 3)
+            BlocBuilder<StudentDashboardBloc, StudentDashboardState>(
+              builder: (context, state) {
+                final String studentName = (state is StudentDashboardLoaded)
+                    ? state.studentName
+                    : 'Sinh viên';
+                final int notifCount = (state is StudentDashboardLoaded)
+                    ? state.unreadNotifications
+                    : 0;
+                return StudentHeader(
+                  studentName: studentName,
+                  notificationCount: notifCount,
+                );
+              },
+            ),
+
+          // ── Body — thay đổi theo tab, Header và BottomNav được share
+          Expanded(
+            child: IndexedStack(
+              index: _currentIndex,
+              children: [
+                // 0: Home Dashboard
+                _buildHomeBody(context),
+                // 1: Exams — dùng StudentExamBody (không có Scaffold)
+                const StudentExamBody(),
+                // 2: Results — dùng StudentResultsBody (không có Scaffold)
+                const StudentResultsBody(),
+                // 3: Profile — ProfileScreen có header gradient riêng
+                const ProfileScreen(),
+              ],
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
+  // ── Home Body ──────────────────────────────────────────────────────────────
   Widget _buildHomeBody(BuildContext context) {
     return BlocBuilder<StudentDashboardBloc, StudentDashboardState>(
       builder: (context, state) {
@@ -82,58 +115,42 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildContent(BuildContext context, StudentDashboardLoaded state) {
-    return Column(
-      children: [
-        // Fixed header
-        StudentHeader(
-          studentName: state.studentName,
-          notificationCount: state.unreadNotifications,
-        ),
+    return RefreshIndicator(
+      color: const Color(0xFFF15A22),
+      onRefresh: () async {
+        context.read<StudentDashboardBloc>().add(
+              const StudentDashboardLoadRequested(),
+            );
+        await context.read<StudentDashboardBloc>().stream.firstWhere(
+              (s) => s is StudentDashboardLoaded || s is StudentDashboardError,
+            );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
 
-        // Scrollable body with pull-to-refresh
-        Expanded(
-          child: RefreshIndicator(
-            color: const Color(0xFFF15A22),
-            onRefresh: () async {
-              context.read<StudentDashboardBloc>().add(
-                    const StudentDashboardLoadRequested(),
-                  );
-              // Đợi state chuyển sang Loaded/Error
-              await context.read<StudentDashboardBloc>().stream.firstWhere(
-                    (s) =>
-                        s is StudentDashboardLoaded ||
-                        s is StudentDashboardError,
-                  );
-            },
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-
-                  // Stats Strip
-                  StudentStatsStrip(
-                    enrolledCount: state.enrolledCount,
-                    examsTakenCount: state.examsTakenCount,
-                    bestScore: state.bestScore,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Upcoming Exams
-                  UpcomingExamsSection(exams: state.upcomingExams),
-                  const SizedBox(height: 24),
-
-                  // My Subjects
-                  MySubjectsSection(subjects: state.subjects),
-                  const SizedBox(height: 32),
-                ],
-              ),
+            // Stats Strip
+            StudentStatsStrip(
+              enrolledCount: state.enrolledCount,
+              examsTakenCount: state.examsTakenCount,
+              bestScore: state.bestScore,
             ),
-          ),
+            const SizedBox(height: 24),
+
+            // Upcoming Exams
+            UpcomingExamsSection(exams: state.upcomingExams),
+            const SizedBox(height: 24),
+
+            // My Subjects
+            MySubjectsSection(subjects: state.subjects),
+            const SizedBox(height: 32),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -182,39 +199,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildPlaceholder(String title, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: const Color(0xFFF15A22)),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1D3557),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Coming soon!',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF485F84),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Bottom Navigation Bar ────────────────────────────────────────────────
+  // ── Bottom Navigation Bar ──────────────────────────────────────────────────
+  //
+  // Index chuẩn:
+  //   0 → Home     (Dashboard)
+  //   1 → Exams    (ExamListScreen for student)
+  //   2 → Results  (ResultListScreen)
+  //   3 → Profile  (ProfileScreen)
   Widget _buildBottomNav(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FF), // surface
+        color: const Color(0xFFF8F9FF),
         border: const Border(
           top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5),
         ),
@@ -233,51 +228,25 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _BottomNavItem(
-              icon: Icons.home,
+              icon: Icons.home_rounded,
               label: 'Home',
               isActive: _currentIndex == 0,
               onTap: () => setState(() => _currentIndex = 0),
             ),
             _BottomNavItem(
-              icon: Icons.assignment,
+              icon: Icons.assignment_rounded,
               label: 'Exams',
               isActive: _currentIndex == 1,
-              onTap: () {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: const Text('Coming soon!'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-              },
+              onTap: () => setState(() => _currentIndex = 1),
             ),
             _BottomNavItem(
-              icon: Icons.leaderboard,
+              icon: Icons.leaderboard_rounded,
               label: 'Results',
               isActive: _currentIndex == 2,
-              onTap: () {
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    SnackBar(
-                      content: const Text('Coming soon!'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-              },
+              onTap: () => setState(() => _currentIndex = 2),
             ),
             _BottomNavItem(
-              icon: Icons.person,
+              icon: Icons.person_rounded,
               label: 'Profile',
               isActive: _currentIndex == 3,
               onTap: () => setState(() => _currentIndex = 3),
@@ -314,23 +283,23 @@ class _BottomNavItem extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          // Active indicator — position: absolute; top: 0 (theo prototype CSS)
+          // Active indicator line ở trên cùng
           if (isActive)
             Positioned(
               top: 0,
               child: Container(
                 width: 40,
                 height: 3,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF15A22),
-                  borderRadius: const BorderRadius.only(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF15A22),
+                  borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(2),
                     bottomRight: Radius.circular(2),
                   ),
                 ),
               ),
             ),
-          // Nội dung icon + label
+          // Icon + Label
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 4),
             child: Column(

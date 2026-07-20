@@ -1,4 +1,4 @@
-﻿using JWT.DTOs.Subjects;
+using JWT.DTOs.Subjects;
 
 namespace JWT.Services.Contracts
 {
@@ -12,7 +12,13 @@ namespace JWT.Services.Contracts
 
         Task<EnrollmentResponseDto> EnrollSubjectAsync(int subjectId, string? currentUserId, string? currentUserRole);
         Task<List<EnrollmentResponseDto>> GetStudentSubjectsAsync(int studentId, string? currentUserId, string? currentUserRole);
-        Task<List<StudentInSubjectDto>> GetSubjectStudentsAsync(int subjectId,string? currentUserId,string? currentUserRole);
+        Task<List<StudentInSubjectDto>> GetSubjectStudentsAsync(int subjectId, string? currentUserId, string? currentUserRole);
         Task UnenrollSubjectAsync(int subjectId, string? currentUserId, string? currentUserRole);
+
+        // Teacher assignment management
+        Task<TeacherInSubjectDto> AssignTeacherAsync(int subjectId, int teacherId, string? currentUserId, string? currentUserRole);
+        Task UnassignTeacherAsync(int subjectId, int teacherId, string? currentUserId, string? currentUserRole);
+        Task<List<TeacherSubjectResponseDto>> GetTeacherSubjectsAsync(string? currentUserId, string? currentUserRole);
+        Task<List<TeacherInSubjectDto>> GetSubjectTeachersAsync(int subjectId, string? currentUserId, string? currentUserRole);
     }
 }

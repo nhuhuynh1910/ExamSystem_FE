@@ -14,6 +14,7 @@ import 'features/question/domain/question_service.dart';
 
 import 'features/notification/bloc/notification_bloc.dart';
 import 'features/notification/data/notification_repository.dart';
+import 'core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,14 +86,10 @@ class ExamSystemApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-
-      // Font Inter — đồng bộ với fontFamily trong HTML design.
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.light().textTheme,
       ),
-
-      // Scaffold background: #ffffff (background từ HTML).
-      scaffoldBackgroundColor: Colors.white,
+      scaffoldBackgroundColor: AppTheme.lightBg,
     );
   }
 }

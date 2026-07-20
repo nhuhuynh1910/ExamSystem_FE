@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cấu hình bảo mật mạng cho Android (chỉ dùng khi DEV).
+  Cho phép HTTP cleartext tới 10.0.2.2 (= localhost của máy host khi dùng emulator).
+  Tham khảo: https://developer.android.com/training/articles/security-config
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- 10.0.2.2 = địa chỉ localhost của máy host trong Android Emulator -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

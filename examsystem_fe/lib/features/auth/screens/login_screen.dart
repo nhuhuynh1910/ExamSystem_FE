@@ -62,8 +62,20 @@ class _LoginScreenState extends State<LoginScreen> {
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthSuccess) {
-              // Đăng nhập thành công → Điều hướng sang trang Exams chủ
-              context.go(AppRouter.examList);
+              // Đăng nhập thành công → Điều hướng theo Role
+              final role = state.response.role.toLowerCase();
+              final String destination;
+              switch (role) {
+                case 'admin':
+                  destination = AppRouter.featureHub;
+                  break;
+                case 'teacher':
+                  destination = AppRouter.teacherDashboard;
+                  break;
+                default: // student
+                  destination = AppRouter.studentDashboard;
+              }
+              context.go(destination);
             } else if (state is AuthFailure) {
               // Đăng nhập thất bại → Hiển thị lỗi từ Backend thông qua SnackBar
               ScaffoldMessenger.of(context).showSnackBar(

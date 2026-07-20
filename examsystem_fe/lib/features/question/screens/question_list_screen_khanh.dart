@@ -9,6 +9,7 @@ import '../models/question_model_khanh.dart';
 import '../models/subject_model_khanh.dart';
 import 'create_question_screen_khanh.dart';
 import 'update_question_screen_khanh.dart';
+import '../../common/admin_bottom_nav_bar.dart';
 
 class QuestionListScreenKhanh extends StatefulWidget {
   const QuestionListScreenKhanh({super.key});
@@ -253,6 +254,7 @@ class _QuestionListScreenKhanhState
                 ),
               ),
             ),
+            bottomNavigationBar: const AdminBottomNavBar(currentIndex: 3),
             floatingActionButton: FloatingActionButton(
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,

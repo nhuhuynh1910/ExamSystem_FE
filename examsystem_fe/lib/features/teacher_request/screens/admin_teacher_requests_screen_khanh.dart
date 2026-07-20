@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../data/teacher_request_api_khanh.dart';
 import '../models/teacher_request_model_khanh.dart';
+import '../../common/admin_bottom_nav_bar.dart';
 
 class AdminTeacherRequestsScreenKhanh extends StatefulWidget {
   const AdminTeacherRequestsScreenKhanh({super.key});
@@ -800,6 +801,7 @@ class _AdminTeacherRequestsScreenKhanhState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
+      bottomNavigationBar: const AdminBottomNavBar(currentIndex: 0),
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
