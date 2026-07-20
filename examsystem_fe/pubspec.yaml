@@ -42,6 +42,7 @@ dependencies:
   intl: ^0.19.0              # Format date/time cho Profile (Joined date)
   google_sign_in: ^6.2.2     # Đăng nhập/đăng ký bằng tài khoản Google
   image_picker: ^1.2.3
+  file_picker: 10.3.10
 
 dev_dependencies:
   flutter_test:

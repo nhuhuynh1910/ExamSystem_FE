@@ -40,6 +40,13 @@ import '../../features/exam/screens/exam_detail_screen.dart';
 import '../../features/notification/screens/notification_list_screen.dart';
 import '../../features/question/screens/question_list_screen.dart';
 import '../utils/token_storage.dart';
+import '../../features/ranking/screens/ranking_screen_khanh.dart';
+import '../../features/question/screens/question_list_screen_khanh.dart';
+import '../../features/subject/screens/assigned_subject_screen_khanh.dart';
+import '../../features/teacher_request/screens/admin_teacher_requests_screen_khanh.dart';
+import '../../features/teacher_request/screens/available_teacher_subject_screen_khanh.dart';
+import '../../features/teacher_request/screens/my_teacher_requests_screen_khanh.dart';
+
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -89,7 +96,22 @@ class AppRouter {
   static const String profile = '/profile';
 
   /// Màn hình danh sách đề thi (trang chủ sau khi đăng nhập).
+
+class AppRouter {
+  static const String login = '/login';
+  static const String register = '/register';
   static const String examList = '/exams';
+  static const String questionList = '/questions';
+  static const String assignedSubjects = '/assigned-subjects';
+
+  static const String availableTeacherSubjects =
+      '/teacher-request/available-subjects';
+
+  static const String myTeacherRequests =
+      '/teacher-request/my-requests';
+
+  static const String adminTeacherRequests =
+      '/admin/teacher-requests';
 
   /// Màn hình chi tiết một đề thi theo ID.
   static const String examDetailPath = '/exams/:id';
@@ -104,7 +126,12 @@ class AppRouter {
   static const String waitingRoom = '/waiting-room';
 
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
+  static const String examDetailPath = '/exams/:id';
+
   static String examDetail(int id) => '/exams/$id';
+  static const String rankingPath = '/exams/:id/ranking';
+
+  static String ranking(int examId) => '/exams/$examId/ranking';
 
   /// Màn hình Teacher Dashboard.
   static const String teacherDashboard = '/teacher/dashboard';
@@ -129,11 +156,12 @@ class AppRouter {
     // Màn hình đầu tiên: SplashScreen.
     // GoRouter Guard sẽ KHÔNG redirect khi ở /splash (là public route).
     initialLocation: splash,
+  static final GoRouter router = GoRouter(
+    // Mỗi lần khởi động app sẽ bắt đầu tại Login.
+    initialLocation: login,
 
-    // Hàm guard: kiểm tra xác thực trước mỗi lần điều hướng.
     redirect: _guardRedirect,
 
-    // Danh sách tất cả các route của app.
     routes: [
       // ── Route: Splash Screen ──────────────────────────────────────────────
       GoRoute(
@@ -319,6 +347,31 @@ class AppRouter {
               ),
             ],
             child: const StudentDashboardScreen(),
+      GoRoute(
+        path: login,
+        name: 'login',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const _PlaceholderScreen(
+            routeName: 'Login Screen',
+            routePath: '/login',
+            assignee: 'Thành viên phụ trách: Auth Feature',
+          );
+        },
+      ),
+      GoRoute(
+        path: register,
+        name: 'register',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const _PlaceholderScreen(
+            routeName: 'Register Screen',
+            routePath: '/register',
+            assignee: 'Thành viên phụ trách: Auth Feature',
           );
         },
       ),
@@ -346,6 +399,19 @@ class AppRouter {
         },
 
         // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
+      GoRoute(
+        path: examList,
+        name: 'examList',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const _PlaceholderScreen(
+            routeName: 'Exam List Screen',
+            routePath: '/exams',
+            assignee: 'Thành viên phụ trách: Exam Feature',
+          );
+        },
         routes: [
           GoRoute(
             path: ':id',
@@ -355,6 +421,17 @@ class AppRouter {
               return BlocProvider(
                 create: (_) => ExamDetailCubit()..loadDetail(examId),
                 child: ExamDetailScreen(examId: examId),
+            builder: (
+                BuildContext context,
+                GoRouterState state,
+                ) {
+              final examId = state.pathParameters['id'] ?? '';
+
+              return _PlaceholderScreen(
+                routeName: 'Exam Detail Screen (id: $examId)',
+                routePath: '/exams/$examId',
+                assignee:
+                'Thành viên phụ trách: Exam Detail Feature',
               );
             },
             routes: [
@@ -372,6 +449,28 @@ class AppRouter {
                     examName: examName,
                     durationMinutes: duration,
                     endTime: endTime,
+                path: 'ranking',
+                name: 'ranking',
+                builder: (
+                    BuildContext context,
+                    GoRouterState state,
+                    ) {
+                  final examId = int.tryParse(
+                    state.pathParameters['id'] ?? '',
+                  );
+
+                  if (examId == null) {
+                    return const Scaffold(
+                      body: Center(
+                        child: Text(
+                          'Exam ID không hợp lệ.',
+                        ),
+                      ),
+                    );
+                  }
+
+                  return RankingScreenKhanh(
+                    examId: examId,
                   );
                 },
               ),
@@ -395,6 +494,14 @@ class AppRouter {
         name: 'notifications',
         builder: (BuildContext context, GoRouterState state) {
           return const NotificationListScreen();
+      GoRoute(
+        path: questionList,
+        name: 'questionList',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const QuestionListScreenKhanh();
         },
       ),
 
@@ -404,18 +511,66 @@ class AppRouter {
         builder: (BuildContext context, GoRouterState state) {
           final exam = state.extra as ExamModel;
           return WaitingRoomScreen(exam: exam);
+        path: assignedSubjects,
+        name: 'assignedSubjects',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const AssignedSubjectScreenKhanh();
+        },
+      ),
+
+      GoRoute(
+        path: availableTeacherSubjects,
+        name: 'availableTeacherSubjects',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const AvailableTeacherSubjectScreenKhanh();
+        },
+      ),
+
+      GoRoute(
+        path: myTeacherRequests,
+        name: 'myTeacherRequests',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const MyTeacherRequestsScreenKhanh();
+        },
+      ),
+
+      GoRoute(
+        path: adminTeacherRequests,
+        name: 'adminTeacherRequests',
+        builder: (
+            BuildContext context,
+            GoRouterState state,
+            ) {
+          return const AdminTeacherRequestsScreenKhanh();
         },
       ),
     ],
 
     // Callback khi GoRouter gặp lỗi.
     errorBuilder: (BuildContext context, GoRouterState state) {
+    errorBuilder: (
+        BuildContext context,
+        GoRouterState state,
+        ) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Lỗi điều hướng')),
+        appBar: AppBar(
+          title: const Text('Lỗi điều hướng'),
+        ),
         body: Center(
           child: Text(
             'Không tìm thấy trang: ${state.uri.path}',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(
+              fontSize: 16,
+            ),
           ),
         ),
       );
@@ -456,6 +611,29 @@ class AppRouter {
     }
 
     // Mọi trường hợp còn lại → điều hướng bình thường.
+  /*
+   * Protect private routes.
+   *
+   * The app is allowed to stay on Login even when an old token exists.
+   * Navigation after successful login must be handled in LoginScreenKhanh.
+   */
+  static Future<String?> _guardRedirect(
+      BuildContext context,
+      GoRouterState state,
+      ) async {
+    final bool isLoggedIn =
+    await StorageManager.isLoggedIn();
+
+    final bool isPublicRoute =
+        state.matchedLocation == login ||
+            state.matchedLocation == register;
+
+    // Chưa đăng nhập nhưng cố vào trang bên trong.
+    if (!isLoggedIn && !isPublicRoute) {
+      return login;
+    }
+
+    // Không tự động bỏ qua Login dù token cũ còn tồn tại.
     return null;
   }
 }
@@ -486,7 +664,7 @@ class _PlaceholderScreen extends StatelessWidget {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -498,17 +676,23 @@ class _PlaceholderScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 routeName,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Route: $routePath',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(
+                  color: Colors.grey[600],
+                ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -518,12 +702,16 @@ class _PlaceholderScreen extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.amber[50],
-                  border: Border.all(color: Colors.amber),
+                  border: Border.all(
+                    color: Colors.amber,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '📌 $assignee\nsẽ implement màn hình này.',
-                  style: const TextStyle(color: Colors.black87),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -535,3 +723,4 @@ class _PlaceholderScreen extends StatelessWidget {
   }
 }
 
+}
