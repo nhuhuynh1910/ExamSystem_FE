@@ -51,6 +51,17 @@ class ApiConstants {
   // Đồng bộ với: Controllers/ExamsController.cs → [Route("api/exams")]
   static const String exams        = '/exams';         // GET (list), POST (create)
   static const String teacherExams = '/teacher/exams'; // GET (teacher only)
+  
+  static String examById(int id) => '/exams/$id';
+  static String examCheckAccess(int id) => '/exams/$id/check-access';
+  static String examStart(int id) => '/exams/$id/start';
+  static String examQuestions(int id) => '/exams/$id/questions';
+  static String examResult(int id) => '/exams/$id/result';
+
+  // ─── Attempts (/api/attempts/...) ───────────────────────────────────────────
+  static String attemptDetails(int id) => '/attempts/$id';
+  static String attemptAnswers(int id) => '/attempts/$id/answers';
+  static String attemptSubmit(int id) => '/attempts/$id/submit';
 
   // ─── Subjects (/api/subjects/...) ────────────────────────────────────────────
   // Đồng bộ với: Controllers/SubjectsController.cs
