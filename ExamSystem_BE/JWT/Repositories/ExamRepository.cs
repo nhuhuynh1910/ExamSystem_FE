@@ -222,6 +222,39 @@ namespace JWT.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task RebalanceExamQuestionScoresAsync(int examId, decimal totalScore)
+        {
+            var examQuestions = await _context.ExamQuestions
+                .Include(eq => eq.Question)
+                .Where(eq =>
+                    eq.ExamId == examId &&
+                    eq.Question != null &&
+                    !eq.Question.IsDeleted)
+                .OrderBy(eq => eq.QuestionOrder)
+                .ThenBy(eq => eq.ExamQuestionId)
+                .ToListAsync();
+
+            if (examQuestions.Count == 0)
+            {
+                return;
+            }
+
+            var baseScore = Math.Round(totalScore / examQuestions.Count, 2, MidpointRounding.AwayFromZero);
+            var assignedScore = 0m;
+
+            for (var index = 0; index < examQuestions.Count; index++)
+            {
+                var score = index == examQuestions.Count - 1
+                    ? totalScore - assignedScore
+                    : baseScore;
+
+                examQuestions[index].Score = score;
+                assignedScore += score;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<ExamQuestionResponseDto>> GetExamQuestionsAsync(int examId)
         {
             return await _context.ExamQuestions
@@ -270,7 +303,6 @@ namespace JWT.Repositories
                 DurationMinutes = e.DurationMinutes,
                 StartTime = e.StartTime,
                 EndTime = e.EndTime,
-                TotalScore = e.TotalScore,
                 PassingScore = e.PassingScore,
                 MaxAttempts = e.MaxAttempts,
                 IsPrivate = e.IsPrivate,
