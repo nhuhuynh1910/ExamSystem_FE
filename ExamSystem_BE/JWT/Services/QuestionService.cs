@@ -104,7 +104,7 @@ namespace JWT.Services
                 Content = request.Content.Trim(),
                 QuestionType = Normalize(request.QuestionType, ValidQuestionTypes),
                 Difficulty = Normalize(request.Difficulty, ValidDifficulties),
-                Score = request.Score,
+                Score = request.Score ?? 0,
                 Explanation = request.Explanation,
                 Status = "Draft",
                 IsDeleted = false,
@@ -147,7 +147,7 @@ namespace JWT.Services
             question.Content = request.Content.Trim();
             question.QuestionType = Normalize(request.QuestionType, ValidQuestionTypes);
             question.Difficulty = Normalize(request.Difficulty, ValidDifficulties);
-            question.Score = request.Score;
+            question.Score = request.Score ?? 0;
             question.Explanation = request.Explanation;
             question.UpdatedBy = teacherId;
             question.UpdatedAt = DateTime.UtcNow;
@@ -394,7 +394,7 @@ namespace JWT.Services
             string content,
             string questionType,
             string difficulty,
-            decimal score)
+            decimal? score)
         {
             if (string.IsNullOrWhiteSpace(content))
             {
@@ -411,9 +411,9 @@ namespace JWT.Services
                 throw new Exception("Difficulty is invalid.");
             }
 
-            if (score <= 0)
+            if (score.HasValue && score.Value < 0)
             {
-                throw new Exception("Score must be greater than zero.");
+                throw new Exception("Score must be equal to or greater than zero.");
             }
         }
 

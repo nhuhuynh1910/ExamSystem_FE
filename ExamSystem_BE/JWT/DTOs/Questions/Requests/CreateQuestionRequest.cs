@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace JWT.DTOs.Questions.Requests
 {
@@ -18,8 +18,8 @@ namespace JWT.DTOs.Questions.Requests
         [MaxLength(20)]
         public string Difficulty { get; set; } = "Easy";
 
-        [Range(0.01, 999)]
-        public decimal Score { get; set; }
+        [Range(0, 999)]
+        public decimal? Score { get; set; }
 
         public string? Explanation { get; set; }
     }
