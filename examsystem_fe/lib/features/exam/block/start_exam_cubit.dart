@@ -116,10 +116,20 @@ class StartExamCubit extends Cubit<StartExamState> {
 
   String _translateServerMessage(String msg) {
     final lowerMsg = msg.toLowerCase();
+    if ((lowerMsg.contains('thời gian') || lowerMsg.contains('thoi gian')) &&
+        (lowerMsg.contains('chưa đến') ||
+            lowerMsg.contains('chua den') ||
+            lowerMsg.contains('chưa tới') ||
+            lowerMsg.contains('chua toi'))) {
+      return 'The exam has not started yet.';
+    }
     if (lowerMsg.contains('thời gian') || lowerMsg.contains('thoi gian')) {
       return 'The exam period has already ended or is not active.';
     }
-    if (lowerMsg.contains('chưa enroll') || lowerMsg.contains('chua enroll') || lowerMsg.contains('chưa') || lowerMsg.contains('chua')) {
+    if (lowerMsg.contains('chưa enroll') ||
+        lowerMsg.contains('chua enroll') ||
+        lowerMsg.contains('chưa') ||
+        lowerMsg.contains('chua')) {
       return 'You have not enrolled in the subject of this exam.';
     }
     if (lowerMsg.contains('quá') || lowerMsg.contains('qua') || lowerMsg.contains('lượt') || lowerMsg.contains('luot')) {
