@@ -49,7 +49,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           // 2: Exams (placeholder / coming soon)
           _buildHomeBody(context),
           // 3: Profile Screen embedded
-          const ProfileScreen(),
+          const ProfileScreen(hideBottomNav: true),
         ],
       ),
       // Bottom Navigation Bar

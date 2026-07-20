@@ -74,7 +74,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 // 2: Results — dùng StudentResultsBody (không có Scaffold)
                 const StudentResultsBody(),
                 // 3: Profile — ProfileScreen có header gradient riêng
-                const ProfileScreen(),
+                const ProfileScreen(hideBottomNav: true),
               ],
             ),
           ),

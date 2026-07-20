@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/storage_manager.dart';
 import '../../core/network/dio_client.dart';
-import 'admin_bottom_nav_bar.dart';
 
 /// FeatureHubScreen — Trang trung tâm Admin Dashboard.
 class FeatureHubScreen extends StatefulWidget {
@@ -434,7 +434,7 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
         ],
       ),
       // ── Custom Bottom Nav Bar ───────────────────────────────────────────────
-      bottomNavigationBar: const AdminBottomNavBar(currentIndex: 0),
+      bottomNavigationBar: _buildHubBottomNav(),
     );
   }
 
@@ -600,5 +600,96 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
     );
   }
 
+  Widget _buildHubBottomNav() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8F9FF),
+        border: Border(top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5)),
+      ),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _HubBottomNavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              isActive: true,
+              onTap: () {},
+            ),
+            _HubBottomNavItem(
+              icon: Icons.quiz_rounded,
+              label: 'Questions',
+              isActive: false,
+              onTap: () => context.go(AppRouter.questionList),
+            ),
+            _HubBottomNavItem(
+              icon: Icons.assignment_rounded,
+              label: 'Exams',
+              isActive: false,
+              onTap: () => context.go(AppRouter.examList),
+            ),
+            _HubBottomNavItem(
+              icon: Icons.person_rounded,
+              label: 'Profile',
+              isActive: false,
+              onTap: () => context.go(AppRouter.profile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
+}
+
+class _HubBottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _HubBottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isActive)
+            Container(
+              width: 48,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF15A22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )
+          else
+            const SizedBox(height: 7),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

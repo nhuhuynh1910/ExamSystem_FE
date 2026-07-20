@@ -43,45 +43,39 @@ import 'widgets/profile_sign_out_card.dart';
 // BlocConsumer cho ProfileBloc + BlocListener cho AuthBloc (logout).
 // ════════════════════════════════════════════════════════════════════════════
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final bool hideBottomNav;
+
+  const ProfileScreen({super.key, this.hideBottomNav = false});
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, authState) {
-        // Khi logout thành công → redirect về onboarding
         if (authState is AuthInitial) {
           context.go(AppRouter.onboarding);
         }
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
-        body: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: _onProfileStateChanged,
-          builder: (context, state) {
-            if (state is ProfileLoading) {
-              return _buildLoading();
-            }
-            if (state is ProfileFailure) {
-              return _buildError(context, state.message);
-            }
+      child: BlocConsumer<ProfileBloc, ProfileState>(
+        listener: _onProfileStateChanged,
+        builder: (context, state) {
+          final profile = _getProfileFromState(state);
+          final isUpdating = state is ProfileUpdating;
 
-            // Lấy profile từ bất kỳ state nào có profile
-            final profile = _getProfileFromState(state);
-            if (profile == null) {
-              return _buildLoading();
-            }
-
-            final isUpdating = state is ProfileUpdating;
-
-            return Stack(
-              children: [
-                _buildContent(context, profile),
-                if (isUpdating) _buildUpdatingOverlay(),
-              ],
-            );
-          },
-        ),
+          return Scaffold(
+            backgroundColor: const Color(0xFFFAFAFA),
+            body: profile == null
+                ? (state is ProfileFailure ? _buildError(context, state.message) : _buildLoading())
+                : Stack(
+                    children: [
+                      _buildContent(context, profile),
+                      if (isUpdating) _buildUpdatingOverlay(),
+                    ],
+                  ),
+            bottomNavigationBar: (!hideBottomNav && profile != null)
+                ? _buildProfileNavBar(context, profile.role)
+                : null,
+          );
+        },
       ),
     );
   }
@@ -421,5 +415,106 @@ class ProfileScreen extends StatelessWidget {
           duration: const Duration(seconds: 3),
         ),
       );
+  }
+
+  Widget _buildProfileNavBar(BuildContext context, String role) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8F9FF),
+        border: Border(top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5)),
+      ),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _ProfileBottomNavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              isActive: false,
+              onTap: () {
+                final r = role.toLowerCase();
+                if (r == 'teacher') {
+                  context.go(AppRouter.teacherDashboard);
+                } else if (r == 'student') {
+                  context.go(AppRouter.studentDashboard);
+                } else {
+                  context.go(AppRouter.featureHub);
+                }
+              },
+            ),
+            _ProfileBottomNavItem(
+              icon: Icons.quiz_rounded,
+              label: 'Questions',
+              isActive: false,
+              onTap: () => context.go(AppRouter.questionList),
+            ),
+            _ProfileBottomNavItem(
+              icon: Icons.assignment_rounded,
+              label: 'Exams',
+              isActive: false,
+              onTap: () => context.go(AppRouter.examList),
+            ),
+            _ProfileBottomNavItem(
+              icon: Icons.person_rounded,
+              label: 'Profile',
+              isActive: true,
+              onTap: () {},
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileBottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _ProfileBottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isActive)
+            Container(
+              width: 48,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF15A22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )
+          else
+            const SizedBox(height: 7),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

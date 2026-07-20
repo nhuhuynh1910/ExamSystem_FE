@@ -219,6 +219,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
               child: const Icon(Icons.add, color: Colors.white),
             )
           : null,
+      bottomNavigationBar: _buildQuestionNavBar(),
     );
   }
 
@@ -414,6 +415,100 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
             },
           ),
           const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuestionNavBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8F9FF),
+        border: Border(top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5)),
+      ),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _QNavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              isActive: false,
+              onTap: () {
+                final role = _userRole?.toLowerCase();
+                if (role == 'teacher') {
+                  context.go(AppRouter.teacherDashboard);
+                } else if (role == 'student') {
+                  context.go(AppRouter.studentDashboard);
+                } else {
+                  context.go(AppRouter.featureHub);
+                }
+              },
+            ),
+            _QNavItem(
+              icon: Icons.quiz_rounded,
+              label: 'Questions',
+              isActive: true,
+              onTap: () {},
+            ),
+            _QNavItem(
+              icon: Icons.assignment_rounded,
+              label: 'Exams',
+              isActive: false,
+              onTap: () => context.go(AppRouter.examList),
+            ),
+            _QNavItem(
+              icon: Icons.person_rounded,
+              label: 'Profile',
+              isActive: false,
+              onTap: () => context.go(AppRouter.profile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _QNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isActive)
+            Container(
+              width: 48, height: 3,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF15A22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )
+          else
+            const SizedBox(height: 7),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(label, style: TextStyle(color: color, fontSize: 12,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w500)),
         ],
       ),
     );

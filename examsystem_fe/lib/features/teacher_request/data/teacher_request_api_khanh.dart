@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 
+import '../../../core/network/api_constants.dart';
 import '../../../core/network/dio_client.dart';
 import '../models/available_subject_request_model_khanh.dart';
 import '../models/teacher_request_model_khanh.dart';
@@ -42,7 +43,7 @@ class TeacherRequestApiKhanh {
     });
 
     final response = await DioClient.instance.post(
-      '/teacher-requests',
+      ApiConstants.teacherRequests,
       data: formData,
     );
 

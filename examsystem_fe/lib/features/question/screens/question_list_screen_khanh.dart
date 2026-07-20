@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-// import '../../../core/utils/storage_manager.dart';
+import '../../../core/routes/app_router.dart';
 import '../bloc/question_cubit_khanh.dart';
 import '../data/question_api_khanh.dart';
 import '../domain/question_repository_khanh.dart';
@@ -9,7 +10,6 @@ import '../models/question_model_khanh.dart';
 import '../models/subject_model_khanh.dart';
 import 'create_question_screen_khanh.dart';
 import 'update_question_screen_khanh.dart';
-import '../../common/admin_bottom_nav_bar.dart';
 
 class QuestionListScreenKhanh extends StatefulWidget {
   const QuestionListScreenKhanh({super.key});
@@ -254,7 +254,7 @@ class _QuestionListScreenKhanhState
                 ),
               ),
             ),
-            bottomNavigationBar: const AdminBottomNavBar(currentIndex: 3),
+            bottomNavigationBar: _buildQuestionBottomNav(blocContext),
             floatingActionButton: FloatingActionButton(
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,
@@ -841,6 +841,98 @@ class _ActionButtonKhanh extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+Widget _buildQuestionBottomNav(BuildContext context) {
+  return Container(
+    decoration: const BoxDecoration(
+      color: Color(0xFFF8F9FF),
+      border: Border(top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5)),
+    ),
+    padding: const EdgeInsets.only(top: 8, bottom: 8),
+    child: SafeArea(
+      top: false,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _QuestionBottomNavItem(
+            icon: Icons.home_rounded,
+            label: 'Home',
+            isActive: false,
+            onTap: () => context.go(AppRouter.featureHub),
+          ),
+          _QuestionBottomNavItem(
+            icon: Icons.quiz_rounded,
+            label: 'Questions',
+            isActive: true,
+            onTap: () {},
+          ),
+          _QuestionBottomNavItem(
+            icon: Icons.assignment_rounded,
+            label: 'Exams',
+            isActive: false,
+            onTap: () => context.go(AppRouter.examList),
+          ),
+          _QuestionBottomNavItem(
+            icon: Icons.person_rounded,
+            label: 'Profile',
+            isActive: false,
+            onTap: () => context.go(AppRouter.profile),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _QuestionBottomNavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _QuestionBottomNavItem({
+    required this.icon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isActive)
+            Container(
+              width: 48,
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF15A22),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            )
+          else
+            const SizedBox(height: 7),
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -138,15 +138,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => MultiBlocProvider(
-            providers: [
-              BlocProvider(create: (_) => ExamDetailCubit()..loadDetail(exam.examId)),
-              BlocProvider(create: (_) => StartExamCubit()),
-            ],
-            child: ExamDetailScreen(examId: exam.examId),
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => UpdateExamScreen(exam: exam)),
       ).then((_) => _loadExams());
     }
   }

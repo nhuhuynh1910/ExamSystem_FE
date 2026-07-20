@@ -550,12 +550,18 @@
                 surfaceTintColor: Colors.white,
                 foregroundColor: textColor,
                 leading: IconButton(
-                  tooltip: 'Menu',
-                  onPressed: () {},
-                        icon: const Icon(
-                    Icons.menu_rounded,
+                  tooltip: 'Back',
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/profile');
+                    }
+                  },
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
                     color: primaryColor,
-                        ),
+                  ),
                 ),
                 titleSpacing: 0,
                 title: const Text(

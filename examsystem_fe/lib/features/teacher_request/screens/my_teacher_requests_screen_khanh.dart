@@ -665,6 +665,20 @@ child: FutureBuilder<List<TeacherRequestModelKhanh>>(
 },
 ),
 ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primaryColor,
+        onPressed: () {
+          context.push('/teacher-request').then((_) => _reload());
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'New Request',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
     );
   }
 }
