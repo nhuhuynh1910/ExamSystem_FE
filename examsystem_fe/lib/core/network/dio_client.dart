@@ -1,115 +1,186 @@
-  import 'dart:io';
-  import 'package:dio/dio.dart';
-  import 'package:dio/io.dart';
-  import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
-  import '../utils/storage_manager.dart';
-  import 'api_constants.dart';
+import '../utils/storage_manager.dart';
+import 'api_constants.dart';
 
-  /// ════════════════════════════════════════════════════════════════════════════
-  /// DioClient — HTTP client dùng chung cho toàn bộ app.
-  /// ════════════════════════════════════════════════════════════════════════════
-  class DioClient {
-    static Dio? _dio;
+/// ════════════════════════════════════════════════════════════════════════════
+/// DioClient — HTTP client dùng chung cho toàn bộ app.
+///
+/// Cách dùng trong bất kỳ repository nào:
+///   final dio = DioClient.instance;
+///   final response = await dio.get(ApiConstants.exams);
+///
+/// Tính năng tích hợp sẵn:
+///   1. Base URL động theo nền tảng (Android Emulator vs các nền tảng khác).
+///   2. Tự động đính kèm "Authorization: Bearer <accessToken>" vào mọi request.
+///   3. Tự động refresh token một lần khi BE trả về 401 (Unauthorized).
+///   4. LogInterceptor đầy đủ (chỉ bật khi chạy debug mode).
+/// ════════════════════════════════════════════════════════════════════════════
+class DioClient {
+  // ── Singleton: chỉ tạo một instance Dio duy nhất trong suốt vòng đời app ──
+  static Dio? _dio;
 
-    static Dio get instance {
-      _dio ??= _createDio();
-      return _dio!;
-    }
+  /// Truy cập instance Dio từ bất kỳ đâu trong app.
+  static Dio get instance {
+    _dio ??= _createDio();
+    return _dio!;
+  }
 
-    static void resetInstance() {
-      _dio = null;
-    }
+  /// Giải phóng instance cũ (gọi khi cần reset, ví dụ sau khi logout).
+  static void resetInstance() {
+    _dio = null;
+  }
 
-    static Dio _createDio() {
-      final dio = Dio(
-        BaseOptions(
-          baseUrl: _resolveBaseUrl(),
-          connectTimeout: const Duration(seconds: 15),
-          receiveTimeout: const Duration(seconds: 30),
-          headers: {
-            'Accept': 'application/json',
-          },
+  // ── Tạo và cấu hình instance Dio ──────────────────────────────────────────
+  static Dio _createDio() {
+    final dio = Dio(
+      BaseOptions(
+        // Base URL động:
+        //   - Android Emulator dùng 10.0.2.2 để trỏ về localhost của máy host.
+        //   - iOS Simulator / Web / Desktop dùng localhost trực tiếp.
+        baseUrl: _resolveBaseUrl(),
+
+        // Timeout kết nối: 15 giây.
+        connectTimeout: const Duration(seconds: 15),
+
+        // Timeout nhận dữ liệu: 30 giây (cho phép upload/download file lớn hơn).
+        receiveTimeout: const Duration(seconds: 30),
+
+        // Header mặc định cho mọi request JSON.
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // Thêm các interceptor theo thứ tự:
+    // 1. Interceptor xác thực (gắn token + tự động refresh).
+    dio.interceptors.add(_buildAuthInterceptor(dio));
+
+    // 2. LogInterceptor: chỉ bật trong debug mode để không làm lộ thông tin nhạy cảm ở production.
+    if (kDebugMode) {
+      dio.interceptors.add(
+        LogInterceptor(
+          // In đầy đủ thông tin request và response để debug.
+          request: true,
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: true,
+          responseBody: true,
+          error: true,
+          // Dùng print mặc định của Dio (hiển thị trong console Flutter).
+          logPrint: (object) => debugPrint('[DioClient] $object'),
         ),
       );
-
-      dio.interceptors.add(_buildAuthInterceptor(dio));
-
-      // Bỏ qua chứng chỉ SSL cho Localhost/Emulator (chỉ bật trong Debug mode và KHÔNG phải Web)
-      if (kDebugMode && !kIsWeb) {
-        dio.httpClientAdapter = IOHttpClientAdapter(
-          createHttpClient: () {
-            final client = HttpClient();
-            client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
-            return client;
-          },
-        );
-      }
-
-      if (kDebugMode) {
-        dio.interceptors.add(
-          LogInterceptor(
-            request: true,
-            requestHeader: true,
-            requestBody: true,
-            responseHeader: true,
-            responseBody: true,
-            error: true,
-            logPrint: (object) => debugPrint('[DioClient] $object'),
-          ),
-        );
-      }
-
-      return dio;
     }
 
-    static String _resolveBaseUrl() {
-      if (defaultTargetPlatform == TargetPlatform.android && !kIsWeb) {
-        return 'https://10.0.2.2:7004/api';
-      }
-      return 'https://localhost:7004/api';
-    }
-
-    static InterceptorsWrapper _buildAuthInterceptor(Dio dio) {
-      return InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final accessToken = await StorageManager.getAccessToken();
-          if (accessToken != null && accessToken.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $accessToken';
-          }
-          return handler.next(options);
-        },
-        onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
-            debugPrint('[DioClient] Nhận 401 — thử refresh token...');
-            final refreshToken = await StorageManager.getRefreshToken();
-
-            if (refreshToken == null || refreshToken.isEmpty) {
-              await StorageManager.clearAll();
-              return handler.next(error);
-            }
-
-            try {
-              final refreshDio = Dio(BaseOptions(baseUrl: _resolveBaseUrl()));
-              final refreshResponse = await refreshDio.post(
-                ApiConstants.refreshToken,
-                data: {'refreshToken': refreshToken},
-              );
-
-              final newAccessToken = refreshResponse.data['accessToken'] as String? ?? '';
-              final newRefreshToken = refreshResponse.data['refreshToken'] as String? ?? '';
-
-              await StorageManager.saveTokens(accessToken: newAccessToken, refreshToken: newRefreshToken);
-              error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-              final retryResponse = await dio.fetch(error.requestOptions);
-              return handler.resolve(retryResponse);
-            } catch (refreshError) {
-              await StorageManager.clearAll();
-              return handler.next(error);
-            }
-          }
-          return handler.next(error);
-        },
-      );
-    }
+    return dio;
   }
+
+  // ── Xác định Base URL theo nền tảng ───────────────────────────────────────
+  /// BE chạy tại port 5122. Tất cả endpoint đều có tiền tố `/api/`.
+  /// Ví dụ:  POST http://10.0.2.2:5122/api/auth/login
+  ///         GET  http://10.0.2.2:5122/api/exams
+  static String _resolveBaseUrl() {
+    // defaultTargetPlatform là Android → đang chạy trên Android Emulator.
+    // Android Emulator không thể dùng "localhost" vì nó là localhost của chính emulator.
+    // Phải dùng 10.0.2.2 để trỏ về máy host.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:5122/api';
+    }
+
+    // iOS Simulator, macOS Desktop, Windows Desktop, Web → dùng localhost.
+    return 'http://localhost:5122/api';
+  }
+
+  // ── Xây dựng Interceptor xác thực ─────────────────────────────────────────
+  /// Interceptor này thực hiện 2 nhiệm vụ:
+  ///   A. onRequest  → đọc accessToken từ StorageManager và gắn vào header.
+  ///   B. onError    → nếu nhận 401, thử refresh token một lần rồi retry request.
+  static InterceptorsWrapper _buildAuthInterceptor(Dio dio) {
+    return InterceptorsWrapper(
+      // ── A. Trước mỗi request: gắn Bearer token ──────────────────────────
+      onRequest: (RequestOptions options, RequestInterceptorHandler handler) async {
+        // Đọc accessToken đã lưu trong SharedPreferences thông qua StorageManager.
+        final accessToken = await StorageManager.getAccessToken();
+
+        if (accessToken != null && accessToken.isNotEmpty) {
+          // Gắn header xác thực theo chuẩn Bearer JWT mà BE yêu cầu.
+          // BE kiểm tra: Authorization: Bearer <accessToken>
+          options.headers['Authorization'] = 'Bearer $accessToken';
+        }
+
+        // Cho phép request tiếp tục.
+        return handler.next(options);
+      },
+
+      // ── B. Khi nhận lỗi: xử lý 401 Unauthorized ─────────────────────────
+      onError: (DioException error, ErrorInterceptorHandler handler) async {
+        // Chỉ xử lý lỗi 401 (token hết hạn).
+        if (error.response?.statusCode == 401) {
+          debugPrint('[DioClient] Nhận 401 — thử refresh token...');
+
+          // Lấy refreshToken từ bộ nhớ cục bộ.
+          final refreshToken = await StorageManager.getRefreshToken();
+
+          // Nếu không có refreshToken → không thể làm gì, trả lỗi về.
+          if (refreshToken == null || refreshToken.isEmpty) {
+            debugPrint('[DioClient] Không có refreshToken — yêu cầu đăng nhập lại.');
+            await StorageManager.clearAll(); // Xóa dữ liệu cũ.
+            return handler.next(error);
+          }
+
+          try {
+            // Tạo một Dio riêng để gọi API refresh token (không dùng Dio chính
+            // để tránh vòng lặp interceptor vô tận).
+            final refreshDio = Dio(
+              BaseOptions(
+                baseUrl: _resolveBaseUrl(),
+                connectTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 15),
+              ),
+            );
+
+            // Gọi endpoint refresh token của BE.
+            // BE: POST /api/auth/refresh-token
+            // Body: { "refreshToken": "<refreshToken>" }
+            final refreshResponse = await refreshDio.post(
+              ApiConstants.refreshToken,
+              data: {'refreshToken': refreshToken},
+            );
+
+            // BE trả về JSON dạng camelCase (do .NET mặc định serialize PascalCase → camelCase):
+            // { "accessToken": "...", "refreshToken": "..." }
+            final newAccessToken  = refreshResponse.data['accessToken']  as String? ?? '';
+            final newRefreshToken = refreshResponse.data['refreshToken'] as String? ?? '';
+
+            // Lưu cặp token mới vào bộ nhớ cục bộ.
+            await StorageManager.saveTokens(
+              accessToken:  newAccessToken,
+              refreshToken: newRefreshToken,
+            );
+
+            debugPrint('[DioClient] Refresh token thành công — retry request gốc.');
+
+            // Cập nhật header của request gốc với token mới.
+            error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+
+            // Retry lại request gốc đã thất bại.
+            final retryResponse = await dio.fetch(error.requestOptions);
+            return handler.resolve(retryResponse);
+          } on DioException catch (refreshError) {
+            // Refresh thất bại (token hết hạn hoặc đã bị thu hồi) → buộc logout.
+            debugPrint('[DioClient] Refresh token thất bại: ${refreshError.message}');
+            await StorageManager.clearAll(); // Xóa toàn bộ dữ liệu auth.
+            return handler.next(error); // Trả lỗi 401 về cho UI xử lý.
+          }
+        }
+
+        // Với các lỗi khác (400, 403, 404, 500...) → trả thẳng về.
+        return handler.next(error);
+      },
+    );
+  }
+}

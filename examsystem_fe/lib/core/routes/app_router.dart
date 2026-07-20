@@ -2,14 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/utils/storage_manager.dart';
-import '../../features/attempt/screens/waiting_room_screen.dart';
-import '../../features/auth/screens/login_screen.dart'; 
-import '../../features/exam/models/exam_model.dart';
-import '../../features/exam/screens/exam_list_screen.dart'; 
-import '../../features/exam/screens/exam_detail_screen.dart'; 
-import '../../features/notification/screens/notification_list_screen.dart';
-import '../../features/question/screens/question_list_screen.dart';
-import '../utils/token_storage.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // AppRouter — Hệ thống điều hướng tập trung của toàn bộ app.
@@ -41,15 +33,6 @@ class AppRouter {
   /// Dùng: context.go('/exams/123') hoặc context.go(AppRouter.examDetail(123))
   static const String examDetailPath = '/exams/:id';
 
-  /// Màn hình ngân hàng câu hỏi.
-  static const String questionBank = '/questions';
-
-  /// Màn hình thông báo.
-  static const String notifications = '/notifications';
-
-  /// Màn hình phòng chờ thi.
-  static const String waitingRoom = '/waiting-room';
-
   /// Helper tạo đường dẫn chi tiết đề thi với ID cụ thể.
   static String examDetail(int id) => '/exams/$id';
 
@@ -65,12 +48,16 @@ class AppRouter {
     // Danh sách tất cả các route của app.
     routes: [
       // ── Route: Đăng nhập ─────────────────────────────────────────────────
-      // CẬP NHẬT: Kết nối LoginScreen thật
+      // TODO: Thành viên phụ trách tính năng Auth sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: login,
         name: 'login',
         builder: (BuildContext context, GoRouterState state) {
-          return const LoginScreen();
+          return const _PlaceholderScreen(
+            routeName: 'Login Screen',
+            routePath: '/login',
+            assignee: 'Thành viên phụ trách: Auth Feature',
+          );
         },
       ),
 
@@ -89,55 +76,35 @@ class AppRouter {
       ),
 
       // ── Route: Danh sách đề thi (trang chủ) ─────────────────────────────
-      // CẬP NHẬT: Kết nối ExamListScreen thật
+      // TODO: Thành viên phụ trách tính năng Exam sẽ đè màn hình thật vào đây sau.
       GoRoute(
         path: examList,
         name: 'examList',
         builder: (BuildContext context, GoRouterState state) {
-          return const ExamListScreen();
+          return const _PlaceholderScreen(
+            routeName: 'Exam List Screen',
+            routePath: '/exams',
+            assignee: 'Thành viên phụ trách: Exam Feature',
+          );
         },
 
         // ── Sub-route: Chi tiết đề thi ──────────────────────────────────
-        // CẬP NHẬT: Kết nối ExamDetailScreen thật
+        // TODO: Thành viên phụ trách tính năng Exam Detail sẽ đè màn hình thật vào đây sau.
         routes: [
           GoRoute(
             path: ':id', // Đường dẫn đầy đủ: /exams/:id
             name: 'examDetail',
             builder: (BuildContext context, GoRouterState state) {
-              // Lấy examId từ path parameter và chuyển sang kiểu int
-              final idStr = state.pathParameters['id'] ?? '0';
-              final examId = int.tryParse(idStr) ?? 0;
-              return ExamDetailScreen(examId: examId);
+              // Lấy examId từ path parameter.
+              final examId = state.pathParameters['id'] ?? '';
+              return _PlaceholderScreen(
+                routeName: 'Exam Detail Screen (id: $examId)',
+                routePath: '/exams/$examId',
+                assignee: 'Thành viên phụ trách: Exam Detail Feature',
+              );
             },
           ),
         ],
-      ),
-
-      // ── Route: Ngân hàng câu hỏi ──────────────────────────────────────────
-      GoRoute(
-        path: questionBank,
-        name: 'questionBank',
-        builder: (BuildContext context, GoRouterState state) {
-          return const QuestionListScreen();
-        },
-      ),
-
-      // ── Route: Thông báo ──────────────────────────────────────────────────
-      GoRoute(
-        path: notifications,
-        name: 'notifications',
-        builder: (BuildContext context, GoRouterState state) {
-          return const NotificationListScreen();
-        },
-      ),
-
-      GoRoute(
-        path: waitingRoom,
-        name: 'waitingRoom',
-        builder: (BuildContext context, GoRouterState state) {
-          final exam = state.extra as ExamModel;
-          return WaitingRoomScreen(exam: exam);
-        },
       ),
     ],
 
@@ -212,7 +179,7 @@ class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({
     required this.routeName,
     required this.routePath,
-    this.assignee = "N/A",
+    required this.assignee,
   });
 
   @override
