@@ -53,9 +53,9 @@ class QuestionTile extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
                     children: [
-                      Icon(opt.isCorrect ? Icons.check_circle : Icons.circle_outlined, size: 16, color: opt.isCorrect ? Colors.green : Colors.grey[300]),
+                      Icon(opt.isCorrect == true ? Icons.check_circle : Icons.circle_outlined, size: 16, color: opt.isCorrect == true ? Colors.green : Colors.grey[300]),
                       const SizedBox(width: 12),
-                      Expanded(child: Text(opt.optionText, style: TextStyle(fontSize: 13, color: opt.isCorrect ? Colors.green[700] : Colors.black87))),
+                      Expanded(child: Text(opt.optionText, style: TextStyle(fontSize: 13, color: opt.isCorrect == true ? Colors.green[700] : Colors.black87))),
                     ],
                   ),
                 )),

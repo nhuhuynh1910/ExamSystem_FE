@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../bloc/teacher_request_cubit_khanh.dart';
 import '../data/teacher_request_api_khanh.dart';
+import '../domain/teacher_request_repository_khanh.dart';
 import '../models/teacher_request_model_khanh.dart';
 
 class MyTeacherRequestsScreenKhanh extends StatefulWidget {
@@ -21,28 +24,14 @@ class _MyTeacherRequestsScreenKhanhState
   static const Color backgroundColor = Color(0xfff7f8fc);
   static const Color darkColor = Color(0xff183153);
 
-  late Future<List<TeacherRequestModelKhanh>> _future;
-
   @override
   void initState() {
     super.initState();
-    _future = TeacherRequestApiKhanh().getMyRequests();
-  }
-
-  /* Reload requests from server. */
-  Future<void> _reload() async {
-    final newFuture = TeacherRequestApiKhanh().getMyRequests();
-
-    setState(() {
-      _future = newFuture;
-    });
-
-    await newFuture;
   }
 
   List<TeacherRequestModelKhanh> _filterRequests(
-      List<TeacherRequestModelKhanh> requests,
-      ) {
+    List<TeacherRequestModelKhanh> requests,
+  ) {
     final keyword = _searchController.text.trim().toLowerCase();
 
     if (keyword.isEmpty) {
@@ -66,13 +55,10 @@ class _MyTeacherRequestsScreenKhanhState
     switch (status.toLowerCase()) {
       case 'approved':
         return const Color(0xff27a94f);
-
       case 'rejected':
         return const Color(0xffe64b4b);
-
       case 'cancelled':
         return Colors.grey;
-
       default:
         return const Color(0xffff8a00);
     }
@@ -82,13 +68,10 @@ class _MyTeacherRequestsScreenKhanhState
     switch (status.toLowerCase()) {
       case 'approved':
         return const Color(0xffe6f8eb);
-
       case 'rejected':
         return const Color(0xffffe8e8);
-
       case 'cancelled':
         return const Color(0xffeeeeee);
-
       default:
         return const Color(0xfffff1df);
     }
@@ -98,46 +81,33 @@ class _MyTeacherRequestsScreenKhanhState
     switch (status.toLowerCase()) {
       case 'approved':
         return Icons.check_circle_outline_rounded;
-
       case 'rejected':
         return Icons.cancel_outlined;
-
       case 'cancelled':
         return Icons.remove_circle_outline;
-
       default:
         return Icons.schedule_rounded;
     }
   }
 
   String _formatDate(DateTime? date) {
-    if (date == null) {
-      return 'N/A';
-    }
-
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year}';
+    if (date == null) return 'N/A';
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
-  /* Navigate back to available subject screen. */
   void _goBack() {
     if (context.canPop()) {
       context.pop();
-      return;
+    } else {
+      context.go('/exams');
     }
-
-    context.go('/teacher-request/available-subjects');
   }
 
-  /* Show complete request information. */
   void _showRequestDetail(TeacherRequestModelKhanh request) {
     final bool hasCertificate = request.certificationUrl != null &&
         request.certificationUrl!.trim().isNotEmpty;
-
     final bool hasAdminNote =
         request.adminNote != null && request.adminNote!.trim().isNotEmpty;
-
     final bool hasReviewer =
         request.reviewerName != null && request.reviewerName!.trim().isNotEmpty;
 
@@ -179,12 +149,7 @@ class _MyTeacherRequestsScreenKhanhState
                       Expanded(
                         child: ListView(
                           controller: scrollController,
-                          padding: const EdgeInsets.fromLTRB(
-                            20,
-                            20,
-                            20,
-                            32,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                           children: [
                             Row(
                               children: [
@@ -204,11 +169,10 @@ class _MyTeacherRequestsScreenKhanhState
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Request #'
-                                            '${request.teacherRequestId}',
+                                        'Request #${request.teacherRequestId}',
                                         style: const TextStyle(
                                           color: darkColor,
                                           fontSize: 19,
@@ -228,9 +192,7 @@ class _MyTeacherRequestsScreenKhanhState
                                 ),
                                 IconButton(
                                   tooltip: 'Close',
-                                  onPressed: () {
-                                    Navigator.pop(bottomSheetContext);
-                                  },
+                                  onPressed: () => Navigator.pop(bottomSheetContext),
                                   icon: const Icon(Icons.close_rounded),
                                 ),
                               ],
@@ -286,9 +248,9 @@ class _MyTeacherRequestsScreenKhanhState
                                 _DetailRowKhanh(
                                   label: 'Reason',
                                   value:
-                                  request.reason?.trim().isNotEmpty == true
-                                      ? request.reason!
-                                      : 'No reason provided',
+                                      request.reason?.trim().isNotEmpty == true
+                                          ? request.reason!
+                                          : 'No reason provided',
                                 ),
                                 const Divider(height: 24),
                                 _DetailRowKhanh(
@@ -297,8 +259,7 @@ class _MyTeacherRequestsScreenKhanhState
                                 ),
                               ],
                             ),
-                            if (hasReviewer ||
-                                request.reviewedAt != null) ...[
+                            if (hasReviewer || request.reviewedAt != null) ...[
                               const SizedBox(height: 21),
                               const _DetailTitleKhanh(
                                 icon: Icons.fact_check_outlined,
@@ -312,15 +273,12 @@ class _MyTeacherRequestsScreenKhanhState
                                       label: 'Reviewed by',
                                       value: request.reviewerName!,
                                     ),
-                                  if (hasReviewer &&
-                                      request.reviewedAt != null)
+                                  if (hasReviewer && request.reviewedAt != null)
                                     const Divider(height: 24),
                                   if (request.reviewedAt != null)
                                     _DetailRowKhanh(
                                       label: 'Reviewed date',
-                                      value: _formatDate(
-                                        request.reviewedAt,
-                                      ),
+                                      value: _formatDate(request.reviewedAt),
                                     ),
                                 ],
                               ),
@@ -376,8 +334,7 @@ class _MyTeacherRequestsScreenKhanhState
                                       height: 40,
                                       decoration: BoxDecoration(
                                         color: const Color(0xffffebe4),
-                                        borderRadius:
-                                        BorderRadius.circular(11),
+                                        borderRadius: BorderRadius.circular(11),
                                       ),
                                       child: const Icon(
                                         Icons.description_outlined,
@@ -388,7 +345,7 @@ class _MyTeacherRequestsScreenKhanhState
                                     const Expanded(
                                       child: Column(
                                         crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             'Certification attached',
@@ -414,26 +371,19 @@ class _MyTeacherRequestsScreenKhanhState
                                       onPressed: () async {
                                         await Clipboard.setData(
                                           ClipboardData(
-                                            text:
-                                            request.certificationUrl!,
-                                          ),
+                                              text: request.certificationUrl!),
                                         );
-
-                                        if (!mounted) {
-                                          return;
-                                        }
-
-                                        ScaffoldMessenger.of(
-                                          this.context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Certification path copied.',
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Certification path copied.'),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
-                                            behavior:
-                                            SnackBarBehavior.floating,
-                                          ),
-                                        );
+                                          );
+                                        }
                                       },
                                       icon: const Icon(
                                         Icons.copy_outlined,
@@ -457,6 +407,7 @@ class _MyTeacherRequestsScreenKhanhState
       },
     );
   }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -465,206 +416,183 @@ class _MyTeacherRequestsScreenKhanhState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        foregroundColor: darkColor,
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: _goBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            size: 21,
-          ),
+    return BlocProvider(
+      create: (_) => TeacherRequestCubitKhanh(
+        TeacherRequestRepositoryKhanh(
+          TeacherRequestApiKhanh(),
         ),
-        titleSpacing: 0,
-        title: const Text(
-          'My Teacher Requests',
-          style: TextStyle(
-            color: darkColor,
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
+      )..loadMyRequests(),
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          foregroundColor: darkColor,
+          leading: IconButton(
+            tooltip: 'Back',
+            onPressed: _goBack,
+            icon: const Icon(Icons.arrow_back_rounded, size: 21),
           ),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh requests',
-            onPressed: _reload,
-            icon: const Icon(
-              Icons.refresh_rounded,
-              color: primaryColor,
+          titleSpacing: 0,
+          title: const Text(
+            'My Teacher Requests',
+            style: TextStyle(
+              color: darkColor,
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(width: 5),
-        ],
-      ),
-body: SafeArea(
-top: false,
-child: LayoutBuilder(
-builder: (context, constraints) {
-final bool isDesktop = constraints.maxWidth >= 900;
+          actions: [
+            Builder(builder: (context) {
+              return IconButton(
+                tooltip: 'Refresh requests',
+                onPressed: () =>
+                    context.read<TeacherRequestCubitKhanh>().loadMyRequests(),
+                icon: const Icon(Icons.refresh_rounded, color: primaryColor),
+              );
+            }),
+            const SizedBox(width: 5),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isDesktop = constraints.maxWidth >= 900;
 
-return Padding(
-padding: EdgeInsets.symmetric(
-horizontal: isDesktop ? 28 : 0,
-),
-child: FutureBuilder<List<TeacherRequestModelKhanh>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: primaryColor,
-                    ),
-                  );
-                }
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 28 : 0),
+                child: BlocBuilder<TeacherRequestCubitKhanh,
+                    TeacherRequestStateKhanh>(
+                  builder: (context, state) {
+                    if (state.isLoading && state.requests.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: primaryColor),
+                      );
+                    }
 
-                if (snapshot.hasError) {
-                  return _ErrorStateKhanh(
-                    message: snapshot.error.toString(),
-                    onRetry: _reload,
-                  );
-                }
+                    if (state.error != null && state.requests.isEmpty) {
+                      return _ErrorStateKhanh(
+                        message: state.error!,
+                        onRetry: () => context
+                            .read<TeacherRequestCubitKhanh>()
+                            .loadMyRequests(),
+                      );
+                    }
 
-                final allRequests = snapshot.data ?? [];
-                final filteredRequests =
-                _filterRequests(allRequests);
+                    final allRequests = state.requests;
+                    final filteredRequests = _filterRequests(allRequests);
 
-                return Column(
-                  children: [
-                    _PageHeaderKhanh(
-                      searchController: _searchController,
-                      onSearchChanged: () {
-                        setState(() {});
-                      },
-                    ),
-                    Expanded(
-                      child: allRequests.isEmpty
-                          ? _EmptyStateKhanh(
-                        isSearching: false,
-                        onRefresh: _reload,
-                      )
-                          : filteredRequests.isEmpty
-                          ? _EmptyStateKhanh(
-                        isSearching: true,
-                        onRefresh: _reload,
-                      )
-
-                          : RefreshIndicator(
-                        color: primaryColor,
-                        onRefresh: _reload,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final int columnCount =
-                            constraints.maxWidth >= 1200
-                                ? 3
-                                : constraints.maxWidth >= 800
-                                ? 2
-                                : 1;
-
-                            if (columnCount == 1) {
-                              return ListView.builder(
-                                physics:
-                                const AlwaysScrollableScrollPhysics(),
-                                padding:
-                                const EdgeInsets.fromLTRB(
-                                  14,
-                                  8,
-                                  14,
-                                  90,
-                                ),
-                                itemCount:
-                                filteredRequests.length,
-                                itemBuilder: (context, index) {
-                                  final request =
-                                  filteredRequests[index];
-
-                                  return _RequestCardKhanh(
-                                    request: request,
-                                    statusColor:
-                                    _statusColor(
-                                      request.status,
-                                    ),
-                                    statusBackground:
-                                    _statusBackground(
-                                      request.status,
-                                    ),
-                                    createdAt: _formatDate(
-                                      request.createdAt,
-                                    ),
-                                    onViewDetails: () {
-                                      _showRequestDetail(
-                                        request,
-                                      );
-                                    },
-                                  );
-                                },
-                              );
-                            }
-
-                            return GridView.builder(
-                              physics:
-                              const AlwaysScrollableScrollPhysics(),
-                              padding:
-                              const EdgeInsets.fromLTRB(
-                                14,
-                                8,
-                                14,
-                                90,
-                              ),
-                              itemCount:
-                              filteredRequests.length,
-                              gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount:
-                                columnCount,
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
-                                childAspectRatio: 1.45,
-                              ),
-                              itemBuilder: (context, index) {
-                                final request =
-                                filteredRequests[index];
-
-                                return _RequestCardKhanh(
-                                  request: request,
-                                  statusColor:
-                                  _statusColor(
-                                    request.status,
-                                  ),
-                                  statusBackground:
-                                  _statusBackground(
-                                    request.status,
-                                  ),
-                                  createdAt: _formatDate(
-                                    request.createdAt,
-                                  ),
-                                  onViewDetails: () {
-                                    _showRequestDetail(
-                                      request,
-                                    );
-
-                                        },
-                                );
-                              },
-                            );
-                          },
+                    return Column(
+                      children: [
+                        _PageHeaderKhanh(
+                          searchController: _searchController,
+                          onSearchChanged: () => setState(() {}),
                         ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-),
-);
-},
-),
-),
+                        Expanded(
+                          child: allRequests.isEmpty
+                              ? _EmptyStateKhanh(
+                                  isSearching: false,
+                                  onRefresh: () async => context
+                                      .read<TeacherRequestCubitKhanh>()
+                                      .loadMyRequests(),
+                                )
+                              : filteredRequests.isEmpty
+                                  ? _EmptyStateKhanh(
+                                      isSearching: true,
+                                      onRefresh: () async => context
+                                          .read<TeacherRequestCubitKhanh>()
+                                          .loadMyRequests(),
+                                    )
+                                  : RefreshIndicator(
+                                      color: primaryColor,
+                                      onRefresh: () async => context
+                                          .read<TeacherRequestCubitKhanh>()
+                                          .loadMyRequests(),
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          final int columnCount = constraints
+                                                      .maxWidth >=
+                                                  1200
+                                              ? 3
+                                              : constraints.maxWidth >= 800
+                                                  ? 2
+                                                  : 1;
+
+                                          if (columnCount == 1) {
+                                            return ListView.builder(
+                                              physics:
+                                                  const AlwaysScrollableScrollPhysics(),
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      14, 8, 14, 90),
+                                              itemCount:
+                                                  filteredRequests.length,
+                                              itemBuilder: (context, index) {
+                                                final request =
+                                                    filteredRequests[index];
+                                                return _RequestCardKhanh(
+                                                  request: request,
+                                                  statusColor: _statusColor(
+                                                      request.status),
+                                                  statusBackground:
+                                                      _statusBackground(
+                                                          request.status),
+                                                  createdAt: _formatDate(
+                                                      request.createdAt),
+                                                  onViewDetails: () =>
+                                                      _showRequestDetail(
+                                                          request),
+                                                );
+                                              },
+                                            );
+                                          }
+
+                                          return GridView.builder(
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                14, 8, 14, 90),
+                                            itemCount: filteredRequests.length,
+                                            gridDelegate:
+                                                SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: columnCount,
+                                              crossAxisSpacing: 14,
+                                              mainAxisSpacing: 14,
+                                              childAspectRatio: 1.45,
+                                            ),
+                                            itemBuilder: (context, index) {
+                                              final request =
+                                                  filteredRequests[index];
+                                              return _RequestCardKhanh(
+                                                request: request,
+                                                statusColor: _statusColor(
+                                                    request.status),
+                                                statusBackground:
+                                                    _statusBackground(
+                                                        request.status),
+                                                createdAt: _formatDate(
+                                                    request.createdAt),
+                                                onViewDetails: () =>
+                                                    _showRequestDetail(request),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 }
@@ -685,12 +613,7 @@ class _PageHeaderKhanh extends StatelessWidget {
     return Container(
       width: double.infinity,
       color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        17,
-        14,
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 17, 14, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -716,35 +639,27 @@ class _PageHeaderKhanh extends StatelessWidget {
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               hintText: 'Search by ID or subject...',
-              prefixIcon: const Icon(
-                Icons.search_rounded,
-                color: Colors.blueGrey,
-              ),
+              prefixIcon:
+                  const Icon(Icons.search_rounded, color: Colors.blueGrey),
               suffixIcon: searchController.text.isEmpty
                   ? null
                   : IconButton(
-                tooltip: 'Clear search',
-                onPressed: () {
-                  searchController.clear();
-                  onSearchChanged();
-                },
-                icon: const Icon(
-                  Icons.close_rounded,
-                ),
-              ),
+                      tooltip: 'Clear search',
+                      onPressed: () {
+                        searchController.clear();
+                        onSearchChanged();
+                      },
+                      icon: const Icon(Icons.close_rounded),
+                    ),
               filled: true,
               fillColor: const Color(0xfff4f6fa),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 11,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 11),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: (_) {
-              onSearchChanged();
-            },
+            onChanged: (_) => onSearchChanged(),
           ),
         ],
       ),
@@ -774,7 +689,6 @@ class _RequestCardKhanh extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool hasCertificate = request.certificationUrl != null &&
         request.certificationUrl!.trim().isNotEmpty;
-
     final bool hasAdminNote =
         request.adminNote != null && request.adminNote!.trim().isNotEmpty;
 
@@ -784,9 +698,7 @@ class _RequestCardKhanh extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffffddd1),
-        ),
+        border: Border.all(color: const Color(0xffffddd1)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0d000000),
@@ -884,9 +796,7 @@ class _RequestCardKhanh extends StatelessWidget {
                 backgroundColor: primaryColor,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 11,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 11),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(9),
                 ),
@@ -920,10 +830,7 @@ class _StatusBadgeKhanh extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 4,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(20),
@@ -954,21 +861,14 @@ class _SmallInfoKhanh extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 13,
-          color: Colors.blueGrey,
-        ),
+        Icon(icon, size: 13, color: Colors.blueGrey),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.blueGrey,
-              fontSize: 10,
-            ),
+            style: const TextStyle(color: Colors.blueGrey, fontSize: 10),
           ),
         ),
       ],
@@ -992,11 +892,7 @@ class _DetailTitleKhanh extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: primaryColor,
-          size: 19,
-        ),
+        Icon(icon, color: primaryColor, size: 19),
         const SizedBox(width: 7),
         Text(
           title,
@@ -1014,9 +910,7 @@ class _DetailTitleKhanh extends StatelessWidget {
 class _DetailCardKhanh extends StatelessWidget {
   final List<Widget> children;
 
-  const _DetailCardKhanh({
-    required this.children,
-  });
+  const _DetailCardKhanh({required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -1026,9 +920,7 @@ class _DetailCardKhanh extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xfff7f8fc),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffe7eaf0),
-        ),
+        border: Border.all(color: const Color(0xffe7eaf0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1042,10 +934,7 @@ class _DetailRowKhanh extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRowKhanh({
-    required this.label,
-    required this.value,
-  });
+  const _DetailRowKhanh({required this.label, required this.value});
 
   static const Color darkColor = Color(0xff183153);
 
@@ -1081,10 +970,7 @@ class _EmptyStateKhanh extends StatelessWidget {
   final bool isSearching;
   final Future<void> Function() onRefresh;
 
-  const _EmptyStateKhanh({
-    required this.isSearching,
-    required this.onRefresh,
-  });
+  const _EmptyStateKhanh({required this.isSearching, required this.onRefresh});
 
   static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
@@ -1096,10 +982,7 @@ class _EmptyStateKhanh extends StatelessWidget {
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 75,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 75),
         children: [
           Center(
             child: Container(
@@ -1110,9 +993,7 @@ class _EmptyStateKhanh extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                isSearching
-                    ? Icons.search_off_rounded
-                    : Icons.assignment_outlined,
+                isSearching ? Icons.search_off_rounded : Icons.assignment_outlined,
                 color: primaryColor,
                 size: 39,
               ),
@@ -1120,9 +1001,7 @@ class _EmptyStateKhanh extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            isSearching
-                ? 'No matching requests'
-                : 'No teacher requests yet',
+            isSearching ? 'No matching requests' : 'No teacher requests yet',
             textAlign: TextAlign.center,
             style: const TextStyle(
               color: darkColor,
@@ -1150,12 +1029,9 @@ class _EmptyStateKhanh extends StatelessWidget {
 
 class _ErrorStateKhanh extends StatelessWidget {
   final String message;
-  final Future<void> Function() onRetry;
+  final VoidCallback onRetry;
 
-  const _ErrorStateKhanh({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorStateKhanh({required this.message, required this.onRetry});
 
   static const Color primaryColor = Color(0xfff45a24);
   static const Color darkColor = Color(0xff183153);
@@ -1167,11 +1043,7 @@ class _ErrorStateKhanh extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            const Icon(
-              Icons.error_outline_rounded,
-              color: Colors.red,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline_rounded, color: Colors.red, size: 48),
             const SizedBox(height: 14),
             const Text(
               'Unable to load requests',

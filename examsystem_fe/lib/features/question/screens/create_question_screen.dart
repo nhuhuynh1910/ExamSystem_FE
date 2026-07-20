@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/question_bloc.dart';
 import '../bloc/question_event.dart';
 import '../bloc/question_state.dart';
+import '../../exam/models/subject_model.dart';
 
 class CreateQuestionScreen extends StatefulWidget {
   const CreateQuestionScreen({super.key});
@@ -13,173 +14,289 @@ class CreateQuestionScreen extends StatefulWidget {
 
 class _CreateQuestionScreenState extends State<CreateQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _contentController = TextEditingController();
-  final _scoreController = TextEditingController(text: '1.0');
+  String _selectedDifficulty = 'Easy';
+  double _score = 1;
+  int? _selectedSubjectId;
+
+  final _questionController = TextEditingController();
   final _explanationController = TextEditingController();
-  int? _subjectId;
-  String _difficulty = 'Easy';
-  
-  final List<Map<String, dynamic>> _options = [
-    {'text': '', 'isCorrect': true, 'order': 1},
-    {'text': '', 'isCorrect': false, 'order': 2},
+  final List<TextEditingController> _optionControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
   ];
+
+  int _correctIndex = 0;
+
+  static const Color primaryColor = Color(0xFFF97316);
 
   @override
   void initState() {
     super.initState();
-    context.read<QuestionBloc>().add(LoadSubjectsEvent());
+    context.read<QuestionBloc>().add(const LoadSubjectsEvent());
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    _explanationController.dispose();
+    for (var c in _optionControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  void _addOption() {
+    setState(() {
+      _optionControllers.add(TextEditingController());
+    });
+  }
+
+  void _removeOption(int index) {
+    if (_optionControllers.length <= 2) return;
+    setState(() {
+      _optionControllers.removeAt(index);
+      if (_correctIndex >= _optionControllers.length) {
+        _correctIndex = 0;
+      }
+    });
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedSubjectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a subject')));
+      return;
+    }
+
+    final Map<String, dynamic> questionData = {
+      'subjectId': _selectedSubjectId,
+      'content': _questionController.text.trim(),
+      'questionType': 'MultipleChoice',
+      'difficulty': _selectedDifficulty,
+      'score': _score,
+      'explanation': _explanationController.text.trim().isEmpty ? null : _explanationController.text.trim(),
+    };
+
+    final options = _optionControllers.asMap().entries.map((e) {
+      return {
+        'optionText': e.value.text.trim(),
+        'isCorrect': e.key == _correctIndex,
+        'optionOrder': e.key + 1,
+      };
+    }).toList();
+
+    context.read<QuestionBloc>().add(CreateQuestionEvent(questionData, options));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tạo Câu hỏi mới')),
-      body: BlocConsumer<QuestionBloc, QuestionState>(
-        listener: (context, state) {
-          if (state is QuestionOperationSuccess) {
-            Navigator.pop(context);
-          }
-          if (state is QuestionError) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message!)));
-          }
-        },
-        builder: (context, state) {
-          final subjects = state.subjects ?? [];
+    return BlocConsumer<QuestionBloc, QuestionState>(
+      listener: (context, state) {
+        if (state is QuestionSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message!), backgroundColor: Colors.green));
+          Navigator.pop(context);
+        } else if (state is QuestionError) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error!), backgroundColor: Colors.red));
+        }
+      },
+      builder: (context, state) {
+        final subjects = state.subjects ?? [];
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: const Text('New Question', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              if (state.isLoading)
+                const Center(child: Padding(padding: EdgeInsets.only(right: 16), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor))))
+              else
+                TextButton(
+                  onPressed: _save,
+                  child: const Text('SAVE', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                ),
+            ],
+          ),
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                _buildCard([
+                  _buildLabel('SUBJECT'),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<int>(
-                    value: _subjectId,
-                    decoration: const InputDecoration(labelText: 'Môn học', border: OutlineInputBorder()),
-                    items: subjects.map((s) => DropdownMenuItem(
-                      value: s.subjectId,
-                      child: Text(s.subjectName),
-                    )).toList(),
-                    onChanged: (v) => setState(() => _subjectId = v),
-                    validator: (v) => v == null ? 'Vui lòng chọn môn học' : null,
+                    value: _selectedSubjectId,
+                    isExpanded: true,
+                    decoration: _inputDecoration('Select subject', Icons.book_outlined),
+                    items: subjects.map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName))).toList(),
+                    onChanged: (v) => setState(() => _selectedSubjectId = v),
+                    validator: (v) => v == null ? 'Please select a subject' : null,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _contentController,
-                    decoration: const InputDecoration(labelText: 'Nội dung câu hỏi', border: OutlineInputBorder()),
-                    maxLines: 3,
-                    validator: (v) => v!.isEmpty ? 'Vui lòng nhập nội dung' : null,
-                  ),
-                  const SizedBox(height: 16),
+                ]),
+                const SizedBox(height: 20),
+                _buildCard([
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<String>(
-                          value: _difficulty,
-                          decoration: const InputDecoration(labelText: 'Độ khó', border: OutlineInputBorder()),
-                          items: ['Easy', 'Medium', 'Hard'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-                          onChanged: (v) => setState(() => _difficulty = v!),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('DIFFICULTY'),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: _selectedDifficulty,
+                              decoration: _inputDecoration('', Icons.speed),
+                              items: ['Easy', 'Medium', 'Hard'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                              onChanged: (v) => setState(() => _selectedDifficulty = v!),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: TextFormField(
-                          controller: _scoreController,
-                          decoration: const InputDecoration(labelText: 'Điểm mặc định', border: OutlineInputBorder()),
-                          keyboardType: TextInputType.number,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('SCORE'),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<double>(
+                              value: _score,
+                              decoration: _inputDecoration('', Icons.stars_outlined),
+                              items: List.generate(10, (i) => (i + 1).toDouble()).map((s) => DropdownMenuItem(value: s, child: Text(s.toStringAsFixed(0)))).toList(),
+                              onChanged: (v) => setState(() => _score = v!),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  const Text('Các phương án trả lời:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  ..._options.asMap().entries.map((entry) {
-                    int idx = entry.key;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _options[idx]['isCorrect'],
-                            onChanged: (v) => setState(() {
-                              for (var opt in _options) { opt['isCorrect'] = false; }
-                              _options[idx]['isCorrect'] = v;
-                            }),
-                          ),
-                          Expanded(
-                            child: TextFormField(
-                              decoration: InputDecoration(labelText: 'Phương án ${idx + 1}'),
-                              onChanged: (v) => _options[idx]['text'] = v,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                            onPressed: () => setState(() => _options.removeAt(idx)),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  TextButton.icon(
-                    onPressed: () => setState(() => _options.add({'text': '', 'isCorrect': false, 'order': _options.length + 1})),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Thêm phương án'),
+                ]),
+                const SizedBox(height: 20),
+                _buildCard([
+                  _buildLabel('QUESTION CONTENT'),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _questionController,
+                    maxLines: 4,
+                    decoration: _inputDecoration('Enter question content...', null),
+                    validator: (v) => v!.trim().isEmpty ? 'Required' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
+                  _buildLabel('EXPLANATION (OPTIONAL)'),
+                  const SizedBox(height: 12),
                   TextFormField(
                     controller: _explanationController,
-                    decoration: const InputDecoration(labelText: 'Giải thích (không bắt buộc)', border: OutlineInputBorder()),
                     maxLines: 2,
+                    decoration: _inputDecoration('Explain the answer...', null),
                   ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: state.isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-                      child: state.isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('LƯU CÂU HỎI'),
+                ]),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    const Text('ANSWER OPTIONS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF64748B), letterSpacing: 1.1)),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: _addOption,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add Option', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(foregroundColor: primaryColor),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...List.generate(_optionControllers.length, (index) => _buildOptionRow(index)),
+                const SizedBox(height: 40),
+                ElevatedButton(
+                  onPressed: state.isLoading ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
                   ),
-                ],
-              ),
+                  child: state.isLoading 
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                    : const Text('SAVE QUESTION', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+                const SizedBox(height: 40),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      if (!_options.any((opt) => opt['isCorrect'])) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn ít nhất một đáp án đúng')));
-        return;
-      }
-      if (_options.any((opt) => opt['text'].isEmpty)) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập nội dung cho tất cả các phương án')));
-        return;
-      }
+  Widget _buildCard(List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+    );
+  }
 
-      final data = {
-        'SubjectId': _subjectId,
-        'Content': _contentController.text,
-        'QuestionType': 'MultipleChoice',
-        'Difficulty': _difficulty,
-        'Score': double.tryParse(_scoreController.text) ?? 1.0,
-        'Explanation': _explanationController.text,
-      };
+  Widget _buildLabel(String text) {
+    return Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF64748B), letterSpacing: 1.1));
+  }
 
-      final optionsData = _options.map((opt) => {
-        'OptionText': opt['text'],
-        'IsCorrect': opt['isCorrect'],
-        'OptionOrder': opt['order'],
-      }).toList();
+  InputDecoration _inputDecoration(String hint, IconData? icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: icon != null ? Icon(icon, size: 20, color: const Color(0xFF64748B)) : null,
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+    );
+  }
 
-      context.read<QuestionBloc>().add(CreateQuestionEvent(data, optionsData));
-    }
+  Widget _buildOptionRow(int index) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: index == _correctIndex ? primaryColor.withOpacity(0.5) : const Color(0xFFF1F5F9)),
+        ),
+        child: Row(
+          children: [
+            Radio<int>(
+              value: index,
+              groupValue: _correctIndex,
+              activeColor: primaryColor,
+              onChanged: (v) => setState(() => _correctIndex = v!),
+            ),
+            Expanded(
+              child: TextFormField(
+                controller: _optionControllers[index],
+                decoration: const InputDecoration(hintText: 'Enter option text...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 8)),
+                validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+              ),
+            ),
+            if (_optionControllers.length > 2)
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
+                onPressed: () => _removeOption(index),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }

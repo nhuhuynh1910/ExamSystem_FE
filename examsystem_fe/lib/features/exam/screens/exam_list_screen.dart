@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/storage_manager.dart';
-import '../../../core/utils/token_storage.dart';
 import '../../question/bloc/question_bloc.dart';
 import '../../question/bloc/question_event.dart' as qe;
 import '../../question/bloc/question_state.dart';
@@ -67,7 +66,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
     if (mounted) {
       final normalizedRole = _userRole?.toLowerCase();
       if (normalizedRole == 'student') {
-        final userId = await TokenStorage.getUserId() ?? 0;
+        final userId = await StorageManager.getUserId() ?? 0;
         context.read<ExamBloc>().add(LoadStudentSubjectsEvent(userId));
       } else if (normalizedRole == 'teacher' || normalizedRole == 'admin') {
         context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
@@ -81,9 +80,9 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
   }
 
   Future<void> _loadUserInfo() async {
-    final role = await TokenStorage.getRole();
-    final userId = await TokenStorage.getUserId();
-    final fullName = await TokenStorage.getFullName();
+    final role = await StorageManager.getRole();
+    final userId = await StorageManager.getUserId();
+    final fullName = await StorageManager.getFullName();
     if (mounted) {
       setState(() {
         _userRole = role;
@@ -95,7 +94,7 @@ class _ExamListScreenState extends State<ExamListScreen> with SingleTickerProvid
 
   void _loadQuestionCount() {
     context.read<QuestionBloc>().add(qe.LoadQuestionsEvent(
-          queryParameters: _selectedSubjectId != null ? {'SubjectId': _selectedSubjectId} : null,
+          queryParameters: _selectedSubjectId != null ? {'subjectId': _selectedSubjectId} : null,
         ));
   }
 

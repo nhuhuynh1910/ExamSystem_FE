@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/storage_manager.dart';
-import '../../../core/utils/token_storage.dart';
 import '../../exam/models/subject_model.dart';
 import '../bloc/question_bloc.dart';
 import '../bloc/question_event.dart';
 import '../bloc/question_state.dart';
+import '../models/question_model.dart';
 import 'create_question_screen.dart';
+
+import 'update_question_screen.dart';
 
 class QuestionListScreen extends StatefulWidget {
   const QuestionListScreen({super.key});
@@ -36,8 +38,8 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
   }
 
   Future<void> _initScreen() async {
-    _userRole = await TokenStorage.getRole();
-    _userName = await TokenStorage.getFullName();
+    _userRole = await StorageManager.getRole();
+    _userName = await StorageManager.getFullName();
     if (mounted) {
       context.read<QuestionBloc>().add(LoadSubjectsEvent());
       _loadQuestions();
@@ -69,7 +71,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xfff6f7fb),
       drawer: _buildDrawer(),
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Color(0xFFF97316)),
@@ -97,56 +99,99 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
         ],
       ),
       body: BlocConsumer<QuestionBloc, QuestionState>(
+
         listener: (context, state) {
-          if (state is QuestionOperationSuccess && state.message != null) {
+          if (state is QuestionSuccess && state.message != null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message!), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating),
+              SnackBar(
+                content: Text(state.message!),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
             );
           }
         },
         builder: (context, state) {
           final questions = state.questions ?? [];
 
-          if (state.isLoading && questions.isEmpty) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)));
-          }
-
           return Column(
             children: [
               _buildFilters(state.subjects ?? []),
+              if (state.isLoading)
+                const LinearProgressIndicator(
+                  color: Color(0xFFF97316),
+                  backgroundColor: Colors.transparent,
+                  minHeight: 2,
+                ),
               Expanded(
-                child: Stack(
-                  children: [
-                    RefreshIndicator(
-                      onRefresh: () async => _loadQuestions(),
-                      color: const Color(0xFFF97316),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: questions.length,
-                        itemBuilder: (context, index) {
+                child: state.isLoading && questions.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFF97316)))
+                    : questions.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.quiz_outlined, size: 70, color: Colors.grey),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No questions found',
+                                  style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Stack(
+                            children: [
+                              RefreshIndicator(
+                                onRefresh: () async => _loadQuestions(),
+                                color: const Color(0xFFF97316),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.all(20),
+                                  itemCount: questions.length,
+                                  itemBuilder: (context, index) {
+
                           final question = questions[index];
                           final isSelected = _selectedIds.contains(question.questionId);
 
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                color: isSelected ? const Color(0xFFF97316) : Colors.grey[200]!,
-                                width: isSelected ? 2 : 1,
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? const Color(0xFFF97316) : Colors.transparent,
+                                width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: InkWell(
                               onTap: () {
                                 if (_selectedIds.isNotEmpty) {
                                   setState(() {
-                                    isSelected ? _selectedIds.remove(question.questionId) : _selectedIds.add(question.questionId);
+                                    if (isSelected) {
+                                      _selectedIds.remove(question.questionId);
+                                    } else {
+                                      _selectedIds.add(question.questionId);
+                                    }
                                   });
+                                } else {
+                                  _navigateToUpdateScreen(question);
                                 }
                               },
-                              onLongPress: () => setState(() => _selectedIds.add(question.questionId)),
-                              borderRadius: BorderRadius.circular(20),
+                              onLongPress: () {
+                                setState(() {
+                                  if (!isSelected) {
+                                    _selectedIds.add(question.questionId);
+                                  }
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(16),
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Column(
@@ -154,20 +199,25 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        if (_selectedIds.isNotEmpty)
-                                          Checkbox(
-                                            value: isSelected,
-                                            activeColor: const Color(0xFFF97316),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                            onChanged: (v) => setState(() => v! ? _selectedIds.add(question.questionId) : _selectedIds.remove(question.questionId)),
-                                          ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(color: const Color(0xFFF97316).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                                          child: Text(question.subjectName.toUpperCase(), style: const TextStyle(color: Color(0xFFF97316), fontSize: 10, fontWeight: FontWeight.bold)),
-                                        ),
-                                        const Spacer(),
                                         _buildStatusBadge(question.status),
+                                        const Spacer(),
+                                        Text(
+                                          'ID: ${question.questionId}',
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        if (_selectedIds.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8),
+                                            child: Icon(
+                                              isSelected ? Icons.check_circle : Icons.circle_outlined,
+                                              color: isSelected ? const Color(0xFFF97316) : Colors.grey[300],
+                                              size: 20,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                     const SizedBox(height: 12),
@@ -175,25 +225,41 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                                       question.content,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, height: 1.4),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: Color(0xFF1E293B),
+                                      ),
                                     ),
                                     const SizedBox(height: 16),
                                     Row(
                                       children: [
-                                        _buildInfoBadge(question.difficulty, _getDiffColor(question.difficulty)),
+                                        _buildInfoBadge(question.subjectName, Colors.blue),
                                         const SizedBox(width: 8),
-                                        _buildInfoBadge('${question.score} pts', Colors.blueGrey),
+                                        _buildInfoBadge(question.difficulty, _getDiffColor(question.difficulty)),
                                         const Spacer(),
-                                        if (question.status == 'Draft')
-                                          TextButton(
-                                            onPressed: () => context.read<QuestionBloc>().add(PublishQuestionEvent(question.questionId)),
-                                            child: const Text('Publish', style: TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold)),
-                                          )
-                                        else
-                                          TextButton(
-                                            onPressed: () => context.read<QuestionBloc>().add(DraftQuestionEvent(question.questionId)),
-                                            child: Text('Set to Draft', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                                          ),
+                                        PopupMenuButton<String>(
+                                          icon: const Icon(Icons.more_vert, size: 20, color: Colors.grey),
+                                          onSelected: (value) {
+                                            if (value == 'edit') {
+                                              _navigateToUpdateScreen(question);
+                                            } else if (value == 'delete') {
+                                              _confirmDelete(question.questionId);
+                                            } else if (value == 'publish' && question.status != 'Published') {
+                                              context.read<QuestionBloc>().add(PublishQuestionEvent(question.questionId));
+                                            } else if (value == 'draft' && question.status != 'Draft') {
+                                              context.read<QuestionBloc>().add(DraftQuestionEvent(question.questionId));
+                                            }
+                                          },
+                                          itemBuilder: (context) => [
+                                            const PopupMenuItem(value: 'edit', child: Row(children: [Icon(Icons.edit_outlined, size: 18), SizedBox(width: 8), Text('Edit')])),
+                                            if (question.status != 'Published')
+                                              const PopupMenuItem(value: 'publish', child: Row(children: [Icon(Icons.publish, size: 18), SizedBox(width: 8), Text('Publish')])),
+                                            if (question.status != 'Draft')
+                                              const PopupMenuItem(value: 'draft', child: Row(children: [Icon(Icons.drafts_outlined, size: 18), SizedBox(width: 8), Text('Move to Draft')])),
+                                            const PopupMenuItem(value: 'delete', child: Row(children: [Icon(Icons.delete_outline, color: Colors.red, size: 18), SizedBox(width: 8), Text('Delete', style: TextStyle(color: Colors.red))])),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -204,10 +270,12 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                         },
                       ),
                     ),
-                    if (_selectedIds.isNotEmpty) _buildBottomActions(questions),
+
+                    if (_selectedIds.isNotEmpty)
+                      _buildBottomActions(questions),
                   ],
                 ),
-              ),
+              )
             ],
           );
         },
@@ -279,7 +347,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
     );
   }
 
-  Widget _buildBottomActions(List questions) {
+  Widget _buildBottomActions(List<QuestionModel> questions) {
     final allDraft = _selectedIds.every((id) => questions.firstWhere((q) => q.questionId == id).status == 'Draft');
     final allPublished = _selectedIds.every((id) => questions.firstWhere((q) => q.questionId == id).status == 'Published');
 
@@ -363,6 +431,35 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
               Navigator.pop(ctx);
             },
             child: const Text('Confirm', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFF97316))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToUpdateScreen(QuestionModel question) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UpdateQuestionScreen(question: question),
+      ),
+    ).then((_) => _loadQuestions());
+  }
+
+  void _confirmDelete(int questionId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa câu hỏi?'),
+        content: const Text('Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () {
+              context.read<QuestionBloc>().add(DeleteQuestionEvent(questionId));
+              Navigator.pop(ctx);
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

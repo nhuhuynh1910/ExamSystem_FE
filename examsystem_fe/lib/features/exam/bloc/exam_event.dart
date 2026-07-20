@@ -10,6 +10,11 @@ abstract class ExamEvent {
 // SUBJECT (MÔN HỌC)
 //==========================================================
 
+/// Lấy danh sách môn học dựa trên vai trò (Admin, Teacher, Student)
+class LoadSubjectsEvent extends ExamEvent {
+  const LoadSubjectsEvent();
+}
+
 /// Giảng viên lấy danh sách môn học mình được phân công giảng dạy
 class LoadTeacherSubjectsEvent extends ExamEvent {
   const LoadTeacherSubjectsEvent();

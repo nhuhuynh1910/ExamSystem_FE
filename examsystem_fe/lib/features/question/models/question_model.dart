@@ -10,8 +10,12 @@ class QuestionModel {
   final double score;
   final String status;
   final String? explanation;
-  final DateTime createdAt;
+
+  // Có hoặc không tùy API
+  final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? rowVersion;
+
   final List<QuestionOptionModel> options;
 
   QuestionModel({
@@ -26,8 +30,9 @@ class QuestionModel {
     required this.score,
     required this.status,
     this.explanation,
-    required this.createdAt,
+    this.createdAt,
     this.updatedAt,
+    this.rowVersion,
     required this.options,
   });
 
@@ -44,8 +49,13 @@ class QuestionModel {
       score: (json['score'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? '',
       explanation: json['explanation'],
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+      rowVersion: json['rowVersion'],
       options: (json['options'] as List? ?? [])
           .map((e) => QuestionOptionModel.fromJson(e))
           .toList(),
@@ -55,23 +65,29 @@ class QuestionModel {
 
 class QuestionOptionModel {
   final int optionId;
+  final int? questionId;
   final String optionText;
-  final bool isCorrect;
+  final bool? isCorrect;
   final int optionOrder;
+  final String? rowVersion;
 
   QuestionOptionModel({
     required this.optionId,
+    this.questionId,
     required this.optionText,
-    required this.isCorrect,
+    this.isCorrect,
     required this.optionOrder,
+    this.rowVersion,
   });
 
   factory QuestionOptionModel.fromJson(Map<String, dynamic> json) {
     return QuestionOptionModel(
       optionId: json['optionId'] ?? 0,
+      questionId: json['questionId'],
       optionText: json['optionText'] ?? '',
-      isCorrect: json['isCorrect'] ?? false,
+      isCorrect: json['isCorrect'],
       optionOrder: json['optionOrder'] ?? 0,
+      rowVersion: json['rowVersion'],
     );
   }
 }

@@ -9,8 +9,7 @@ class TeacherRequestRepositoryKhanh {
 
   TeacherRequestRepositoryKhanh(this.api);
 
-  Future<List<AvailableSubjectRequestModelKhanh>>
-  getAvailableSubjects() {
+  Future<List<AvailableSubjectRequestModelKhanh>> getAvailableSubjects() {
     return api.getAvailableSubjects();
   }
 
@@ -25,7 +24,34 @@ class TeacherRequestRepositoryKhanh {
       certificationFile: certificationFile,
     );
   }
+
   Future<List<TeacherRequestModelKhanh>> getMyRequests() {
     return api.getMyRequests();
+  }
+
+  Future<List<TeacherRequestModelKhanh>> getAdminRequests({
+    String? status,
+    int pageNumber = 1,
+    int pageSize = 20,
+  }) {
+    return api.getAdminRequests(
+      status: status,
+      pageNumber: pageNumber,
+      pageSize: pageSize,
+    );
+  }
+
+  Future<TeacherRequestModelKhanh> approveRequest(int requestId) {
+    return api.approveRequest(requestId);
+  }
+
+  Future<TeacherRequestModelKhanh> rejectRequest({
+    required int requestId,
+    String? adminNote,
+  }) {
+    return api.rejectRequest(
+      requestId: requestId,
+      adminNote: adminNote,
+    );
   }
 }

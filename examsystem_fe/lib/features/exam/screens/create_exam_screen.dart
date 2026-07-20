@@ -70,7 +70,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
 
   void _loadQuestionsForSubject() {
     if (_subjectId != null) {
-      context.read<QuestionBloc>().add(qe.LoadQuestionsEvent(queryParameters: {'SubjectId': _subjectId, 'Status': 'Published'}));
+      context.read<QuestionBloc>().add(qe.LoadQuestionsEvent(queryParameters: {'subjectId': _subjectId, 'status': 'Published'}));
     }
   }
 

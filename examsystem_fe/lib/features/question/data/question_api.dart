@@ -1,90 +1,334 @@
 import 'package:dio/dio.dart';
+
 import '../../../core/network/api_constants.dart';
 import '../../../core/network/dio_client.dart';
-import '../models/question_model.dart';
 import '../../exam/models/subject_model.dart';
+import '../models/question_model.dart';
 
 class QuestionApi {
   final Dio _dio = DioClient.instance;
 
+  //======================== PARSE ========================
+
+  QuestionModel _parseQuestion(dynamic responseData) {
+    if (responseData is Map<String, dynamic>) {
+      final data = responseData['data'];
+
+      if (data is Map<String, dynamic>) {
+        return QuestionModel.fromJson(data);
+      }
+
+      return QuestionModel.fromJson(responseData);
+    }
+
+    throw const FormatException(
+      'Invalid question response format',
+    );
+  }
+
+
+  List<QuestionModel> _parseQuestionList(dynamic responseData) {
+    if (responseData is List) {
+      return responseData
+          .map((e) => QuestionModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
+    if (responseData is Map<String, dynamic>) {
+      // Handle PagedResultDto or other wrapper structures
+      final data = responseData['items'] ??
+          responseData['data'] ??
+          responseData['questions'];
+
+      if (data is List) {
+        return data
+            .map((e) => QuestionModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      }
+    }
+
+    return []; // Return empty list instead of throwing to be more robust
+  }
+
+  //======================== SUBJECT ========================
+
   Future<List<SubjectModel>> getSubjects() async {
     final response = await _dio.get(ApiConstants.subjects);
-    final List data = response.data is List ? response.data : (response.data['items'] ?? []);
-    return data.map((json) => SubjectModel.fromJson(json)).toList();
+    return _parseSubjectList(response.data);
   }
 
   Future<List<SubjectModel>> getTeacherSubjects() async {
-    final response = await _dio.get(ApiConstants.teacherSubjects);
-    final List data = response.data is List ? response.data : (response.data['items'] ?? []);
+    // Current BE uses teacher-requests/my-requests to see which subjects a teacher is assigned to.
+    final response = await _dio.get(ApiConstants.teacherRequestsMy);
 
-    final List<SubjectModel> subjects = [];
-    final Set<int> seenIds = {};
+    final data = response.data;
+    if (data is List) {
+      // If the response is a list of BaoTecherRequestResponseDto, map them to SubjectModel.
+      // We only care about Approved requests.
+      return data
+          .where((e) => e['status'] == 'Approved')
+          .map((e) => SubjectModel(
+                subjectId: e['subjectId'] ?? 0,
+                subjectName: e['subjectName'] ?? 'Unknown',
+                isActive: true,
+              ))
+          .toList();
+    }
+    
+    // Fallback to all subjects if the above doesn't yield anything or structure is different
+    return getSubjects();
+  }
 
-    for (var e in data) {
-      final status = (e['status'] ?? e['Status'] ?? "").toString().toLowerCase();
-      if (status == "approved") {
-        Map<String, dynamic>? s;
-        if (e['subject'] is Map) s = Map<String, dynamic>.from(e['subject']);
-        else if (e['Subject'] is Map) s = Map<String, dynamic>.from(e['Subject']);
-        else s = Map<String, dynamic>.from(e);
-
-        final id = s['subjectId'] ?? s['SubjectId'] ?? s['id'] ?? s['Id'] ?? 
-                   e['subjectId'] ?? e['SubjectId'] ?? e['id'] ?? e['Id'] ?? 0;
-                   
-        final name = s['subjectName'] ?? s['SubjectName'] ?? s['name'] ?? s['Name'] ??
-                     e['subjectName'] ?? e['SubjectName'] ?? e['name'] ?? e['Name'] ?? 'Unknown Subject';
-
-        if (id != 0 && !seenIds.contains(id)) {
-          subjects.add(SubjectModel(
-            subjectId: id,
-            subjectName: name,
-            description: s['description'] ?? e['description'],
-            isActive: true,
-          ));
-          seenIds.add(id);
-        }
+  List<SubjectModel> _parseSubjectList(dynamic responseData) {
+    if (responseData is List) {
+      return responseData
+          .map((e) => SubjectModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    if (responseData is Map<String, dynamic>) {
+      final data = responseData['items'] ?? responseData['data'] ?? responseData['subjects'];
+      if (data is List) {
+        return data
+            .map((e) => SubjectModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
       }
     }
-    return subjects;
+    return [];
   }
 
-  Future<List<QuestionModel>> getQuestions({Map<String, dynamic>? queryParameters}) async {
-    // Convert keys to PascalCase for Backend compatibility if needed, 
-    // but here we just pass through and ensure common ones are correct.
-    final Map<String, dynamic> params = {};
-    if (queryParameters != null) {
-      queryParameters.forEach((key, value) {
-        if (key.toLowerCase() == 'subjectid') params['SubjectId'] = value;
-        else if (key.toLowerCase() == 'difficulty') params['Difficulty'] = value;
-        else if (key.toLowerCase() == 'status') params['Status'] = value;
-        else if (key.toLowerCase() == 'search') params['Search'] = value;
-        else params[key] = value;
-      });
-    }
+
+
+
+  //======================== QUESTION ========================
+
+
+  Future<List<QuestionModel>> getQuestions({
+
+    int pageNumber = 1,
+
+    int pageSize = 10,
+
+    int? subjectId,
+
+    String? difficulty,
+
+    String? status,
+
+    String? questionType,
+
+    String? search,
+
+  }) async {
+
 
     final response = await _dio.get(
+
       ApiConstants.questions,
-      queryParameters: params,
+
+      queryParameters: {
+
+
+        "pageNumber": pageNumber,
+
+        "pageSize": pageSize,
+
+
+        if(subjectId != null)
+          "subjectId": subjectId,
+
+
+        if(difficulty != null && difficulty.isNotEmpty)
+          "difficulty": difficulty,
+
+
+        if(status != null && status.isNotEmpty)
+          "status": status,
+
+
+        if(questionType != null && questionType.isNotEmpty)
+          "questionType": questionType,
+
+
+        if(search != null && search.trim().isNotEmpty)
+          "search": search.trim(),
+
+      },
+
     );
-    // BE trả về trực tiếp mảng List<QuestionResponse>, không bọc trong 'items'
-    final List data = response.data is List ? response.data : (response.data['items'] ?? []);
-    return data.map((e) => QuestionModel.fromJson(e)).toList();
+
+
+    return _parseQuestionList(
+      response.data,
+    );
+
   }
 
-  Future<void> publishQuestion(int id) async {
-    await _dio.put('${ApiConstants.questions}/$id/publish');
+
+
+
+  Future<QuestionModel> createQuestion(
+      Map<String,dynamic> data
+      ) async {
+
+
+    final response = await _dio.post(
+
+      ApiConstants.questions,
+
+      data:data,
+
+    );
+
+
+    return _parseQuestion(
+      response.data,
+    );
+
   }
 
-  Future<void> draftQuestion(int id) async {
-    await _dio.put('${ApiConstants.questions}/$id/draft');
+
+
+
+  Future<QuestionModel> updateQuestion(
+
+      int questionId,
+
+      Map<String,dynamic> data,
+
+      ) async {
+
+
+    final response = await _dio.put(
+
+      '${ApiConstants.questions}/$questionId',
+
+      data:data,
+
+    );
+
+
+    return _parseQuestion(
+      response.data,
+    );
+
   }
 
-  Future<QuestionModel> createQuestion(Map<String, dynamic> data) async {
-    final response = await _dio.post(ApiConstants.questions, data: data);
-    return QuestionModel.fromJson(response.data);
+
+
+
+
+  Future<void> deleteQuestion(
+      int questionId
+      ) async {
+
+
+    await _dio.delete(
+
+      '${ApiConstants.questions}/$questionId',
+
+    );
+
   }
 
-  Future<void> addOption(int questionId, Map<String, dynamic> data) async {
-    await _dio.post('${ApiConstants.questions}/$questionId/options', data: data);
+
+
+
+
+  Future<void> publishQuestion(
+      int questionId
+      ) async {
+
+
+    await _dio.put(
+
+      '${ApiConstants.questions}/$questionId/publish',
+
+    );
+
   }
+
+
+
+
+
+  Future<void> draftQuestion(
+      int questionId
+      ) async {
+
+
+    await _dio.put(
+
+      '${ApiConstants.questions}/$questionId/draft',
+
+    );
+
+  }
+
+
+
+
+  //======================== OPTION ========================
+
+
+  Future<void> addOption(
+
+      int questionId,
+
+      Map<String,dynamic> data,
+
+      ) async {
+
+
+    await _dio.post(
+
+      '${ApiConstants.questions}/$questionId/options',
+
+      data:data,
+
+    );
+
+  }
+
+
+
+
+
+  Future<void> updateOption(
+
+      int optionId,
+
+      Map<String,dynamic> data,
+
+      ) async {
+
+
+    await _dio.put(
+
+      '${ApiConstants.questions}/options/$optionId',
+
+      data:data,
+
+    );
+
+  }
+
+
+
+
+
+  Future<void> deleteOption(
+
+      int optionId
+
+      ) async {
+
+
+    await _dio.delete(
+
+      '${ApiConstants.questions}/options/$optionId',
+
+    );
+
+  }
+
 }

@@ -27,7 +27,7 @@
 /// ════════════════════════════════════════════════════════════════════════════
 class ApiConstants {
   // ─── Base URL (chỉ dùng làm fallback, DioClient override theo nền tảng) ────
-  static const String baseUrl = 'https://localhost:7004/api';
+  static const String baseUrl = 'http://127.0.0.1:5122/api';
 
   // ─── Auth (/api/auth/...) ────────────────────────────────────────────────────
   // Đồng bộ với: Controllers/AuthController.cs → [Route("api/[controller]")]
@@ -50,7 +50,7 @@ class ApiConstants {
   // ─── Subjects (/api/subjects/...) ────────────────────────────────────────────
   // Đồng bộ với: Controllers/SubjectsController.cs
   static const String subjects = '/subjects'; // GET, POST, PUT, DELETE
-  static const String teacherSubjects = '/teacher-requests/my-requests'; // Sửa lại thành /teacher-requests/my-requests
+  static const String teacherSubjects = '/teacher-requests/my-requests'; // GET assigned subjects for teacher
 
   // ─── Questions (/api/questions/...) ──────────────────────────────────────────
   // Đồng bộ với: Controllers/QuestionController.cs → [Route("api/questions")]

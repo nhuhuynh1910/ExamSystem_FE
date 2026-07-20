@@ -4,13 +4,16 @@ import '../domain/exam_service.dart';
 import '../models/exam_question_model.dart';
 import '../../question/models/question_model.dart';
 import '../../../core/network/api_constants.dart';
+import '../../../core/utils/storage_manager.dart';
 import 'exam_event.dart';
 import 'exam_state.dart';
+import '../models/subject_model.dart';
 import '../../../core/network/dio_client.dart';
 class ExamBloc extends Bloc<ExamEvent, ExamState> {
   final ExamService _examService;
 
   ExamBloc(this._examService) : super(const ExamInitial()) {
+    on<LoadSubjectsEvent>(_onLoadSubjects);
     on<LoadTeacherSubjectsEvent>(_onLoadTeacherSubjects);
     on<LoadStudentSubjectsEvent>(_onLoadStudentSubjects);
     on<LoadExamsEvent>(_onLoadExams);
@@ -44,6 +47,28 @@ class ExamBloc extends Bloc<ExamEvent, ExamState> {
   //==========================================================
   // SUBJECT HANDLERS
   //==========================================================
+
+  Future<void> _onLoadSubjects(LoadSubjectsEvent event, Emitter<ExamState> emit) async {
+    emit(ExamLoading(exams: state.exams, subjects: state.subjects, selectedExam: state.selectedExam, examQuestions: state.examQuestions, tempBankQuestions: state.tempBankQuestions));
+    try {
+      final role = await StorageManager.getRole();
+      final userId = await StorageManager.getUserId() ?? 0;
+      
+      List<SubjectModel> subjects;
+      
+      if (role == 'Admin') {
+        subjects = await _examService.getSubjects();
+      } else if (role == 'Teacher') {
+        subjects = await _examService.getTeacherSubjects();
+      } else {
+        subjects = await _examService.getEnrolledSubjects(userId);
+      }
+
+      emit(SubjectsLoaded(subjects: subjects, exams: state.exams, tempBankQuestions: state.tempBankQuestions));
+    } catch (e) {
+      emit(ExamError(error: _handleError(e), exams: state.exams, subjects: state.subjects, selectedExam: state.selectedExam, examQuestions: state.examQuestions, tempBankQuestions: state.tempBankQuestions));
+    }
+  }
 
   Future<void> _onLoadTeacherSubjects(
       LoadTeacherSubjectsEvent event,
@@ -246,7 +271,7 @@ class ExamBloc extends Bloc<ExamEvent, ExamState> {
     try {
       final examQuestions = await _examService.getExamQuestions(event.examId);
       
-      final response = await DioClient.instance.get(ApiConstants.questions, queryParameters: {'SubjectId': event.subjectId, 'Status': 'Published'});
+      final response = await DioClient.instance.get(ApiConstants.questions, queryParameters: {'subjectId': event.subjectId, 'status': 'Published'});
       final List items = response.data is List ? response.data : (response.data['items'] ?? []);
       final bankQuestions = items.map((e) => QuestionModel.fromJson(e)).toList();
       
