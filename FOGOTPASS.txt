@@ -1,0 +1,223 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Forgot Password - FPT Exam Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary": "#286182",
+                      "surface-container": "#e5eeff",
+                      "error-container": "#ffdad6",
+                      "primary-fixed": "#ffdbd0",
+                      "surface-variant": "#d3e4fe",
+                      "surface-tint": "#ac3400",
+                      "on-primary": "#ffffff",
+                      "on-tertiary": "#ffffff",
+                      "secondary-fixed": "#d5e3ff",
+                      "on-primary-fixed-variant": "#842600",
+                      "surface": "#f8f9ff",
+                      "secondary-container": "#bbd3fd",
+                      "surface-dim": "#cbdbf5",
+                      "inverse-primary": "#ffb59d",
+                      "tertiary-fixed": "#c7e7ff",
+                      "on-secondary-fixed-variant": "#30476a",
+                      "on-secondary-fixed": "#001b3c",
+                      "on-secondary-container": "#445a7f",
+                      "on-tertiary-fixed-variant": "#064c6b",
+                      "secondary-fixed-dim": "#b0c7f1",
+                      "on-background": "#0b1c30",
+                      "surface-container-highest": "#d3e4fe",
+                      "primary-container": "#d14307",
+                      "on-surface-variant": "#5a4139",
+                      "surface-bright": "#f8f9ff",
+                      "outline-variant": "#e2bfb4",
+                      "outline": "#8e7067",
+                      "primary": "#a83300",
+                      "surface-container-low": "#eff4ff",
+                      "surface-container-high": "#dce9ff",
+                      "on-error-container": "#93000a",
+                      "on-primary-container": "#fffbff",
+                      "inverse-surface": "#213145",
+                      "on-surface": "#0b1c30",
+                      "on-primary-fixed": "#390b00",
+                      "secondary": "#485f84",
+                      "tertiary-container": "#447a9c",
+                      "background": "#f8f9ff",
+                      "on-tertiary-fixed": "#001e2e",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed-dim": "#98cdf2",
+                      "error": "#ba1a1a",
+                      "primary-fixed-dim": "#ffb59d",
+                      "on-tertiary-container": "#fcfcff",
+                      "inverse-on-surface": "#eaf1ff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "16px",
+                      "xs": "8px",
+                      "sm": "12px",
+                      "md": "16px",
+                      "lg": "24px",
+                      "xl": "32px",
+                      "gutter": "12px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "title-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "title-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "26px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-[#FAFAFA] font-body-md text-on-surface antialiased flex flex-col min-h-screen">
+<!-- Header / Back Navigation -->
+<header class="w-full flex items-center px-container-padding h-16 pt-safe">
+<button aria-label="Go back" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface-container-high transition-colors active:scale-95 text-[#1D3557]">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 w-full max-w-md mx-auto px-container-padding flex flex-col items-center justify-center sm:mt-0 mt-24">
+<!-- Logo -->
+<div class="mb-lg"><div class="mb-6 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center bg-[#F15A22]">
+    <img alt="FPT Exam Portal Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLtbGREWipgEkHVQuaplxB4r5MMdzl9qQXOlKQcEN1--75GFhAFh_EQDbuaFpnoBXalHBceq5EEqrzEjvuejiJ-5RWNtZK-FnoYf-hz3tb5skRfBVchV8Z7FBttaU8jB6ml36ZCHCQjB-_VsD-nvsJl20-EO1q_JaT9Q92ZTVdxjmyb2Og1MgEz9gOG49x5jcMYbmpBEHRUMX1KoDq2uqEdN16wcBnJTWgmpWRASdUbjwO4LyfxpHNXiVwM">
+</div></div>
+<!-- Typography Context -->
+<div class="text-center mb-xl w-full"><h1 class="text-[24px] font-bold text-[#1D3557] mb-xs leading-tight flex items-center justify-center gap-2">
+    Forgot Password 
+    <span class="material-symbols-outlined text-[#F15A22]" style="font-size: 24px;">lock</span>
+</h1>
+<p class="text-[14px] text-gray-500 font-normal px-4">
+    Enter your email address and we'll send you a link to reset your password.
+</p></div>
+<!-- Form Card / Bento approach to form -->
+<div class="w-full bg-white rounded-xl border border-[#E2E8F0] shadow-[0px_4px_12px_rgba(0,0,0,0.05)] p-md flex flex-col gap-lg">
+<form action="#" class="flex flex-col gap-md">
+<!-- Email Input Field -->
+<div class="flex flex-col gap-base">
+<label class="font-label-md text-label-md text-[#1D3557]" for="email">Email Address</label>
+<div class="relative flex items-center">
+<span class="absolute left-sm material-symbols-outlined text-gray-400" style="font-variation-settings: 'FILL' 0;">mail</span>
+<input class="w-full h-[52px] bg-[#F1F5F9] rounded-[10px] pl-10 pr-sm py-sm text-body-md text-on-surface border border-transparent focus:border-[#F15A22] focus:ring-1 focus:ring-[#F15A22] outline-none transition-all placeholder:text-gray-400" id="email" name="email" placeholder="student@fpt.edu.vn" required="" type="email">
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-[52px] bg-[#F15A22] hover:bg-[#d94f1c] text-white font-title-lg text-title-lg rounded-[12px] flex items-center justify-center gap-2 transition-colors active:scale-[0.98] mt-sm shadow-sm" type="submit">
+<span class="">Send Reset Link</span>
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">send</span>
+</button>
+</form>
+</div>
+<!-- Footer Actions -->
+<div class="mt-lg text-center w-full"><p class="text-body-md text-gray-500">
+    Remember your password? 
+    <a class="text-[#F15A22] font-bold hover:underline ml-1 inline-flex items-center gap-1 active:scale-95 transition-transform" href="#">
+        Back to Login
+        <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+    </a>
+</p></div>
+</main>
+
+
+
+
+</body></html>

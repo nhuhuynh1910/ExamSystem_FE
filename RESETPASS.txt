@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Set New Password - FPT Exam Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary": "#286182",
+                        "surface-container": "#e5eeff",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-variant": "#d3e4fe",
+                        "surface-tint": "#ac3400",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#d5e3ff",
+                        "on-primary-fixed-variant": "#842600",
+                        "surface": "#f8f9ff",
+                        "secondary-container": "#bbd3fd",
+                        "surface-dim": "#cbdbf5",
+                        "inverse-primary": "#ffb59d",
+                        "tertiary-fixed": "#c7e7ff",
+                        "on-secondary-fixed-variant": "#30476a",
+                        "on-secondary-fixed": "#001b3c",
+                        "on-secondary-container": "#445a7f",
+                        "on-tertiary-fixed-variant": "#064c6b",
+                        "secondary-fixed-dim": "#b0c7f1",
+                        "on-background": "#0b1c30",
+                        "surface-container-highest": "#d3e4fe",
+                        "primary-container": "#d14307",
+                        "on-surface-variant": "#5a4139",
+                        "surface-bright": "#f8f9ff",
+                        "outline-variant": "#e2bfb4",
+                        "outline": "#8e7067",
+                        "primary": "#a83300",
+                        "surface-container-low": "#eff4ff",
+                        "surface-container-high": "#dce9ff",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#fffbff",
+                        "inverse-surface": "#213145",
+                        "on-surface": "#0b1c30",
+                        "on-primary-fixed": "#390b00",
+                        "secondary": "#485f84",
+                        "tertiary-container": "#447a9c",
+                        "background": "#f8f9ff",
+                        "on-tertiary-fixed": "#001e2e",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed-dim": "#98cdf2",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#ffb59d",
+                        "on-tertiary-container": "#fcfcff",
+                        "inverse-on-surface": "#eaf1ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding": "16px",
+                        "xs": "8px",
+                        "sm": "12px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "title-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-lg": ["18px", { "lineHeight": "26px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #FAFAFA; font-family: 'Inter', sans-serif; }
+        .text-brand-primary { color: #F15A22; }
+        .bg-brand-primary { background-color: #F15A22; }
+        .text-brand-navy { color: #1D3557; }
+        .bg-brand-navy { background-color: #1D3557; }
+        .border-brand-navy { border-color: #1D3557; }
+        .focus-ring-primary:focus-within { border-color: #F15A22 !important; box-shadow: none !important; }
+        .custom-input-bg { background-color: #F1F5F9; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center pt-8 px-container-padding">
+<!-- Top Navigation (Back Button) -->
+<div class="w-full max-w-md flex items-center justify-start mb-8">
+<button class="p-2 -ml-2 rounded-full hover:bg-surface-variant transition-colors text-on-surface">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+</div>
+<!-- Main Content Container -->
+<main class="w-full max-w-md flex flex-col items-center">
+<!-- Logo -->
+<div class="mb-6 w-14 h-14 rounded-full overflow-hidden flex items-center justify-center bg-brand-primary">
+<img alt="FPT Exam Portal Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AP1WRLtbGREWipgEkHVQuaplxB4r5MMdzl9qQXOlKQcEN1--75GFhAFh_EQDbuaFpnoBXalHBceq5EEqrzEjvuejiJ-5RWNtZK-FnoYf-hz3tb5skRfBVchV8Z7FBttaU8jB6ml36ZCHCQjB-_VsD-nvsJl20-EO1q_JaT9Q92ZTVdxjmyb2Og1MgEz9gOG49x5jcMYbmpBEHRUMX1KoDq2uqEdN16wcBnJTWgmpWRASdUbjwO4LyfxpHNXiVwM"/>
+</div>
+<!-- Typography -->
+<h1 class="text-[24px] font-bold text-brand-navy mb-2 text-center">Set New Password 🔑</h1>
+<p class="text-[14px] text-gray-500 text-center mb-8 px-4">Your new password must be different to previously used passwords.</p>
+<!-- Form -->
+<form class="w-full flex flex-col gap-6" onsubmit="event.preventDefault();">
+<!-- New Password Input -->
+<div class="flex flex-col gap-2">
+<label class="text-brand-navy font-label-md text-label-md" for="new_password">New Password</label>
+<div class="relative flex items-center w-full h-[52px] rounded-[10px] custom-input-bg border border-transparent focus-ring-primary transition-colors px-4">
+<span class="material-symbols-outlined text-gray-400 mr-3 text-lg" data-icon="lock">lock</span>
+<input class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface p-0 placeholder:text-gray-400" id="new_password" placeholder="Enter new password" type="password"/>
+<button class="ml-3 text-gray-400 hover:text-on-surface transition-colors" onclick="togglePasswordVisibility('new_password', 'new_password_icon')" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="visibility_off" id="new_password_icon">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Confirm Password Input -->
+<div class="flex flex-col gap-2">
+<label class="text-brand-navy font-label-md text-label-md" for="confirm_password">Confirm Password</label>
+<div class="relative flex items-center w-full h-[52px] rounded-[10px] custom-input-bg border border-transparent focus-ring-primary transition-colors px-4">
+<span class="material-symbols-outlined text-gray-400 mr-3 text-lg" data-icon="lock">lock</span>
+<input class="w-full h-full bg-transparent border-none focus:ring-0 text-body-md text-on-surface p-0 placeholder:text-gray-400" id="confirm_password" placeholder="Confirm new password" type="password"/>
+<button class="ml-3 text-gray-400 hover:text-on-surface transition-colors" onclick="togglePasswordVisibility('confirm_password', 'confirm_password_icon')" type="button">
+<span class="material-symbols-outlined text-lg" data-icon="visibility_off" id="confirm_password_icon">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full h-[52px] rounded-[12px] bg-brand-primary text-white font-title-lg text-title-lg mt-2 active:scale-[0.98] transition-transform flex justify-center items-center" type="submit">
+                Update Password
+            </button>
+</form>
+<!-- Footer Link -->
+<div class="mt-8">
+<a class="font-label-md text-label-md text-brand-primary flex items-center gap-1 hover:underline" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back">arrow_back</span>
+                Back to Login
+            </a>
+</div>
+</main>
+<script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            
+            if (input.type === "password") {
+                input.type = "text";
+                icon.textContent = "visibility";
+                icon.setAttribute("data-icon", "visibility");
+            } else {
+                input.type = "password";
+                icon.textContent = "visibility_off";
+                icon.setAttribute("data-icon", "visibility_off");
+            }
+        }
+    </script>
+</body></html>

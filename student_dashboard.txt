@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "secondary-fixed-dim": "#b0c7f1",
+                  "secondary-fixed": "#d5e3ff",
+                  "on-primary-container": "#fffbff",
+                  "tertiary-container": "#447a9c",
+                  "on-tertiary-container": "#fcfcff",
+                  "inverse-on-surface": "#eaf1ff",
+                  "surface-container": "#e5eeff",
+                  "on-tertiary-fixed": "#001e2e",
+                  "surface-variant": "#d3e4fe",
+                  "on-primary-fixed": "#390b00",
+                  "inverse-primary": "#ffb59d",
+                  "surface-container-high": "#dce9ff",
+                  "secondary-container": "#bbd3fd",
+                  "on-primary": "#ffffff",
+                  "surface-container-lowest": "#ffffff",
+                  "surface-dim": "#cbdbf5",
+                  "on-secondary-fixed": "#001b3c",
+                  "error": "#ba1a1a",
+                  "surface-container-low": "#eff4ff",
+                  "primary": "#a83300",
+                  "error-container": "#ffdad6",
+                  "on-secondary-container": "#445a7f",
+                  "surface": "#f8f9ff",
+                  "tertiary": "#286182",
+                  "primary-container": "#d14307",
+                  "primary-fixed": "#ffdbd0",
+                  "on-tertiary-fixed-variant": "#064c6b",
+                  "surface-tint": "#ac3400",
+                  "on-error": "#ffffff",
+                  "background": "#f8f9ff",
+                  "on-background": "#0b1c30",
+                  "inverse-surface": "#213145",
+                  "surface-bright": "#f8f9ff",
+                  "surface-container-highest": "#d3e4fe",
+                  "secondary": "#485f84",
+                  "tertiary-fixed": "#c7e7ff",
+                  "on-surface-variant": "#5a4139",
+                  "on-surface": "#0b1c30",
+                  "on-primary-fixed-variant": "#842600",
+                  "outline-variant": "#e2bfb4",
+                  "on-error-container": "#93000a",
+                  "tertiary-fixed-dim": "#98cdf2",
+                  "primary-fixed-dim": "#ffb59d",
+                  "on-secondary-fixed-variant": "#30476a",
+                  "on-tertiary": "#ffffff",
+                  "outline": "#8e7067",
+                  "on-secondary": "#ffffff",
+                  "fpt-orange": "#F15A22",
+                  "fpt-navy": "#1D3557"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "xl": "32px",
+                  "xs": "8px",
+                  "sm": "12px",
+                  "base": "4px",
+                  "container-padding": "16px",
+                  "md": "16px",
+                  "lg": "24px",
+                  "gutter": "12px"
+          },
+          "fontFamily": {
+                  "label-md": ["Inter"],
+                  "display-lg-mobile": ["Inter"],
+                  "headline-md": ["Inter"],
+                  "display-lg": ["Inter"],
+                  "body-lg": ["Inter"],
+                  "headline-sm": ["Inter"],
+                  "title-lg": ["Inter"],
+                  "body-md": ["Inter"]
+          },
+          "fontSize": {
+                  "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                  "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                  "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                  "title-lg": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                  "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #FAFAFA;
+      font-family: 'Inter', sans-serif;
+      color: #0b1c30;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .safe-area-top { padding-top: env(safe-area-inset-top); }
+    .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    
+    .orange-glow {
+      box-shadow: 0px 4px 12px rgba(241, 90, 34, 0.15);
+    }
+    
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .active-indicator {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 3px;
+      background-color: #F15A22;
+      border-radius: 0 0 2px 2px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<header class="bg-fpt-orange text-white fixed top-0 w-full z-50 shadow-md">
+<div class="safe-area-top"></div>
+<div class="h-16 px-container-padding flex items-center justify-between">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<img alt="FPT Logo" class="w-7 h-7 object-contain brightness-0 invert" src="https://lh3.googleusercontent.com/aida/AP1WRLug50ElWkTK25bTdkbFNTs0ueL8sdUdFTAdYn6BEdRKSOlDEi7YEcdQj4sTsLmaD5IK-weEr5ypScfHmkmE3IQNWG9FtdrIS-QWsDrVa3MmOOL-ujtiuvtYvHxtf-175Wu36i5qDbcOM6vhjHFDVqA0LTwUsuw4rZOBcYJiZkZrEoYxdWjJpE7wxdCD74cMvcou8bdZH5YKAWkg97GyWqQ9cjIC7DCHBXbdqB6mzEb6tXpCxsKV1Rmvk1Y"/>
+<span class="font-bold text-[13px] tracking-tight leading-tight">FPT ExamHub</span>
+</div>
+</div>
+<div class="absolute left-1/2 -translate-x-1/2">
+<h1 class="font-semibold text-lg whitespace-nowrap">Hello, Minh 👋</h1>
+</div>
+<div class="relative active:scale-95 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute -top-1 -right-1 bg-red-600 text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-fpt-orange">3</span>
+</div>
+</div>
+</header>
+<main class="flex-1 mt-24 mb-24 px-container-padding">
+<section class="mt-4">
+<div class="flex overflow-x-auto hide-scrollbar gap-gutter pb-4 -mx-container-padding px-container-padding">
+<div class="flex-shrink-0 w-[110px] bg-white rounded-xl p-md orange-glow border border-gray-100 flex flex-col gap-2">
+<div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-fpt-orange text-xl" style="font-variation-settings: 'FILL' 1;">book</span>
+</div>
+<span class="text-fpt-navy font-bold text-2xl">5</span>
+<span class="text-gray-500 text-xs font-medium">Enrolled</span>
+</div>
+<div class="flex-shrink-0 w-[110px] bg-white rounded-xl p-md orange-glow border border-gray-100 flex flex-col gap-2">
+<div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-fpt-orange text-xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="text-fpt-navy font-bold text-2xl">12</span>
+<span class="text-gray-500 text-xs font-medium">Exams Taken</span>
+</div>
+<div class="flex-shrink-0 w-[110px] bg-white rounded-xl p-md orange-glow border border-gray-100 flex flex-col gap-2">
+<div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-fpt-orange text-xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<span class="text-fpt-navy font-bold text-2xl">95%</span>
+<span class="text-gray-500 text-xs font-medium">Best Score</span>
+</div>
+</div>
+</section>
+<section class="mt-lg">
+<div class="flex items-center justify-between mb-sm">
+<h2 class="font-semibold text-fpt-navy font-title-lg text-title-lg">📅 Upcoming Exams</h2>
+<button class="text-fpt-orange text-xs font-semibold">See All</button>
+</div>
+<div class="flex overflow-x-auto hide-scrollbar gap-gutter -mx-container-padding px-container-padding pb-2">
+<div class="flex-shrink-0 w-[200px] bg-white rounded-xl p-md border-l-4 border-fpt-orange shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-2">
+<h3 class="font-bold text-fpt-navy text-[14px] leading-tight">Advanced Algorithms Midterm</h3>
+<div class="inline-flex">
+<span class="bg-fpt-orange text-white text-[11px] px-2 py-0.5 rounded-full font-medium">PRN211</span>
+</div>
+<div class="bg-[#FFF3EE] p-2 rounded-lg flex items-center gap-1.5">
+<span class="material-symbols-outlined text-fpt-orange text-[16px]">schedule</span>
+<span class="text-fpt-orange text-[12px] font-semibold">Starts in 2 days</span>
+</div>
+<div class="flex items-center gap-1 text-gray-500">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span class="text-[12px]">60 min</span>
+</div>
+</div>
+</div>
+<div class="flex-shrink-0 w-[200px] bg-white rounded-xl p-md border-l-4 border-fpt-orange shadow-sm hover:shadow-md transition-shadow">
+<div class="flex flex-col gap-2">
+<h3 class="font-bold text-fpt-navy text-[14px] leading-tight">Human Computer Interaction</h3>
+<div class="inline-flex">
+<span class="bg-fpt-orange text-white text-[11px] px-2 py-0.5 rounded-full font-medium">HCI201</span>
+</div>
+<div class="bg-[#FFF3EE] p-2 rounded-lg flex items-center gap-1.5">
+<span class="material-symbols-outlined text-fpt-orange text-[16px]">schedule</span>
+<span class="text-fpt-orange text-[12px] font-semibold">Starts in 5 days</span>
+</div>
+<div class="flex items-center gap-1 text-gray-500">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+<span class="text-[12px]">45 min</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="mt-lg">
+<div class="flex items-center justify-between mb-sm">
+<h2 class="font-semibold text-fpt-navy font-title-lg text-title-lg">📖 My Subjects</h2>
+</div>
+<div class="flex flex-col gap-sm">
+<div class="bg-white rounded-xl p-md border-l-4 border-fpt-orange shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex flex-col">
+<h3 class="font-bold text-fpt-navy text-[15px]">Software Engineering</h3>
+<span class="text-gray-500 text-[13px]">Dr. Le Van Nam</span>
+</div>
+<div class="flex items-center gap-1 text-gray-400">
+<div class="flex items-center gap-1 mr-2 bg-gray-50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="text-[11px] font-medium">32</span>
+</div>
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</div>
+</div>
+<div class="bg-white rounded-xl p-md border-l-4 border-fpt-orange shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex flex-col">
+<h3 class="font-bold text-fpt-navy text-[15px]">Distributed Systems</h3>
+<span class="text-gray-500 text-[13px]">MSc. Hoang Thuy</span>
+</div>
+<div class="flex items-center gap-1 text-gray-400">
+<div class="flex items-center gap-1 mr-2 bg-gray-50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="text-[11px] font-medium">28</span>
+</div>
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</div>
+</div>
+<div class="bg-white rounded-xl p-md border-l-4 border-fpt-orange shadow-sm flex items-center justify-between active:scale-[0.98] transition-transform">
+<div class="flex flex-col">
+<h3 class="font-bold text-fpt-navy text-[15px]">Mobile App Development</h3>
+<span class="text-gray-500 text-[13px]">Mr. Nguyen Quang</span>
+</div>
+<div class="flex items-center gap-1 text-gray-400">
+<div class="flex items-center gap-1 mr-2 bg-gray-50 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-[14px]">group</span>
+<span class="text-[11px] font-medium">45</span>
+</div>
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-xs py-sm pb-safe bg-surface border-t border-outline-variant shadow-lg">
+<a class="relative flex flex-col items-center justify-center text-fpt-orange transition-all duration-200" href="#">
+<div class="active-indicator"></div>
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px]">assignment</span>
+<span class="font-label-md text-label-md mt-1">Exams</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px]">leaderboard</span>
+<span class="font-label-md text-label-md mt-1">Results</span>
+</a>
+<a class="flex flex-col items-center justify-center text-gray-400 active:scale-90 transition-all duration-200" href="#">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-md text-label-md mt-1">Profile</span>
+</a>
+<div class="safe-area-bottom"></div>
+</nav>
+<script>
+    document.querySelectorAll('nav a').forEach(item => {
+      item.addEventListener('click', function(e) {
+        if (!this.classList.contains('text-fpt-orange')) {
+          document.querySelector('nav a.text-fpt-orange').classList.remove('text-fpt-orange');
+          document.querySelector('nav a .active-indicator')?.remove();
+          
+          this.classList.add('text-fpt-orange');
+          this.classList.remove('text-gray-400');
+          
+          const indicator = document.createElement('div');
+          indicator.className = 'active-indicator';
+          this.appendChild(indicator);
+          
+          const icon = this.querySelector('.material-symbols-outlined');
+          icon.style.fontVariationSettings = "'FILL' 1";
+          
+          document.querySelectorAll('nav a:not(.text-fpt-orange)').forEach(inactive => {
+            inactive.classList.add('text-gray-400');
+            inactive.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 0";
+          });
+        }
+      });
+    });
+  </script>
+</body></html>
