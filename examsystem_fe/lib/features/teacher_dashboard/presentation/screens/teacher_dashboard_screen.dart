@@ -132,7 +132,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          // TODO: Navigate to full exam list
+                          context.push(AppRouter.examList);
                         },
                         child: const Text(
                           'See all',

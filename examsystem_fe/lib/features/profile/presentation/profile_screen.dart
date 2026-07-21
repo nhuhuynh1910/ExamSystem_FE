@@ -224,8 +224,7 @@ class ProfileScreen extends StatelessWidget {
         );
       },
       onExamManagement: () {
-        // TODO: Navigate to exam management
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        context.push(AppRouter.examList);
       },
       onHelpSupport: () {
         // TODO: Navigate to help & support

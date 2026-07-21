@@ -1220,7 +1220,7 @@
                   size: 18,
                 ),
                 label: const Text(
-                  'View Details',
+                  'Create Teacher Requests',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../exam/screens/create_exam_screen.dart';
 
 /// Grid 4 nút Quick Actions.
 ///
@@ -9,10 +11,24 @@ class QuickActionsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final actions = [
-      _QuickAction(icon: Icons.add_circle, label: 'New\nQuestion'),
-      _QuickAction(icon: Icons.assignment_add, label: 'New\nExam'),
-      _QuickAction(icon: Icons.analytics, label: 'Results'),
-      _QuickAction(icon: Icons.groups, label: 'Students'),
+      _QuickAction(
+          icon: Icons.add_circle,
+          label: 'New\nQuestion',
+          onTap: () => context.push('/questions')),
+      _QuickAction(
+          icon: Icons.assignment_add,
+          label: 'New\nExam',
+          onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CreateExamScreen()))),
+      _QuickAction(
+          icon: Icons.analytics,
+          label: 'Exams',
+          onTap: () => context.push('/exams')),
+      _QuickAction(
+          icon: Icons.groups,
+          label: 'Students',
+          onTap: () => context.push('/student/courses/catalog')),
     ];
 
     return Padding(
@@ -34,7 +50,8 @@ class QuickActionsGrid extends StatelessWidget {
 class _QuickAction {
   final IconData icon;
   final String label;
-  const _QuickAction({required this.icon, required this.label});
+  final VoidCallback onTap;
+  const _QuickAction({required this.icon, required this.label, required this.onTap});
 }
 
 class _QuickActionButton extends StatelessWidget {
@@ -44,20 +61,7 @@ class _QuickActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: const Text('Coming soon!'),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-      },
+      onTap: action.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
