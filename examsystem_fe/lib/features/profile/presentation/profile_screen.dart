@@ -33,6 +33,7 @@ import 'widgets/profile_identity_card.dart';
 import 'widgets/profile_menu_card.dart';
 import 'widgets/profile_menu_config.dart';
 import 'widgets/profile_sign_out_card.dart';
+import '../../common/admin_bottom_nav_bar.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
 // ProfileScreen — Màn hình Profile chính.
@@ -72,7 +73,9 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
             bottomNavigationBar: (!hideBottomNav && profile != null)
-                ? _buildProfileNavBar(context, profile.role)
+                ? (profile.role.toLowerCase() == 'admin'
+                    ? const AdminBottomNavBar(currentIndex: 2)
+                    : _buildProfileNavBar(context, profile.role))
                 : null,
           );
         },
@@ -459,7 +462,7 @@ class ProfileScreen extends StatelessWidget {
                 isActive: false,
                 onTap: () => context.go(AppRouter.studentDashboard),
               ),
-            ] else ...[
+            ] else ...[ // Teacher
               _ProfileBottomNavItem(
                 icon: Icons.quiz_rounded,
                 label: 'Questions',

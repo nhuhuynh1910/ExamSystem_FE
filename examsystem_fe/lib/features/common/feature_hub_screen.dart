@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/routes/app_router.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/storage_manager.dart';
 import '../../core/network/dio_client.dart';
+import 'admin_bottom_nav_bar.dart';
 
 /// FeatureHubScreen — Trang trung tâm Admin Dashboard.
 class FeatureHubScreen extends StatefulWidget {
@@ -15,8 +15,6 @@ class FeatureHubScreen extends StatefulWidget {
 
 class _FeatureHubScreenState extends State<FeatureHubScreen> {
   String? _fullName;
-  String? _role;
-  String? _username;
 
   int _totalStudents = 0;
   int _activeCourses = 0;
@@ -81,40 +79,10 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
 
   Future<void> _loadUserInfo() async {
     final fullName = await StorageManager.getFullName();
-    final role = await StorageManager.getRole();
-    final username = await StorageManager.getUsername();
     if (mounted) {
       setState(() {
         _fullName = fullName ?? 'Người dùng';
-        _role = role ?? 'Unknown';
-        _username = username ?? '';
       });
-    }
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc muốn đăng xuất?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Đăng xuất'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      await StorageManager.clearAll();
-      if (mounted) context.go('/login');
     }
   }
 
@@ -137,13 +105,13 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.lightBg,
+      backgroundColor: const Color(0xFFF8FAFC),
       // ── Top App Bar ──────────────────────────────────────────────────────────
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppTheme.primary),
+          icon: const Icon(Icons.menu_rounded, color: AppTheme.primary),
           onPressed: () => _showFeaturePendingDialog(context, 'Menu'),
         ),
         title: Row(
@@ -152,7 +120,7 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
             Image.network(
               'https://lh3.googleusercontent.com/aida/AP1WRLs9uI4gDsk_p6lAI1OqbHDXyKZBdrqeBA-bY4xnIk1CUgoqLvT_0KFZMolYwqah0XQ8B8y5zcmkzSSW6y3731qbMPyW-67cNO6_wYkU0U9d4m65t2DRuN2P389YSNot3Qgpt2xkLrQGShRsIIQ8tEfu1R2x3BYDpsAKOJ9FjtpDRLqnXyPR15zqIJJxnXq_rXCEWeN_DpYjvdpwEbesYOMwglGphQdkDOQze_e7a1ekrgEmmZGg_9Cereg',
               height: 32,
-              errorBuilder: (_, __, ___) => const Icon(Icons.school, color: AppTheme.primary),
+              errorBuilder: (_, __, ___) => const Icon(Icons.school_rounded, color: AppTheme.primary),
             ),
             const SizedBox(width: 8),
             const Text(
@@ -167,9 +135,9 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: AppTheme.error),
-            onPressed: _logout,
-            tooltip: 'Đăng xuất',
+            icon: const Icon(Icons.notifications_outlined, color: AppTheme.secondary),
+            onPressed: () => context.push('/notifications'),
+            tooltip: 'Thông báo',
           ),
           const SizedBox(width: 8),
           Padding(
@@ -193,99 +161,133 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
       ),
       // ── Body Content ─────────────────────────────────────────────────────────
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
         children: [
-          // Welcome Header
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Welcome back, ${_fullName ?? 'Admin'}!',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.secondary,
-                ),
+          // Welcome Header Banner
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E293B), Color(0xFF334155)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'System status is healthy. ',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
-                  ),
-                  GestureDetector(
-                    onTap: () => context.push('/admin/teacher-requests'),
-                    child: const Text(
-                      '2 pending faculty requests. →',
-                      style: TextStyle(
-                        color: AppTheme.warning,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                        decorationColor: AppTheme.warning,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1E293B).withOpacity(0.15),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF10B981), width: 0.8),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle, color: Color(0xFF10B981), size: 8),
+                          SizedBox(width: 6),
+                          Text(
+                            'System Active',
+                            style: TextStyle(
+                              color: Color(0xFF10B981),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const Icon(Icons.shield_outlined, color: Colors.white70, size: 22),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Welcome back, ${_fullName ?? 'Admin'}!',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    height: 1.2,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Academic Office Administration Hub',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
+
+          // Overview Title
+          const Text(
+            'System Overview',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.secondary,
+            ),
+          ),
+          const SizedBox(height: 14),
 
           // Stats Bento Grid
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.4,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: 1.5,
             children: [
               _buildStatCard(
                 icon: Icons.groups_rounded,
                 badge: 'Live',
-                badgeColor: Colors.green,
-                badgeBg: const Color(0xFFF0FDF4),
+                color: const Color(0xFF2563EB),
                 title: 'Total Students',
                 value: '$_totalStudents',
               ),
               _buildStatCard(
                 icon: Icons.school_rounded,
                 badge: 'Live',
-                badgeColor: AppTheme.primary,
-                badgeBg: const Color(0xFFFFEFEA),
+                color: AppTheme.primary,
                 title: 'Active Courses',
                 value: '$_activeCourses',
               ),
               _buildStatCard(
                 icon: Icons.person_pin_rounded,
                 badge: 'Live',
-                badgeColor: Colors.green,
-                badgeBg: const Color(0xFFF0FDF4),
+                color: const Color(0xFF7C3AED),
                 title: 'Faculty Members',
                 value: '$_facultyMembers',
               ),
               _buildStatCard(
                 icon: Icons.assignment_turned_in_rounded,
                 badge: 'Live',
-                badgeColor: AppTheme.warning,
-                badgeBg: const Color(0xFFFFECE5),
+                color: const Color(0xFF059669),
                 title: 'Exams Conducted',
                 value: '$_examsConducted',
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           // Quick Actions
           const Text(
@@ -296,166 +298,67 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
               color: AppTheme.secondary,
             ),
           ),
-          const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: [
-                _buildQuickActionButton(
-                  icon: Icons.add_circle,
+          const SizedBox(height: 14),
+
+          // Balanced 3-Column Quick Actions Layout
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: Icons.add_circle_outline_rounded,
                   label: 'Create Course',
-                  bgColor: AppTheme.primary.withOpacity(0.1),
+                  bgColor: AppTheme.primary.withOpacity(0.08),
                   iconColor: AppTheme.primary,
                   onTap: () => context.push('/admin/courses/create'),
                 ),
-                const SizedBox(width: 20),
-                _buildQuickActionButton(
-                  icon: Icons.person_add,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
+                  icon: Icons.person_add_alt_1_rounded,
                   label: 'Assign Teacher',
-                  bgColor: AppTheme.secondary.withOpacity(0.1),
-                  iconColor: AppTheme.secondary,
+                  bgColor: const Color(0xFF7C3AED).withOpacity(0.08),
+                  iconColor: const Color(0xFF7C3AED),
                   onTap: () => context.push('/admin/courses'),
                 ),
-                const SizedBox(width: 20),
-                _buildQuickActionButton(
-                  icon: Icons.assignment_add,
-                  label: 'Manage Exams',
-                  bgColor: const Color(0xFFFFF7ED),
-                  iconColor: const Color(0xFFEA580C),
-                  onTap: () => context.push('/exams'),
-                ),
-                const SizedBox(width: 20),
-                _buildQuickActionButton(
-                  icon: Icons.quiz_rounded,
-                  label: 'Question Bank',
-                  bgColor: const Color(0xFFEFF6FF),
-                  iconColor: const Color(0xFF2563EB),
-                  onTap: () => context.push('/questions'),
-                ),
-                const SizedBox(width: 20),
-                _buildQuickActionButton(
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
                   icon: Icons.how_to_reg_rounded,
                   label: 'Faculty Requests',
-                  bgColor: const Color(0xFFFDF2F8),
-                  iconColor: const Color(0xFFBE185D),
+                  bgColor: const Color(0xFF059669).withOpacity(0.08),
+                  iconColor: const Color(0xFF059669),
                   onTap: () => context.push('/admin/teacher-requests'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 28),
-
-          // System Activity Feed
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'System Activity',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.secondary,
-                ),
-              ),
-              TextButton(
-                onPressed: () => _showFeaturePendingDialog(context, 'Xem tất cả hoạt động'),
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    color: AppTheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.border),
-            ),
-            child: Column(
-              children: [
-                _buildActivityItem(
-                  dotColor: AppTheme.warning,
-                  richText: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(color: AppTheme.navy, fontSize: 14),
-                      children: [
-                        TextSpan(text: 'New course '),
-                        TextSpan(
-                          text: "'Mobile App Dev'",
-                          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(text: ' created by Academic Office'),
-                      ],
-                    ),
-                  ),
-                  time: '2h ago',
-                  isLast: false,
-                ),
-                _buildActivityItem(
-                  dotColor: AppTheme.secondary,
-                  richText: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(color: AppTheme.navy, fontSize: 14),
-                      children: [
-                        TextSpan(text: 'Teacher Assignment: '),
-                        TextSpan(
-                          text: 'Dr. Nguyen Thi Lan',
-                          style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                        ),
-                        TextSpan(text: ' assigned to SWE302'),
-                      ],
-                    ),
-                  ),
-                  time: '5h ago',
-                  isLast: false,
-                ),
-                _buildActivityItem(
-                  dotColor: Colors.green,
-                  richText: RichText(
-                    text: const TextSpan(
-                      style: TextStyle(color: AppTheme.navy, fontSize: 14),
-                      children: [
-                        TextSpan(text: 'System Backup completed successfully'),
-                      ],
-                    ),
-                  ),
-                  time: '1d ago',
-                  isLast: true,
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 24),
         ],
       ),
-      // ── Custom Bottom Nav Bar ───────────────────────────────────────────────
-      bottomNavigationBar: _buildHubBottomNav(),
+      // ── Admin Bottom Nav Bar ───────────────────────────────────────────────
+      bottomNavigationBar: const AdminBottomNavBar(currentIndex: 0),
     );
   }
 
   Widget _buildStatCard({
     required IconData icon,
     required String badge,
-    required Color badgeColor,
-    required Color badgeBg,
+    required Color color,
     required String title,
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border.withOpacity(0.8)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
+            color: color.withOpacity(0.06),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -467,20 +370,41 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: AppTheme.primary, size: 24),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(99),
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      badge,
+                      style: const TextStyle(
+                        color: Color(0xFF047857),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -493,14 +417,15 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
                 style: const TextStyle(
                   color: AppTheme.textMuted,
                   fontSize: 12,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppTheme.secondary,
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -518,177 +443,50 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
-      child: SizedBox(
-        width: 80,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.border.withOpacity(0.8)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: bgColor,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               label,
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
                 color: AppTheme.navy,
+                height: 1.2,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem({
-    required Color dotColor,
-    required Widget richText,
-    required String time,
-    required bool isLast,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : Border(
-                bottom: BorderSide(
-                  color: AppTheme.border.withOpacity(0.5),
-                ),
-              ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: dotColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                richText,
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHubBottomNav() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8F9FF),
-        border: Border(top: BorderSide(color: Color(0xFFE2BFB4), width: 0.5)),
-      ),
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _HubBottomNavItem(
-              icon: Icons.home_rounded,
-              label: 'Home',
-              isActive: true,
-              onTap: () {},
-            ),
-            _HubBottomNavItem(
-              icon: Icons.quiz_rounded,
-              label: 'Questions',
-              isActive: false,
-              onTap: () => context.go(AppRouter.questionList),
-            ),
-            _HubBottomNavItem(
-              icon: Icons.assignment_rounded,
-              label: 'Exams',
-              isActive: false,
-              onTap: () => context.go(AppRouter.examList),
-            ),
-            _HubBottomNavItem(
-              icon: Icons.person_rounded,
-              label: 'Profile',
-              isActive: false,
-              onTap: () => context.go(AppRouter.profile),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-}
-
-class _HubBottomNavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _HubBottomNavItem({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive ? const Color(0xFFF15A22) : const Color(0xFF485F84);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isActive)
-            Container(
-              width: 48,
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF15A22),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            )
-          else
-            const SizedBox(height: 7),
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
