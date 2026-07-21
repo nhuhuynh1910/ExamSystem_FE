@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../teacher_dashboard/models/paged_exam_result.dart';
+import '../../Enrollment/models/subject_model.dart';
 import 'student_dashboard_remote_data_source.dart';
 import 'student_dashboard_repository.dart';
 
@@ -67,6 +68,23 @@ class StudentDashboardRepositoryImpl implements StudentDashboardRepository {
     try {
       return await _remoteDataSource.getStudentSubjects(studentId);
     } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<SubjectModel>> getAvailableCatalogSubjects() async {
+    try {
+      final response = await _remoteDataSource.getAvailableCatalogSubjects();
+      if (response is List) {
+        return response
+            .map((item) => SubjectModel.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ))
+            .toList();
+      }
+      return [];
+    } catch (_) {
       return [];
     }
   }

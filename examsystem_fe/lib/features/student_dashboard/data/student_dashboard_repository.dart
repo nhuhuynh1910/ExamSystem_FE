@@ -1,4 +1,5 @@
 import '../../teacher_dashboard/models/paged_exam_result.dart';
+import '../../Enrollment/models/subject_model.dart';
 
 /// Interface repository cho Student Dashboard.
 abstract class StudentDashboardRepository {
@@ -10,4 +11,7 @@ abstract class StudentDashboardRepository {
 
   /// Lấy danh sách môn học sinh viên đã đăng ký
   Future<List<dynamic>> getStudentSubjects(int studentId);
+
+  /// Lấy danh sách tất cả môn học mở có sẵn để đăng ký (Catalog)
+  Future<List<SubjectModel>> getAvailableCatalogSubjects();
 }

@@ -8,7 +8,6 @@ import '../widgets/dashboard_header.dart';
 import '../widgets/exam_card.dart';
 import '../widgets/exam_filter_tabs.dart';
 import '../widgets/quick_actions_grid.dart';
-import '../widgets/recent_activity_timeline.dart';
 import '../widgets/stats_strip.dart';
 import '../../../../core/routes/app_router.dart';
 
@@ -92,7 +91,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         // Fixed header
         DashboardHeader(
           teacherName: state.teacherName,
-          notificationCount: 5, // mock
         ),
 
         // Scrollable body
@@ -195,11 +193,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       }).toList(),
                     ),
                   ),
-                const SizedBox(height: 24),
-
-                // Recent Activity
-                const RecentActivityTimeline(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
               ],
             ),
           ),

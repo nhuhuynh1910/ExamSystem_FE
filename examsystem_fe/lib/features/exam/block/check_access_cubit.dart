@@ -9,8 +9,8 @@ class CheckAccessCubit extends Cubit<CheckAccessState> {
   final ExamRepository _repository;
 
   CheckAccessCubit({ExamRepository? repository})
-    : _repository = repository ?? ExamRepository(),
-      super(const CheckAccessInitial());
+      : _repository = repository ?? ExamRepository(),
+        super(const CheckAccessInitial());
 
   Future<void> checkAccess({required int examId, String? accessCode}) async {
     emit(const CheckAccessLoading());
@@ -21,21 +21,33 @@ class CheckAccessCubit extends Cubit<CheckAccessState> {
       );
       emit(CheckAccessSuccess(response: result));
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.response == null) {
+        emit(const CheckAccessFailure(
+          message: 'Server connection error. Please check your network and try again.',
+        ));
+        return;
+      }
+
       final code = e.response?.statusCode;
-      
       final responseData = e.response?.data;
       String? serverMsg;
       if (responseData is Map) {
-        serverMsg = responseData['message']?.toString() ?? responseData['detail']?.toString();
+        serverMsg = responseData['message']?.toString() ??
+            responseData['detail']?.toString();
       }
 
-      final msg = serverMsg != null ? _translateServerMessage(serverMsg) : switch (code) {
-        401  => 'Session expired. Please log in again.',
-        403  => 'You are not eligible to take this exam.',
-        404  => 'Exam not found.',
-        409  => 'You have exceeded the maximum number of attempts.',
-        _    => e.message ?? 'An error occurred.',
-      };
+      final msg = serverMsg != null
+          ? _translateServerMessage(serverMsg)
+          : switch (code) {
+              401 => 'Session expired. Please log in again.',
+              403 => 'You are not eligible to take this exam.',
+              404 => 'Exam not found.',
+              409 => 'You have exceeded the maximum number of attempts.',
+              _ => 'Server connection error. Please try again.',
+            };
       emit(CheckAccessFailure(message: msg, statusCode: code));
     } catch (e) {
       emit(CheckAccessFailure(message: e.toString()));

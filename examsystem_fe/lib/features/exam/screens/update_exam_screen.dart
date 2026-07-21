@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+
+import '../../question/bloc/question_bloc.dart';
+import '../../question/bloc/question_event.dart' as qe;
+import '../../question/bloc/question_state.dart' as qs;
 import '../bloc/exam_bloc.dart';
 import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
+import '../models/add_exam_question_request.dart';
 import '../models/exam_model.dart';
 import '../models/exam_update_request.dart';
-import '../models/subject_model.dart';
 
 class UpdateExamScreen extends StatefulWidget {
   final ExamModel exam;
@@ -21,7 +25,7 @@ class UpdateExamScreen extends StatefulWidget {
 class _UpdateExamScreenState extends State<UpdateExamScreen> {
   int _currentStep = 0;
   final _formKey = GlobalKey<FormState>();
-  
+
   late TextEditingController _nameController;
   late TextEditingController _descController;
   late int _subjectId;
@@ -35,7 +39,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
   late DateTime _endTime;
   late bool _shuffleQuestions;
   late bool _showAnswerAfterSubmit;
-  
+
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
   final ImagePicker _picker = ImagePicker();
@@ -46,18 +50,28 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     _nameController = TextEditingController(text: widget.exam.examName);
     _descController = TextEditingController(text: widget.exam.description);
     _subjectId = widget.exam.subjectId;
-    _durationController = TextEditingController(text: widget.exam.durationMinutes.toString());
-    _totalScoreController = TextEditingController(text: widget.exam.totalScore.toString());
-    _passingScoreController = TextEditingController(text: widget.exam.passingScore.toString());
-    _attemptsController = TextEditingController(text: widget.exam.maxAttempts.toString());
+    _durationController =
+        TextEditingController(text: widget.exam.durationMinutes.toString());
+    _totalScoreController =
+        TextEditingController(text: widget.exam.totalScore.toString());
+    _passingScoreController =
+        TextEditingController(text: widget.exam.passingScore.toString());
+    _attemptsController =
+        TextEditingController(text: widget.exam.maxAttempts.toString());
     _isPrivate = widget.exam.isPrivate;
-    _accessCodeController = TextEditingController(text: widget.exam.accessCode);
+    _accessCodeController =
+        TextEditingController(text: widget.exam.accessCode);
     _startTime = widget.exam.startTime ?? DateTime.now();
-    _endTime = widget.exam.endTime ?? DateTime.now().add(const Duration(hours: 1));
+    _endTime =
+        widget.exam.endTime ?? DateTime.now().add(const Duration(hours: 1));
     _shuffleQuestions = widget.exam.shuffleQuestions;
     _showAnswerAfterSubmit = widget.exam.showAnswerAfterSubmit;
-    
+
     context.read<ExamBloc>().add(const LoadTeacherSubjectsEvent());
+    context.read<ExamBloc>().add(LoadBankQuestionsForExamEvent(
+        examId: widget.exam.examId, subjectId: widget.exam.subjectId));
+    context.read<QuestionBloc>().add(
+        qe.LoadQuestionsEvent(queryParameters: {'SubjectId': widget.exam.subjectId, 'Status': 'Published'}));
   }
 
   @override
@@ -121,16 +135,19 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      final double totalScore = double.parse(_totalScoreController.text);
-      final double passingScore = double.parse(_passingScoreController.text);
+      final double totalScore = double.tryParse(_totalScoreController.text) ?? 10.0;
+      final double passingScore = double.tryParse(_passingScoreController.text) ?? 5.0;
 
       if (passingScore > totalScore) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Điểm đạt không được lớn hơn tổng điểm')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Điểm đạt không được lớn hơn tổng điểm')));
         return;
       }
 
-      if (_startTime.isAfter(_endTime) || _startTime.isAtSameMomentAs(_endTime)) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thời gian bắt đầu phải trước thời gian kết thúc')));
+      if (_startTime.isAfter(_endTime) ||
+          _startTime.isAtSameMomentAs(_endTime)) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Thời gian bắt đầu phải trước thời gian kết thúc')));
         return;
       }
 
@@ -141,8 +158,8 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
         durationMinutes: int.parse(_durationController.text),
         startTime: _startTime,
         endTime: _endTime,
-        totalScore: double.parse(_totalScoreController.text),
-        passingScore: double.parse(_passingScoreController.text),
+        totalScore: totalScore,
+        passingScore: passingScore,
         maxAttempts: int.parse(_attemptsController.text),
         isPrivate: _isPrivate,
         accessCode: _isPrivate ? _accessCodeController.text : null,
@@ -161,7 +178,8 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Update Exam', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Update Exam',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
       ),
       body: BlocListener<ExamBloc, ExamState>(
@@ -178,8 +196,8 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
                   index: _currentStep,
                   children: [
                     _buildInfoStep(),
+                    _buildQuestionsStep(),
                     _buildSettingsStep(),
-                    _buildImageStep(),
                     _buildPreviewStep(),
                   ],
                 ),
@@ -193,7 +211,7 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
   }
 
   Widget _buildStepIndicator() {
-    final steps = ['Info', 'Settings', 'Cover', 'Preview'];
+    final steps = ['Details', 'Questions', 'Settings', 'Preview'];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Row(
@@ -206,19 +224,29 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
                 children: [
                   CircleAvatar(
                     radius: 14,
-                    backgroundColor: isActive ? const Color(0xFFF97316) : Colors.grey[200],
-                    child: Text('${index + 1}', style: TextStyle(color: isActive ? Colors.white : Colors.grey, fontSize: 12)),
+                    backgroundColor:
+                        isActive ? const Color(0xFFF97316) : Colors.grey[200],
+                    child: Text('${index + 1}',
+                        style: TextStyle(
+                            color: isActive ? Colors.white : Colors.grey,
+                            fontSize: 12)),
                   ),
                   const SizedBox(height: 4),
-                  Text(steps[index], style: TextStyle(fontSize: 10, color: isActive ? Colors.black : Colors.grey)),
+                  Text(steps[index],
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: isActive ? Colors.black : Colors.grey)),
                 ],
               ),
               if (index < steps.length - 1)
                 Container(
                   width: 40,
                   height: 2,
-                  margin: const EdgeInsets.only(left: 8, right: 8, bottom: 15),
-                  color: index < _currentStep ? const Color(0xFFF97316) : Colors.grey[200],
+                  margin:
+                      const EdgeInsets.only(left: 8, right: 8, bottom: 15),
+                  color: index < _currentStep
+                      ? const Color(0xFFF97316)
+                      : Colors.grey[200],
                 ),
             ],
           );
@@ -230,33 +258,169 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
   Widget _buildInfoStep() {
     return BlocBuilder<ExamBloc, ExamState>(
       builder: (context, state) {
-        final subjects = state.subjects ?? [];
+        final subjects = state.subjects;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DropdownButtonFormField<int>(
-                value: _subjectId,
-                decoration: const InputDecoration(labelText: 'Subject', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
-                items: state.subjects.map((s) => DropdownMenuItem(value: s.subjectId, child: Text(s.subjectName))).toList(),
-                onChanged: (v) => setState(() => _subjectId = v!),
+                initialValue: _subjectId,
+                decoration: const InputDecoration(
+                    labelText: 'Subject',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)))),
+                items: subjects
+                    .map((s) => DropdownMenuItem(
+                        value: s.subjectId, child: Text(s.subjectName)))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    setState(() => _subjectId = v);
+                    context.read<ExamBloc>().add(LoadBankQuestionsForExamEvent(
+                        examId: widget.exam.examId, subjectId: v));
+                    context.read<QuestionBloc>().add(qe.LoadQuestionsEvent(
+                        queryParameters: {'SubjectId': v, 'Status': 'Published'}));
+                  }
+                },
                 validator: (v) => v == null ? 'Please select a subject' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Exam Name', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
+                decoration: const InputDecoration(
+                    labelText: 'Exam Name',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)))),
                 validator: (v) => v!.isEmpty ? 'Name is required' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _descController,
-                decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
+                decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)))),
                 maxLines: 4,
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildQuestionsStep() {
+    return BlocBuilder<ExamBloc, ExamState>(
+      builder: (context, examState) {
+        final selectedQuestionIds =
+            examState.examQuestions.map((q) => q.questionId).toSet();
+
+        return BlocBuilder<QuestionBloc, qs.QuestionState>(
+          builder: (context, questionState) {
+            final bankQuestions = questionState.questions ?? [];
+
+            if (questionState.isLoading && bankQuestions.isEmpty) {
+              return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFF97316)));
+            }
+
+            if (bankQuestions.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No questions found for this subject.\nPlease add questions in Question Bank first.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+              );
+            }
+
+            return Column(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Question Bank (${bankQuestions.length})',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${selectedQuestionIds.length} Selected',
+                        style: const TextStyle(
+                            color: Color(0xFFF97316),
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    itemCount: bankQuestions.length,
+                    itemBuilder: (context, index) {
+                      final q = bankQuestions[index];
+                      final isSelected =
+                          selectedQuestionIds.contains(q.questionId);
+
+                      return Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSelected
+                                ? const Color(0xFFF97316)
+                                : Colors.grey.shade200,
+                            width: isSelected ? 1.5 : 1.0,
+                          ),
+                        ),
+                        child: CheckboxListTile(
+                          value: isSelected,
+                          activeColor: const Color(0xFFF97316),
+                          onChanged: (v) {
+                            if (v == true) {
+                              context.read<ExamBloc>().add(
+                                    AddQuestionToExamEvent(
+                                      widget.exam.examId,
+                                      AddExamQuestionRequest(
+                                        questionId: q.questionId,
+                                        score: q.score,
+                                      ),
+                                    ),
+                                  );
+                            } else {
+                              context.read<ExamBloc>().add(
+                                    RemoveQuestionFromExamEvent(
+                                      widget.exam.examId,
+                                      q.questionId,
+                                    ),
+                                  );
+                            }
+                          },
+                          title: Text(
+                            q.content,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Text(
+                            '${q.difficulty} • ${q.questionType}',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -270,42 +434,48 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
         children: [
           Row(
             children: [
-              Expanded(child: _buildTextField(_durationController, 'Duration (Mins)', Icons.timer_outlined)),
+              Expanded(
+                  child: _buildTextField(_durationController,
+                      'Duration (Mins)', Icons.timer_outlined)),
               const SizedBox(width: 16),
-              Expanded(child: _buildTextField(_attemptsController, 'Attempts', Icons.person_outline)),
+              Expanded(
+                  child: _buildTextField(_attemptsController,
+                      'Max Attempts', Icons.person_outline)),
             ],
           ),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: _buildTextField(_totalScoreController, 'Total Score', Icons.grade_outlined)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildTextField(_passingScoreController, 'Passing Score', Icons.check_circle_outline)),
-            ],
-          ),
+          _buildTextField(
+              _passingScoreController, 'Passing Score', Icons.check_circle_outline),
           const Divider(height: 40),
-          const Text('Scheduling', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text('Scheduling',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 12),
-          _buildDateTimePickerTile('Start Time', _startTime, () => _pickDateTime(isStart: true)),
-          _buildDateTimePickerTile('End Time', _endTime, () => _pickDateTime(isStart: false)),
+          _buildDateTimePickerTile(
+              'Start Time', _startTime, () => _pickDateTime(isStart: true)),
+          _buildDateTimePickerTile(
+              'End Time', _endTime, () => _pickDateTime(isStart: false)),
           const Divider(height: 40),
           SwitchListTile(
-            title: const Text('Private Exam', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('Private Exam',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             subtitle: const Text('Require access code to join'),
             value: _isPrivate,
             activeColor: const Color(0xFFF97316),
             onChanged: (v) => setState(() => _isPrivate = v),
           ),
           if (_isPrivate)
-            _buildTextField(_accessCodeController, 'Access Code', Icons.lock_open),
+            _buildTextField(
+                _accessCodeController, 'Access Code', Icons.lock_open),
           SwitchListTile(
             title: const Text('Shuffle Questions'),
             value: _shuffleQuestions,
+            activeColor: const Color(0xFFF97316),
             onChanged: (v) => setState(() => _shuffleQuestions = v),
           ),
           SwitchListTile(
             title: const Text('Show Answers After Submit'),
             value: _showAnswerAfterSubmit,
+            activeColor: const Color(0xFFF97316),
             onChanged: (v) => setState(() => _showAnswerAfterSubmit = v),
           ),
         ],
@@ -313,94 +483,134 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
     );
   }
 
-  Widget _buildDateTimePickerTile(String label, DateTime dt, VoidCallback onTap) {
+  Widget _buildDateTimePickerTile(
+      String label, DateTime dt, VoidCallback onTap) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-      subtitle: Text(DateFormat('dd MMM yyyy, HH:mm').format(dt), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      subtitle: Text(DateFormat('dd MMM yyyy, HH:mm').format(dt),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       trailing: const Icon(Icons.calendar_month, color: Color(0xFFF97316)),
       onTap: onTap,
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, IconData icon) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, IconData icon) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
-        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-      ),
-    );
-  }
-
-  Widget _buildImageStep() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (_selectedImageBytes != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.memory(_selectedImageBytes!, height: 200, width: 300, fit: BoxFit.cover),
-            )
-          else if (widget.exam.examImageUrl != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.network(widget.exam.examImageUrl!, height: 200, width: 300, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 64)),
-            )
-          else
-            Container(
-              height: 200, width: 300,
-              decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid)),
-              child: const Icon(Icons.image_outlined, size: 64, color: Colors.grey),
-            ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _pickImage,
-            icon: const Icon(Icons.cloud_upload_outlined),
-            label: const Text('Change Cover Image'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF97316), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-          ),
-        ],
+        border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(12))),
       ),
     );
   }
 
   Widget _buildPreviewStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey[200]!),
-        ),
-        child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 0,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Review Changes', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                const Divider(height: 32),
-                _previewRow('Name', _nameController.text),
-                _previewRow('Duration', '${_durationController.text} Mins'),
-                _previewRow('Starts', DateFormat('dd/MM HH:mm').format(_startTime)),
-                _previewRow('Ends', DateFormat('dd/MM HH:mm').format(_endTime)),
-                _previewRow('Score', '${_passingScoreController.text} / ${_totalScoreController.text}'),
-                _previewRow('Access', _isPrivate ? 'Private' : 'Public'),
-              ],
-            ),
+    return BlocBuilder<ExamBloc, ExamState>(
+      builder: (context, examState) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Center(
+                child: Column(
+                  children: [
+                    if (_selectedImageBytes != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.memory(_selectedImageBytes!,
+                            height: 160, width: 260, fit: BoxFit.cover),
+                      )
+                    else if (widget.exam.examImageUrl != null)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(widget.exam.examImageUrl!,
+                            height: 160,
+                            width: 260,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) =>
+                                const Icon(Icons.broken_image, size: 64)),
+                      )
+                    else
+                      Container(
+                        height: 160,
+                        width: 260,
+                        decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey[300]!)),
+                        child: const Icon(Icons.image_outlined,
+                            size: 64, color: Colors.grey),
+                      ),
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: _pickImage,
+                      icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                      label: const Text('Change Cover Image'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFF97316),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Review Changes',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18)),
+                        const Divider(height: 24),
+                        _previewRow('Exam Name', _nameController.text),
+                        _previewRow('Questions Selected',
+                            '${examState.examQuestions.length} questions'),
+                        _previewRow('Duration', '${_durationController.text} Mins'),
+                        _previewRow(
+                            'Starts', DateFormat('dd/MM HH:mm').format(_startTime)),
+                        _previewRow(
+                            'Ends', DateFormat('dd/MM HH:mm').format(_endTime)),
+                        _previewRow('Passing Score',
+                            '${_passingScoreController.text} / 10'),
+                        _previewRow('Access', _isPrivate ? 'Private' : 'Public'),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _previewRow(String l, String v) => Padding(padding: const EdgeInsets.only(bottom: 12), child: Row(children: [Text('$l:', style: const TextStyle(color: Colors.grey)), const SizedBox(width: 8), Expanded(child: Text(v, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.right))]));
+  Widget _previewRow(String l, String v) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(children: [
+        Text('$l:', style: const TextStyle(color: Colors.grey)),
+        const SizedBox(width: 8),
+        Expanded(
+            child: Text(v,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.right))
+      ]));
 
   Widget _buildFooter() {
     return SafeArea(
@@ -412,8 +622,13 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => setState(() => _currentStep--),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), side: const BorderSide(color: Color(0xFFF97316))),
-                  child: const Text('Previous', style: TextStyle(color: Color(0xFFF97316))),
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 54),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      side: const BorderSide(color: Color(0xFFF97316))),
+                  child: const Text('Previous',
+                      style: TextStyle(color: Color(0xFFF97316))),
                 ),
               ),
             if (_currentStep > 0) const SizedBox(width: 16),
@@ -426,8 +641,14 @@ class _UpdateExamScreenState extends State<UpdateExamScreen> {
                     _submit();
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF97316), foregroundColor: Colors.white, minimumSize: const Size(0, 54), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                child: Text(_currentStep == 3 ? 'SAVE CHANGES' : 'Next', style: const TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF97316),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(0, 54),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16))),
+                child: Text(_currentStep == 3 ? 'SAVE CHANGES' : 'Next',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],

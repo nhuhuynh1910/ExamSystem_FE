@@ -63,4 +63,10 @@ class StudentDashboardRemoteDataSource {
     }
     return [];
   }
+
+  /// Lấy danh sách tất cả môn học mở từ hệ thống (Catalog)
+  Future<dynamic> getAvailableCatalogSubjects() async {
+    final response = await _dio.get(ApiConstants.subjects);
+    return response.data;
+  }
 }

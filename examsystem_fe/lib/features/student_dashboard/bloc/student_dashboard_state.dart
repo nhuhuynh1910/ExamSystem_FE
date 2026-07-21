@@ -1,4 +1,5 @@
 import '../../teacher_dashboard/models/teacher_exam_model.dart';
+import '../../Enrollment/models/subject_model.dart';
 import '../models/student_subject_model.dart';
 
 /// States cho StudentDashboardBloc.
@@ -39,6 +40,13 @@ class StudentDashboardLoaded extends StudentDashboardState {
   /// Danh sách môn học đã đăng ký (My Subjects section).
   final List<StudentSubjectModel> subjects;
 
+  /// Danh sách tất cả môn học có sẵn trong hệ thống để đăng ký.
+  final List<SubjectModel>? availableCatalogSubjects;
+
+  /// Safe getter cho availableCatalogSubjects để tránh lỗi null khi Hot Reload.
+  List<SubjectModel> get availableCatalogSubjectsList =>
+      availableCatalogSubjects ?? const [];
+
   const StudentDashboardLoaded({
     required this.studentName,
     required this.unreadNotifications,
@@ -47,6 +55,7 @@ class StudentDashboardLoaded extends StudentDashboardState {
     required this.bestScore,
     required this.upcomingExams,
     required this.subjects,
+    this.availableCatalogSubjects = const [],
   });
 }
 

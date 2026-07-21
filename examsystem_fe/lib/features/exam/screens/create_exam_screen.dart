@@ -8,7 +8,6 @@ import '../bloc/exam_event.dart';
 import '../bloc/exam_state.dart';
 import '../models/add_exam_question_request.dart';
 import '../models/exam_create_request.dart';
-import '../models/subject_model.dart';
 import '../../question/bloc/question_bloc.dart';
 import '../../question/bloc/question_event.dart' as qe;
 import '../../question/bloc/question_state.dart' as qs;
@@ -413,8 +412,6 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
               Expanded(child: _buildTextField(_passingScoreController, 'Passing Score', Icons.check_circle_outline)),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildTextField(_totalScoreController, 'Total Points', Icons.grade_outlined),
           const SizedBox(height: 16),
           SwitchListTile(title: const Text('Shuffle Questions', style: TextStyle(fontSize: 14)), value: _shuffleQuestions, activeColor: const Color(0xFFF97316), onChanged: (v) => setState(() => _shuffleQuestions = v)),
           SwitchListTile(title: const Text('Show Answer After Submit', style: TextStyle(fontSize: 14)), value: _showAnswerAfterSubmit, activeColor: const Color(0xFFF97316), onChanged: (v) => setState(() => _showAnswerAfterSubmit = v)),

@@ -8,6 +8,9 @@ class QuestionApi {
   final Dio _dio = DioClient.instance;
 
   Future<List<SubjectModel>> getSubjects() async {
+    final teacherSubs = await getTeacherSubjects();
+    if (teacherSubs.isNotEmpty) return teacherSubs;
+
     final response = await _dio.get(ApiConstants.subjects);
     final List data = response.data is List ? response.data : (response.data['items'] ?? []);
     return data.map((json) => SubjectModel.fromJson(json)).toList();

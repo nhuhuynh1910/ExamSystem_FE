@@ -31,7 +31,8 @@ import '../../features/exam/block/start_exam_cubit.dart';
 import '../../features/exam/screens/exam_detail_screen.dart';
 import '../../features/exam/screens/exam_list_screen.dart';
 import '../../features/exam/screens/enter_access_code_screen.dart';
-import '../../features/exam/models/exam_model.dart';
+import '../../features/notification/bloc/notification_bloc.dart';
+import '../../features/notification/data/notification_repository.dart';
 import '../../features/notification/screens/notification_list_screen.dart';
 import '../../features/question/screens/question_list_screen.dart';
 import '../../features/ranking/screens/ranking_screen_khanh.dart';
@@ -396,7 +397,10 @@ class AppRouter {
       GoRoute(
         path: notifications,
         name: 'notifications',
-        builder: (context, state) => const NotificationListScreen(),
+        builder: (context, state) => BlocProvider(
+          create: (context) => NotificationBloc(NotificationRepository()),
+          child: const NotificationListScreen(),
+        ),
       ),
      
     ],
@@ -446,6 +450,7 @@ class AppRouter {
     final bool isAdminRoute = location.startsWith('/admin/');
     final bool isTeacherRoute = location.startsWith('/teacher/');
     final bool isStudentRoute = location.startsWith('/student/');
+    final bool isQuestionRoute = location == questionList || location == questionBank;
     final bool isFeatureHub = location == featureHub;
 
     switch (role.toLowerCase()) {
@@ -456,8 +461,8 @@ class AppRouter {
           return teacherDashboard;
         }
         return null;
-      default:
-        if (isAdminRoute || isTeacherRoute || isFeatureHub) {
+      default: // student
+        if (isAdminRoute || isTeacherRoute || isQuestionRoute || isFeatureHub) {
           return studentDashboard;
         }
         return null;

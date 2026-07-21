@@ -16,7 +16,7 @@ class StartExamCubit extends Cubit<StartExamState> {
 
   Future<void> checkAndStartExam({required int examId, String? accessCode}) async {
     emit(const StartExamLoading(statusMessage: 'Checking access permissions...'));
-    
+
     // 1. Gọi API 1: check-access
     try {
       final accessCheck = await _repository.checkAccess(
@@ -33,7 +33,7 @@ class StartExamCubit extends Cubit<StartExamState> {
       }
     } on DioException catch (e) {
       final code = e.response?.statusCode;
-      
+
       final responseData = e.response?.data;
       String? serverMsg;
       if (responseData is Map) {
@@ -56,13 +56,13 @@ class StartExamCubit extends Cubit<StartExamState> {
           final hasQuyen = normalizedMsg.contains('quyền') || normalizedMsg.contains('quyen');
           final hasQua = normalizedMsg.contains('quá') || normalizedMsg.contains('qua');
           final hasLuot = normalizedMsg.contains('lượt') || normalizedMsg.contains('luot');
-          
+
           if (hasThoiGian || hasChua || hasQuyen || hasQua || hasLuot) {
             emit(StartExamFailure(message: _translateServerMessage(serverMsg), statusCode: code));
             return;
           }
         }
-        
+
         String? displayMsg = serverMsg != null ? _translateServerMessage(serverMsg) : null;
         emit(StartExamCodeRequired(
           errorMessage: accessCode != null ? (displayMsg ?? 'Incorrect access code. Please try again.') : null,
@@ -142,8 +142,15 @@ class StartExamCubit extends Cubit<StartExamState> {
   }
 
   String _getDioErrorMessage(DioException e) {
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.response == null) {
+      return 'Server connection error. Please check your network and try again.';
+    }
+
     final code = e.response?.statusCode;
-    
+
     // Thử lấy message/detail trực tiếp từ server
     final responseData = e.response?.data;
     if (responseData is Map<String, dynamic>) {
@@ -159,7 +166,7 @@ class StartExamCubit extends Cubit<StartExamState> {
       403  => 'You are not eligible to take this exam.',
       404  => 'Exam details not found.',
       409  => 'You have exceeded the maximum number of attempts.',
-      _    => e.message ?? 'Server connection error.',
+      _    => 'Server connection error. Please try again.',
     };
   }
 

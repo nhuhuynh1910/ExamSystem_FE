@@ -37,7 +37,7 @@ class UpcomingExamsSection extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  // TODO: Navigate to full exam list
+                  context.push(AppRouter.examList);
                 },
                 child: const Text(
                   'See All',

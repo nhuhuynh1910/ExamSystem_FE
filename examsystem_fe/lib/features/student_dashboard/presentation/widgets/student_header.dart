@@ -1,17 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-/// Student Header — Header cam FPT, layout giống Teacher Dashboard.
-///
-/// Hiển thị logo + "Hello, [tên SV] 👋" bên trái + icon notification + badge bên phải.
-class StudentHeader extends StatelessWidget {
+import '../../../../core/routes/app_router.dart';
+import '../../../notification/data/notification_api.dart';
+
+/// Student Header — Header cam FPT, kết nối API thông báo thực tế.
+class StudentHeader extends StatefulWidget {
   final String studentName;
-  final int notificationCount;
+  final int? notificationCount;
 
   const StudentHeader({
     super.key,
     required this.studentName,
-    this.notificationCount = 0,
+    this.notificationCount,
   });
+
+  @override
+  State<StudentHeader> createState() => _StudentHeaderState();
+}
+
+class _StudentHeaderState extends State<StudentHeader> {
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.notificationCount != null) {
+      _unreadCount = widget.notificationCount!;
+    }
+    _fetchUnreadCount();
+  }
+
+  Future<void> _fetchUnreadCount() async {
+    try {
+      final list = await NotificationApi().getNotifications();
+      final unread = list.where((n) => !n.isRead).length;
+      if (mounted) {
+        setState(() {
+          _unreadCount = unread;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +53,10 @@ class StudentHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Logo + Tên SV (bên trái — giống Teacher Dashboard)
+          // Logo + Tên SV
           Expanded(
             child: Row(
               children: [
-                // Logo FPT tròn nhỏ
                 Container(
                   width: 32,
                   height: 32,
@@ -46,7 +75,7 @@ class StudentHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Hello, $studentName 👋',
+                    'Hello, ${widget.studentName} 👋',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -58,10 +87,11 @@ class StudentHeader extends StatelessWidget {
               ],
             ),
           ),
-          // Notification bell + badge
+          // Notification bell + badge — Nút gọi API thực tế
           GestureDetector(
-            onTap: () {
-              // TODO: Navigate to notifications screen
+            onTap: () async {
+              await context.push(AppRouter.notifications);
+              _fetchUnreadCount();
             },
             child: Stack(
               clipBehavior: Clip.none,
@@ -69,29 +99,25 @@ class StudentHeader extends StatelessWidget {
                 const Icon(
                   Icons.notifications_outlined,
                   color: Colors.white,
-                  size: 24,
+                  size: 26,
                 ),
-                if (notificationCount > 0)
+                if (_unreadCount > 0)
                   Positioned(
                     top: -4,
                     right: -4,
                     child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade600,
+                      width: 18,
+                      height: 18,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFBA1A1A),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFF15A22),
-                          width: 2,
-                        ),
                       ),
                       child: Center(
                         child: Text(
-                          notificationCount > 9 ? '9+' : '$notificationCount',
+                          _unreadCount > 9 ? '9+' : '$_unreadCount',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

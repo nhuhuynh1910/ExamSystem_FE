@@ -112,7 +112,19 @@ class ExamBloc extends Bloc<ExamEvent, ExamState> {
         pageNumber: event.pageNumber,
         pageSize: event.pageSize,
       );
-      emit(ExamsLoaded(exams: exams, subjects: state.subjects, tempBankQuestions: state.tempBankQuestions));
+
+      final enrolledSubjectIds = state.subjects.map((s) => s.subjectId).where((id) => id > 0).toSet();
+      final enrolledSubjectNames = state.subjects.map((s) => s.subjectName.toLowerCase().trim()).where((n) => n.isNotEmpty).toSet();
+
+      final filteredExams = enrolledSubjectIds.isEmpty && enrolledSubjectNames.isEmpty
+          ? exams
+          : exams.where((exam) {
+              final matchId = enrolledSubjectIds.contains(exam.subjectId);
+              final matchName = enrolledSubjectNames.contains(exam.subjectName.toLowerCase().trim());
+              return matchId || matchName;
+            }).toList();
+
+      emit(ExamsLoaded(exams: filteredExams, subjects: state.subjects, tempBankQuestions: state.tempBankQuestions));
     } catch (e) {
       emit(ExamError(error: _handleError(e), exams: state.exams, subjects: state.subjects, selectedExam: state.selectedExam, examQuestions: state.examQuestions, tempBankQuestions: state.tempBankQuestions));
     }

@@ -21,7 +21,12 @@ final class EnrollmentLoading extends EnrollmentState {}
 /// Đã tải thành công danh sách môn học catalog.
 final class CatalogLoaded extends EnrollmentState {
   final List<SubjectModel> subjects;
-  CatalogLoaded(this.subjects);
+  final List<EnrollmentModel>? enrolledSubjects;
+
+  List<EnrollmentModel> get enrolledSubjectsList =>
+      enrolledSubjects ?? const [];
+
+  CatalogLoaded(this.subjects, {this.enrolledSubjects = const []});
 }
 
 /// Đã tải thành công danh sách môn sinh viên đã đăng ký.

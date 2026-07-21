@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/student_dashboard_bloc.dart';
 import '../../bloc/student_dashboard_event.dart';
 import '../../bloc/student_dashboard_state.dart';
+import '../widgets/available_subjects_section.dart';
 import '../widgets/my_subjects_section.dart';
 import '../widgets/student_header.dart';
 import '../widgets/student_stats_strip.dart';
@@ -38,6 +39,14 @@ class StudentDashboardScreen extends StatefulWidget {
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   int _currentIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,14 +148,86 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               examsTakenCount: state.examsTakenCount,
               bestScore: state.bestScore,
             ),
+            const SizedBox(height: 16),
+
+            // ── Shared Global Search Bar ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val.trim();
+                    });
+                  },
+                  style: const TextStyle(fontSize: 14, color: Color(0xFF1D3557)),
+                  decoration: InputDecoration(
+                    hintText: 'Search subjects or teachers...',
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 13,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFFF15A22),
+                      size: 20,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.cancel,
+                              color: Colors.grey.shade400,
+                              size: 18,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Upcoming Exams
             UpcomingExamsSection(exams: state.upcomingExams),
             const SizedBox(height: 24),
 
+            // Available Subjects to Enroll (Danh sách môn học mở để đăng ký)
+            AvailableSubjectsSection(
+              availableSubjects: state.availableCatalogSubjectsList,
+              enrolledSubjects: state.subjects,
+              searchQuery: _searchQuery,
+            ),
+            const SizedBox(height: 24),
+
             // My Subjects
-            MySubjectsSection(subjects: state.subjects),
+            MySubjectsSection(
+              subjects: state.subjects,
+              searchQuery: _searchQuery,
+            ),
             const SizedBox(height: 32),
           ],
         ),

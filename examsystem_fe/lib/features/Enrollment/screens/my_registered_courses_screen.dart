@@ -39,7 +39,13 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
         elevation: 0.5,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.navy),
-          onPressed: () => context.go('/student/courses/catalog'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/student/courses/catalog');
+            }
+          },
         ),
         title: const Text(
           'My Registered Courses',
@@ -132,7 +138,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                       border: Border.all(color: AppTheme.border),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -193,7 +199,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                             border: Border.all(color: AppTheme.border),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
+                                color: Colors.black.withValues(alpha: 0.02),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),

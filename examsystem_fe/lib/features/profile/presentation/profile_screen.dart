@@ -417,6 +417,10 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildProfileNavBar(BuildContext context, String role) {
+    final normalizedRole = role.toLowerCase();
+    final bool isStudent = normalizedRole == 'student';
+    final bool isTeacher = normalizedRole == 'teacher';
+
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFF8F9FF),
@@ -433,28 +437,42 @@ class ProfileScreen extends StatelessWidget {
               label: 'Home',
               isActive: false,
               onTap: () {
-                final r = role.toLowerCase();
-                if (r == 'teacher') {
+                if (isTeacher) {
                   context.go(AppRouter.teacherDashboard);
-                } else if (r == 'student') {
+                } else if (isStudent) {
                   context.go(AppRouter.studentDashboard);
                 } else {
                   context.go(AppRouter.featureHub);
                 }
               },
             ),
-            _ProfileBottomNavItem(
-              icon: Icons.quiz_rounded,
-              label: 'Questions',
-              isActive: false,
-              onTap: () => context.go(AppRouter.questionList),
-            ),
-            _ProfileBottomNavItem(
-              icon: Icons.assignment_rounded,
-              label: 'Exams',
-              isActive: false,
-              onTap: () => context.go(AppRouter.examList),
-            ),
+            if (isStudent) ...[
+              _ProfileBottomNavItem(
+                icon: Icons.assignment_rounded,
+                label: 'Exams',
+                isActive: false,
+                onTap: () => context.go(AppRouter.studentDashboard),
+              ),
+              _ProfileBottomNavItem(
+                icon: Icons.leaderboard_rounded,
+                label: 'Results',
+                isActive: false,
+                onTap: () => context.go(AppRouter.studentDashboard),
+              ),
+            ] else ...[
+              _ProfileBottomNavItem(
+                icon: Icons.quiz_rounded,
+                label: 'Questions',
+                isActive: false,
+                onTap: () => context.go(AppRouter.questionList),
+              ),
+              _ProfileBottomNavItem(
+                icon: Icons.assignment_rounded,
+                label: 'Exams',
+                isActive: false,
+                onTap: () => context.go(AppRouter.examList),
+              ),
+            ],
             _ProfileBottomNavItem(
               icon: Icons.person_rounded,
               label: 'Profile',

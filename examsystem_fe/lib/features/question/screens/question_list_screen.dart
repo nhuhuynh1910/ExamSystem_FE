@@ -68,6 +68,16 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_userRole?.toLowerCase() == 'student') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(AppRouter.studentDashboard);
+      });
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator(color: Color(0xFFF97316))),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: _buildDrawer(),

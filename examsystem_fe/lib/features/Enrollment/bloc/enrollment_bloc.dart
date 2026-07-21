@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/enrollment_repository.dart';
+import '../models/enrollment_model.dart';
 import 'enrollment_event.dart';
 import 'enrollment_state.dart';
 
@@ -25,15 +26,23 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
     on<UnenrollSubject>(_onUnenrollSubject);
   }
 
-  /// Xử lý LoadCatalog: tải danh sách môn học từ API.
+  /// Xử lý LoadCatalog: tải danh sách môn học và môn đã đăng ký từ API.
   Future<void> _onLoadCatalog(
     LoadCatalog event,
     Emitter<EnrollmentState> emit,
   ) async {
     emit(EnrollmentLoading());
     try {
-      final subjects = await _repository.fetchCatalog();
-      emit(CatalogLoaded(subjects));
+      final results = await Future.wait([
+        _repository.fetchCatalog(),
+        _repository.fetchMyEnrollments(),
+      ]);
+      final subjects = results[0] as List<dynamic>;
+      final myEnrollments = results[1] as List<EnrollmentModel>;
+      emit(CatalogLoaded(
+        subjects.cast(),
+        enrolledSubjects: myEnrollments,
+      ));
     } catch (e) {
       emit(EnrollmentLoadFailure(e.toString()));
     }

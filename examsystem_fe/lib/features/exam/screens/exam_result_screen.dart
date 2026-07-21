@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/routes/app_router.dart';
 import '../data/exam_repository.dart';
 import '../models/attempt_details_response.dart';
 import '../models/exam_submit_response.dart';
@@ -122,7 +123,13 @@ class _ExamResultScreenState extends State<ExamResultScreen> {
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => context.go('/exams'),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              context.go(AppRouter.studentDashboard);
+            }
+          },
         ),
         title: const Text(
           'Exam Result',
@@ -198,53 +205,30 @@ class _ExamResultScreenState extends State<ExamResultScreen> {
         ),
         padding: const EdgeInsets.all(16.0),
         child: SafeArea(
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFF15A22),
-                    side: const BorderSide(color: Color(0xFFF15A22), width: 2),
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Under construction or placeholder ranking action
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Ranking leaderboard is coming soon!'),
-                        backgroundColor: Color(0xFF1D3557),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'View Ranking',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF15A22),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 0,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF15A22),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () => context.go('/exams'),
-                  child: const Text(
-                    'Back to Exams',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  context.go(AppRouter.studentDashboard);
+                }
+              },
+              child: const Text(
+                'Back to Exams',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -299,7 +283,7 @@ class _ExamResultScreenState extends State<ExamResultScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      totalScore == 10.0 ? ((score * 10).toInt()).toString() : score.toStringAsFixed(1),
+                      score % 1 == 0 ? score.toInt().toString() : score.toStringAsFixed(1),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -308,7 +292,7 @@ class _ExamResultScreenState extends State<ExamResultScreen> {
                       ),
                     ),
                     Text(
-                      totalScore == 10.0 ? '/100' : '/${totalScore.toInt()}',
+                      '/${totalScore > 0 ? totalScore.toInt() : 10}',
                       style: const TextStyle(
                         fontSize: 14,
                         color: Color(0xFF94A3B8),

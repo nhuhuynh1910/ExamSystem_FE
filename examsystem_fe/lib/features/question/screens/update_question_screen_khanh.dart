@@ -317,15 +317,6 @@ class _UpdateQuestionScreenKhanhState
                           _buildDifficultyField(),
 
                           const SizedBox(height: 18),
-                          const SizedBox(height: 18),
-
-                          const _LabelKhanh(
-                            text: 'Score',
-                          ),
-
-                          _buildScoreField(),
-
-                          const SizedBox(height: 18),
                           const _LabelKhanh(
                             text: 'Explanation',
                           ),
@@ -526,44 +517,6 @@ class _UpdateQuestionScreenKhanhState
             color: Colors.redAccent,
             width: 1.4,
           ),
-        ),
-      ),
-    );
-  }
-  Widget _buildScoreField() {
-    final scores =
-    List.generate(10, (index) => (index + 1).toDouble());
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xffe6e8ef),
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<double>(
-          value: _score,
-          isExpanded: true,
-          items: scores.map((score) {
-            return DropdownMenuItem<double>(
-              value: score,
-              child: Text(
-                score.toStringAsFixed(0),
-              ),
-            );
-          }).toList(),
-          onChanged: _isSaving
-              ? null
-              : (value) {
-            if (value == null) return;
-
-            setState(() {
-              _score = value;
-            });
-          },
         ),
       ),
     );

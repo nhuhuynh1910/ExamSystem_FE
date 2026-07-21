@@ -203,7 +203,9 @@ class _QuestionListScreenKhanhState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  _initializationError!,
+                  _initializationError!.contains('401')
+                      ? 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                      : _initializationError!,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.red,
@@ -212,18 +214,21 @@ class _QuestionListScreenKhanhState
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      _isInitializing = true;
-                      _initializationError = null;
-                    });
-
-                    _initialize();
+                    if (_initializationError!.contains('401')) {
+                      context.go(AppRouter.login);
+                    } else {
+                      setState(() {
+                        _isInitializing = true;
+                        _initializationError = null;
+                      });
+                      _initialize();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('Retry'),
+                  child: Text(_initializationError!.contains('401') ? 'Đăng nhập lại' : 'Retry'),
                 ),
               ],
             ),

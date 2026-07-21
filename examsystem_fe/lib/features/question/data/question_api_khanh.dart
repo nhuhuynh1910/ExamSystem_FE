@@ -104,12 +104,77 @@ class QuestionApiKhanh {
   }
 
   Future<List<SubjectModelKhanh>> getSubjects() async {
+    // 1. Thử lấy danh sách môn học ĐƯỢC PHÂN CÔNG cho Giáo viên (/api/subjects/assigned)
+    try {
+      final response = await DioClient.instance.get(
+        '${ApiConstants.subjects}/assigned',
+      );
+      final responseData = response.data;
+      dynamic subjectsData = responseData;
+      if (responseData is Map<String, dynamic>) {
+        subjectsData = responseData['data'] ??
+            responseData['items'] ??
+            responseData['subjects'];
+      }
+      if (subjectsData is List && subjectsData.isNotEmpty) {
+        return subjectsData
+            .map((item) => SubjectModelKhanh.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ))
+            .toList();
+      }
+    } catch (_) {}
+
+    // 2. Thử lấy danh sách môn từ Yêu cầu nhận môn được duyệt (/api/teacher-requests/my-requests)
+    try {
+      final response = await DioClient.instance.get(
+        ApiConstants.teacherRequestsMy,
+      );
+      final responseData = response.data;
+      dynamic requestsData = responseData;
+      if (responseData is Map<String, dynamic>) {
+        requestsData = responseData['data'] ?? responseData['items'];
+      }
+      if (requestsData is List && requestsData.isNotEmpty) {
+        final List<SubjectModelKhanh> teacherSubs = [];
+        final Set<int> seenIds = {};
+
+        for (var req in requestsData) {
+          final status = (req['status'] ?? req['Status'] ?? '')
+              .toString()
+              .toLowerCase();
+          if (status == 'approved') {
+            Map<String, dynamic>? s;
+            if (req['subject'] is Map) {
+              s = Map<String, dynamic>.from(req['subject']);
+            } else if (req['Subject'] is Map) {
+              s = Map<String, dynamic>.from(req['Subject']);
+            } else {
+              s = Map<String, dynamic>.from(req as Map);
+            }
+
+            final id = (s['subjectId'] ?? s['SubjectId'] ?? s['id'] ?? 0) as int;
+            final name = (s['subjectName'] ?? s['SubjectName'] ?? s['name'] ?? '').toString();
+
+            if (id != 0 && !seenIds.contains(id) && name.isNotEmpty) {
+              teacherSubs.add(SubjectModelKhanh(
+                subjectId: id,
+                subjectName: name,
+              ));
+              seenIds.add(id);
+            }
+          }
+        }
+        if (teacherSubs.isNotEmpty) return teacherSubs;
+      }
+    } catch (_) {}
+
+    // 3. Fallback sang /api/subjects nếu chưa có phân công riêng
     final response = await DioClient.instance.get(
       ApiConstants.subjects,
     );
 
     final responseData = response.data;
-
     dynamic subjectsData = responseData;
 
     if (responseData is Map<String, dynamic>) {
@@ -122,9 +187,9 @@ class QuestionApiKhanh {
       return subjectsData
           .map(
             (item) => SubjectModelKhanh.fromJson(
-          Map<String, dynamic>.from(item as Map),
-        ),
-      )
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
           .toList();
     }
 
