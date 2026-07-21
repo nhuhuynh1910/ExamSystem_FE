@@ -1,4 +1,4 @@
-﻿using JWT.DTOs.BaoAccess;
+using JWT.DTOs.BaoAccess;
 using JWT.Exceptions;
 using JWT.Models;
 using JWT.Repositories.Contracts;
@@ -150,12 +150,15 @@ namespace JWT.Services
                 CreatedAt = now
             };
 
+            var totalQuestions = targetQuestions.Count;
+            var defaultQuestionScore = totalQuestions > 0 ? 10m / totalQuestions : 0m;
+
             var attemptQuestions = targetQuestions
                 .Select((question, index) => new AttemptQuestion
                 {
                     QuestionId = question.QuestionId,
                     QuestionOrder = index + 1,
-                    Score = question.Score
+                    Score = defaultQuestionScore
                 })
                 .ToList();
 
@@ -256,9 +259,12 @@ namespace JWT.Services
                 QuestionId = request.QuestionId
             };
 
+            var totalQuestions = attempt.AttemptQuestions.Count;
+            var questionScore = totalQuestions > 0 ? 10m / totalQuestions : 0m;
+
             answer.AnsweredAt = now;
             answer.IsCorrect = isCorrect;
-            answer.ScoreAwarded = isCorrect ? attemptQuestion.Score : 0;
+            answer.ScoreAwarded = isCorrect ? questionScore : 0m;
 
             var savedAnswer = await _baoAccessRepository.SaveAnswerAsync(
                 answer,
@@ -471,7 +477,8 @@ namespace JWT.Services
             var answersByQuestion = attempt.StudentAnswers
                 .ToDictionary(answer => answer.QuestionId);
 
-            var totalScore = 0m;
+            var totalQuestions = attempt.AttemptQuestions.Count;
+            var correctCount = 0;
 
             foreach (var attemptQuestion in attempt.AttemptQuestions)
             {
@@ -490,12 +497,23 @@ namespace JWT.Services
                     .ToHashSet() ?? new HashSet<int>();
 
                 var isCorrect = correctOptionIds.SetEquals(selectedOptionIds);
-                var scoreAwarded = isCorrect ? attemptQuestion.Score : 0;
+                if (isCorrect)
+                {
+                    correctCount++;
+                }
 
                 answer.IsCorrect = isCorrect;
-                answer.ScoreAwarded = scoreAwarded;
+            }
 
-                totalScore += scoreAwarded;
+            var questionScore = totalQuestions > 0 ? 10m / totalQuestions : 0m;
+            var totalScore = totalQuestions > 0 ? (10m * correctCount) / totalQuestions : 0m;
+
+            foreach (var attemptQuestion in attempt.AttemptQuestions)
+            {
+                if (answersByQuestion.TryGetValue(attemptQuestion.QuestionId, out var answer))
+                {
+                    answer.ScoreAwarded = answer.IsCorrect ? questionScore : 0m;
+                }
             }
 
             return totalScore;

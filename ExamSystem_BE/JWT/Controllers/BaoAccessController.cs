@@ -48,13 +48,14 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service kiểm tra các điều kiện: Đã publish, còn thời gian, đã enroll môn, đúng AccessCode, chưa quá MaxAttempts
                 var result = await _baoAccessService.CheckAccessAsync(
                     examId,
                     request,
                     GetCurrentUserId(),
                     GetCurrentUserRole());
 
-                return Ok(result);
+                return Ok(result); // Trả về kết quả cho phép truy cập (CanAccess = true)
             }
             catch (Exception ex)
             {
@@ -62,19 +63,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Student bat dau lam bai, tao attempt va attempt questions.
-        /// </summary>
-        /// <remarks>
-        /// Neu Student da co attempt InProgress thi resume attempt do, khong tao moi.
-        /// Neu ShuffleQuestions = true thi thu tu AttemptQuestions duoc random.
-        /// </remarks>
-        /// <response code="200">Bat dau hoac resume bai lam thanh cong.</response>
-        /// <response code="400">De thi chua co cau hoi published.</response>
-        /// <response code="401">Token khong hop le hoac thieu thong tin user.</response>
-        /// <response code="403">Khong du dieu kien bat dau lam bai.</response>
-        /// <response code="404">Khong tim thay de thi.</response>
-        /// <response code="409">Da vuot so lan lam bai toi da.</response>
+        // POST /api/exams/{examId}/start - Bắt đầu làm bài thi (Tạo attempt mới hoặc Resume attempt cũ)
         [HttpPost("{examId:int}/start")]
         [ProducesResponseType(typeof(BaoStartResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -88,13 +77,14 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service bắt đầu thi: trộn câu hỏi nếu ShuffleQuestions = true, tính số lượt thi
                 var result = await _baoAccessService.StartAsync(
                     examId,
                     request ?? new BaoAccessRequestDto(),
                     GetCurrentUserId(),
                     GetCurrentUserRole());
 
-                return Ok(result);
+                return Ok(result); // Trả về thông tin AttemptId và danh sách câu hỏi
             }
             catch (Exception ex)
             {
@@ -102,20 +92,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Lay thong tin mot lan lam bai de resume hoac xem lai.
-        /// </summary>
-        /// <remarks>
-        /// Student chi xem attempt cua minh.
-        /// Teacher chi xem attempt thuoc de thi cua minh.
-        /// Admin xem duoc tat ca.
-        /// Attempt InProgress khong tra dap an dung.
-        /// Attempt Submitted chi tra ket qua khi ShowAnswerAfterSubmit = true.
-        /// </remarks>
-        /// <response code="200">Tra ve thong tin attempt.</response>
-        /// <response code="401">Token khong hop le hoac thieu thong tin user.</response>
-        /// <response code="403">Khong co quyen xem attempt.</response>
-        /// <response code="404">Khong tim thay attempt.</response>
+        // GET /api/attempts/{attemptId} - Lấy chi tiết thông tin một lần làm bài (Attempt)
         [HttpGet("/api/attempts/{attemptId:int}")]
         [ProducesResponseType(typeof(BaoAttemptDetailResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -125,6 +102,7 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service lấy thông tin lượt thi (có giấu đáp án đúng nếu đang thi)
                 var result = await _baoAccessService.GetAttemptAsync(
                     attemptId,
                     GetCurrentUserId(),
@@ -138,19 +116,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Luu cau tra loi trong qua trinh Student lam bai.
-        /// </summary>
-        /// <remarks>
-        /// Attempt phai ton tai, thuoc Student hien tai, dang InProgress,
-        /// chua qua thoi gian lam bai, question phai thuoc AttemptQuestions,
-        /// option chon phai thuoc question do. Neu tra loi lai thi update answer cu.
-        /// </remarks>
-        /// <response code="200">Luu cau tra loi thanh cong.</response>
-        /// <response code="400">Du lieu cau tra loi khong hop le.</response>
-        /// <response code="401">Token khong hop le hoac thieu thong tin user.</response>
-        /// <response code="403">Khong co quyen hoac da qua thoi gian lam bai.</response>
-        /// <response code="404">Khong tim thay attempt.</response>
+        // POST /api/attempts/{attemptId}/answers - Tự động lưu đáp án câu hỏi khi Sinh viên đang làm bài
         [HttpPost("/api/attempts/{attemptId:int}/answers")]
         [ProducesResponseType(typeof(BaoSaveAnswerResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -163,6 +129,7 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service lưu đáp án Sinh viên vừa chọn
                 var result = await _baoAccessService.SaveAnswerAsync(
                     attemptId,
                     request,
@@ -177,19 +144,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Student nop bai, cham diem tu dong va tinh passed/failed.
-        /// </summary>
-        /// <remarks>
-        /// Attempt phai ton tai, thuoc Student hien tai va dang InProgress.
-        /// Multiple choice phai match exact moi duoc diem.
-        /// Neu qua thoi gian thi Status = Expired va IsAutoSubmitted = true.
-        /// </remarks>
-        /// <response code="200">Nop bai va cham diem thanh cong.</response>
-        /// <response code="400">Attempt khong con InProgress hoac da submit.</response>
-        /// <response code="401">Token khong hop le hoac thieu thong tin user.</response>
-        /// <response code="403">Khong co quyen nop attempt nay.</response>
-        /// <response code="404">Khong tim thay attempt.</response>
+        // POST /api/attempts/{attemptId}/submit - Sinh viên nộp bài thi & Hệ thống chấm điểm tự động
         [HttpPost("/api/attempts/{attemptId:int}/submit")]
         [ProducesResponseType(typeof(BaoSubmitResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -202,13 +157,14 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service nộp bài và chạy thuật toán chấm điểm tự động (GradeAttempt)
                 var result = await _baoAccessService.SubmitAsync(
                     attemptId,
                     request,
                     GetCurrentUserId(),
                     GetCurrentUserRole());
 
-                return Ok(result);
+                return Ok(result); // Trả về tổng điểm, điểm đậu/rớt
             }
             catch (Exception ex)
             {
@@ -216,19 +172,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Student xem ket qua bai thi cua minh.
-        /// </summary>
-        /// <remarks>
-        /// Student chi xem ket qua cua chinh minh.
-        /// Attempt phai Submitted hoac Expired.
-        /// Neu ShowAnswerAfterSubmit = true thi tra dap an/giai thich.
-        /// Neu false thi khong tra dap an dung.
-        /// </remarks>
-        /// <response code="200">Tra ve ket qua bai thi.</response>
-        /// <response code="401">Token khong hop le hoac thieu thong tin user.</response>
-        /// <response code="403">Khong co quyen xem ket qua.</response>
-        /// <response code="404">Khong tim thay exam hoac attempt da nop.</response>
+        // GET /api/exams/{examId}/result - Sinh viên xem lại kết quả bài thi và kiểm tra đáp án
         [HttpGet("{examId:int}/result")]
         [ProducesResponseType(typeof(BaoResultResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -238,6 +182,7 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service lấy kết quả thi của sinh viên hiện tại
                 var result = await _baoAccessService.GetResultAsync(
                     examId,
                     GetCurrentUserId(),
@@ -251,17 +196,7 @@ namespace JWT.Controllers
             }
         }
 
-        /// <summary>
-        /// Xem bang xep hang cua exam.
-        /// </summary>
-        /// <remarks>
-        /// Chi lay attempt Submitted.
-        /// Moi Student lay attempt co score cao nhat.
-        /// Sort Score DESC, neu bang diem thi SubmitDuration ASC.
-        /// Mac dinh Top 5.
-        /// </remarks>
-        /// <response code="200">Tra ve bang xep hang.</response>
-        /// <response code="404">Khong tim thay exam.</response>
+        // GET /api/exams/{examId}/ranking - Xem bảng xếp hạng (Leaderboard) của đề thi
         [HttpGet("{examId:int}/ranking")]
         [ProducesResponseType(typeof(BaoRankingResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -269,6 +204,7 @@ namespace JWT.Controllers
         {
             try
             {
+                // Gọi Service lấy danh sách Top cao điểm nhất và hoàn thành sớm nhất
                 var result = await _baoAccessService.GetRankingAsync(examId, top);
 
                 return Ok(result);
