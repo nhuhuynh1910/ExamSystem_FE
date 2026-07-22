@@ -11,6 +11,7 @@ namespace JWT.Services
         private const string DraftStatus = "Draft";
         private const string PublishedStatus = "Published";
         private const string ClosedStatus = "Closed";
+        private const decimal DefaultExamTotalScore = 10m;
         private const long MaxExamImageFileSize = 5 * 1024 * 1024;
         private static readonly HashSet<string> AllowedExamImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -136,7 +137,7 @@ namespace JWT.Services
                 DurationMinutes = request.DurationMinutes,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
-                TotalScore = request.TotalScore,
+                TotalScore = DefaultExamTotalScore,
                 PassingScore = request.PassingScore,
                 MaxAttempts = request.MaxAttempts,
                 IsPrivate = request.IsPrivate,
@@ -193,7 +194,7 @@ namespace JWT.Services
             exam.DurationMinutes = request.DurationMinutes;
             exam.StartTime = request.StartTime;
             exam.EndTime = request.EndTime;
-            exam.TotalScore = request.TotalScore;
+            exam.TotalScore = DefaultExamTotalScore;
             exam.PassingScore = request.PassingScore;
             exam.MaxAttempts = request.MaxAttempts;
             exam.IsPrivate = request.IsPrivate;
@@ -318,11 +319,12 @@ namespace JWT.Services
                 ExamId = examId,
                 QuestionId = request.QuestionId,
                 QuestionOrder = request.QuestionOrder ?? await _examRepository.GetNextQuestionOrderAsync(examId),
-                Score = request.Score ?? question.Score,
+                Score = 0,
                 CreatedAt = DateTime.Now
             };
 
             await _examRepository.AddExamQuestionAsync(examQuestion);
+            await _examRepository.RebalanceExamQuestionScoresAsync(examId, exam.TotalScore);
 
             var questions = await _examRepository.GetExamQuestionsAsync(examId);
             return questions.First(q => q.QuestionId == request.QuestionId);
@@ -358,6 +360,7 @@ namespace JWT.Services
             }
 
             await _examRepository.RemoveExamQuestionAsync(examQuestion);
+            await _examRepository.RebalanceExamQuestionScoresAsync(examId, exam.TotalScore);
         }
 
         public async Task<ExamResponseDto> PublishExamAsync(
@@ -596,7 +599,6 @@ namespace JWT.Services
                 request.EndTime,
                 request.DurationMinutes,
                 request.PassingScore,
-                request.TotalScore,
                 request.IsPrivate,
                 request.AccessCode);
         }
@@ -609,7 +611,6 @@ namespace JWT.Services
                 request.EndTime,
                 request.DurationMinutes,
                 request.PassingScore,
-                request.TotalScore,
                 request.IsPrivate,
                 request.AccessCode);
         }
@@ -620,7 +621,6 @@ namespace JWT.Services
             DateTime endTime,
             int durationMinutes,
             decimal passingScore,
-            decimal totalScore,
             bool isPrivate,
             string? accessCode)
         {
@@ -639,7 +639,7 @@ namespace JWT.Services
                 throw new BadRequestException("DurationMinutes phai lon hon 0.");
             }
 
-            if (passingScore > totalScore)
+            if (passingScore > DefaultExamTotalScore)
             {
                 throw new BadRequestException("PassingScore khong duoc lon hon TotalScore.");
             }

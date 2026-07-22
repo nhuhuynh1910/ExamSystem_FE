@@ -22,8 +22,6 @@ namespace JWT.DTOs.Exam
 
         public DateTime EndTime { get; set; }
 
-        public decimal TotalScore { get; set; }
-
         public decimal PassingScore { get; set; }
 
         public int MaxAttempts { get; set; }

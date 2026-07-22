@@ -43,6 +43,8 @@ namespace JWT.Repositories.Contracts
 
         Task RemoveExamQuestionAsync(ExamQuestion examQuestion);
 
+        Task RebalanceExamQuestionScoresAsync(int examId, decimal totalScore);
+
         Task<List<ExamQuestionResponseDto>> GetExamQuestionsAsync(int examId);
     }
 }
