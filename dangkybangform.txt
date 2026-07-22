@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        .input-focus-ring:focus-within {
+            border-color: #F15A22;
+            box-shadow: 0 0 0 1px #F15A22;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "tertiary-fixed": "#c7e7ff",
+                        "primary-container": "#d14307",
+                        "on-primary-container": "#fffbff",
+                        "surface-dim": "#cbdbf5",
+                        "primary": "#a83300",
+                        "surface-container": "#e5eeff",
+                        "on-secondary-container": "#445a7f",
+                        "inverse-surface": "#213145",
+                        "primary-fixed-dim": "#ffb59d",
+                        "surface-bright": "#f8f9ff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#d5e3ff",
+                        "on-primary-fixed": "#390b00",
+                        "on-tertiary-fixed": "#001e2e",
+                        "on-tertiary-fixed-variant": "#064c6b",
+                        "tertiary-fixed-dim": "#98cdf2",
+                        "surface-container-highest": "#d3e4fe",
+                        "primary-fixed": "#ffdbd0",
+                        "surface-container-high": "#dce9ff",
+                        "outline": "#8e7067",
+                        "secondary": "#485f84",
+                        "on-primary-fixed-variant": "#842600",
+                        "on-tertiary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#5a4139",
+                        "surface": "#f8f9ff",
+                        "secondary-container": "#bbd3fd",
+                        "on-secondary-fixed-variant": "#30476a",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-fixed": "#001b3c",
+                        "surface-tint": "#ac3400",
+                        "secondary-fixed-dim": "#b0c7f1",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#e2bfb4",
+                        "on-tertiary-container": "#fcfcff",
+                        "tertiary": "#286182",
+                        "surface-variant": "#d3e4fe",
+                        "on-background": "#0b1c30",
+                        "tertiary-container": "#447a9c",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "inverse-primary": "#ffb59d",
+                        "brand-navy": "#1D3557",
+                        "brand-orange": "#F15A22",
+                        "brand-grey": "#6B7280",
+                        "brand-bg": "#FAFAFA"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "4px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "4px",
+                        "lg": "24px",
+                        "sm": "12px",
+                        "container-padding": "16px",
+                        "md": "16px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "xs": "8px"
+                    },
+                    "fontFamily": {
+                        "inter": ["Inter", "sans-serif"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "display-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "display-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "title-lg": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-brand-bg font-inter text-on-surface antialiased selection:bg-brand-orange/30 overflow-x-hidden">
+<!-- Top Status Bar Area (Placeholder for mobile integration) -->
+<div class="h-6 w-full"></div>
+<!-- Main Container -->
+<main class="flex flex-col min-h-screen max-w-md mx-auto relative px-container-padding pb-xl">
+<!-- Header / Navigation Shell -->
+<header class="flex items-center h-14 w-full mb-xs sticky top-0 bg-brand-bg/80 backdrop-blur-md z-10">
+<button aria-label="Go back" class="w-10 h-10 flex items-center justify-start text-brand-navy active:scale-90 transition-transform duration-200">
+<span class="material-symbols-outlined text-[28px]" data-icon="arrow_back">arrow_back</span>
+</button>
+</header>
+<section class="mt-xs">
+<h1 class="font-headline-md-mobile text-headline-md-mobile text-brand-navy font-bold">Create Account</h1>
+<p class="font-body-md text-brand-grey mt-1">Join FPT ExamHub today</p>
+</section>
+<!-- Role Selector Chips -->
+<section class="flex gap-xs mt-lg">
+<button class="flex-1 flex items-center justify-center gap-2 h-[40px] bg-brand-orange text-white rounded-full font-label-md transition-all active:scale-95">
+<span>🎓</span>
+<span>Student</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 h-[40px] bg-white border border-brand-orange text-brand-orange rounded-full font-label-md transition-all active:scale-95">
+<span>👨‍🏫</span>
+<span>Teacher</span>
+</button>
+</section>
+<!-- Registration Form -->
+<form class="flex flex-col gap-sm mt-lg" onsubmit="event.preventDefault();">
+<!-- Full Name -->
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-grey group-focus-within:text-brand-orange transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="person">person</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-4 bg-white border border-slate-200 rounded-[10px] outline-none transition-all duration-200 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-body-md text-brand-navy placeholder:text-brand-grey/60" placeholder="Full Name" type="text"/>
+</div>
+<!-- ID Field -->
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-grey group-focus-within:text-brand-orange transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="badge">badge</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-4 bg-white border border-slate-200 rounded-[10px] outline-none transition-all duration-200 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-body-md text-brand-navy placeholder:text-brand-grey/60" placeholder="Student/Teacher ID" type="text"/>
+</div>
+<!-- Email -->
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-grey group-focus-within:text-brand-orange transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="mail">mail</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-4 bg-white border border-slate-200 rounded-[10px] outline-none transition-all duration-200 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-body-md text-brand-navy placeholder:text-brand-grey/60" placeholder="Email address" type="email"/>
+</div>
+<!-- Password -->
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-grey group-focus-within:text-brand-orange transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock">lock</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-12 bg-white border border-slate-200 rounded-[10px] outline-none transition-all duration-200 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-body-md text-brand-navy placeholder:text-brand-grey/60" placeholder="Password" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-grey hover:text-brand-navy transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+</div>
+<!-- Confirm Password -->
+<div class="relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 text-brand-grey group-focus-within:text-brand-orange transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="lock">lock</span>
+</div>
+<input class="w-full h-[52px] pl-11 pr-12 bg-white border border-slate-200 rounded-[10px] outline-none transition-all duration-200 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange font-body-md text-brand-navy placeholder:text-brand-grey/60" placeholder="Confirm Password" type="password"/>
+<button class="absolute right-4 top-1/2 -translate-y-1/2 text-brand-grey hover:text-brand-navy transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="visibility">visibility</span>
+</button>
+</div>
+<!-- Terms & Conditions -->
+<div class="flex items-start gap-3 mt-xs">
+<div class="flex items-center h-5">
+<input checked="" class="h-5 w-5 rounded border-slate-300 text-brand-orange focus:ring-brand-orange cursor-pointer" id="terms" name="terms" type="checkbox"/>
+</div>
+<label class="font-body-md text-brand-grey leading-tight" for="terms">
+                    I agree to <a class="text-brand-orange underline underline-offset-2" href="#">Terms & Privacy Policy</a>
+</label>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full h-[52px] mt-md bg-brand-orange text-white font-semibold rounded-[12px] flex items-center justify-center transition-all duration-200 hover:brightness-110 active:scale-[0.98] shadow-sm" type="submit">
+<span class="text-[15px] font-inter">Create Account</span>
+</button>
+</form>
+<!-- Spacer for Footer -->
+<div class="flex-grow min-h-[32px]"></div>
+<!-- Footer -->
+<footer class="text-center pb-md">
+<p class="font-body-md text-brand-grey">
+                Already have an account? 
+                <a class="text-brand-orange font-semibold hover:underline" href="#">Sign In</a>
+</p>
+</footer>
+</main>
+<!-- Micro-interaction script for password toggle -->
+<script>
+        document.querySelectorAll('button[type="button"]').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const input = this.parentElement.querySelector('input');
+                const icon = this.querySelector('.material-symbols-outlined');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.textContent = 'visibility_off';
+                } else {
+                    input.type = 'password';
+                    icon.textContent = 'visibility';
+                }
+            });
+        });
+
+        // Simple role selection toggle
+        const roles = document.querySelectorAll('section.flex.gap-xs button');
+        roles.forEach(role => {
+            role.addEventListener('click', () => {
+                roles.forEach(r => {
+                    r.classList.remove('bg-brand-orange', 'text-white');
+                    r.classList.add('bg-white', 'border', 'border-brand-orange', 'text-brand-orange');
+                });
+                role.classList.remove('bg-white', 'border', 'border-brand-orange', 'text-brand-orange');
+                role.classList.add('bg-brand-orange', 'text-white');
+            });
+        });
+    </script>
+</body></html>
