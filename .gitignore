@@ -1,0 +1,15 @@
+# Ignore IDE settings
+.vscode/
+.idea/
+
+# Ignore database scripts & temporary text notes
+*.sql
+*.txt
+*.ps1
+diff.txt
+inserts.txt
+FullDatabaseScript.sql
+
+# Ignore system files
+.DS_Store
+Thumbs.db
