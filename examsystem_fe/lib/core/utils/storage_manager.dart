@@ -221,7 +221,7 @@ class StorageManager {
 
   static Future<String> getLanguage() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyLanguage) ?? 'Tiếng Việt (VN)';
+    return prefs.getString(_keyLanguage) ?? 'Vietnamese (VN)';
   }
 
   static Future<void> setLanguage(String lang) async {
@@ -231,7 +231,7 @@ class StorageManager {
 
   static Future<String> getThemeColor() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyThemeColor) ?? 'Cam Hổ Phách (Mặc định)';
+    return prefs.getString(_keyThemeColor) ?? 'Amber Orange (Default)';
   }
 
   static Future<void> setThemeColor(String colorName) async {

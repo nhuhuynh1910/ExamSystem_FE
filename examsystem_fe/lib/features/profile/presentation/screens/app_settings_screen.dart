@@ -334,6 +334,8 @@ class AppSettingsScreen extends StatelessWidget {
     required List<String> options,
     required ValueChanged<String?> onChanged,
   }) {
+    final safeValue = options.contains(value) ? value : options.first;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -351,7 +353,7 @@ class AppSettingsScreen extends StatelessWidget {
             ),
           ),
           DropdownButton<String>(
-            value: value,
+            value: safeValue,
             underline: const SizedBox(),
             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF9CA3AF)),
             dropdownColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,

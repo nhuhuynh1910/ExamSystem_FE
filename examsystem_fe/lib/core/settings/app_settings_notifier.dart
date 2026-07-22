@@ -18,8 +18,8 @@ class AppSettingsNotifier extends ChangeNotifier {
   bool _pushNotifications = true;
   bool _examSound = true;
   bool _vibration = true;
-  String _language = 'Tiếng Việt (VN)';
-  String _themeColor = 'Cam Hổ Phách (Mặc định)';
+  String _language = 'Vietnamese (VN)';
+  String _themeColor = 'Amber Orange (Default)';
   bool _biometricLock = false;
 
   // ── Public getters ─────────────────────────────────────────────────────────
@@ -37,10 +37,13 @@ class AppSettingsNotifier extends ChangeNotifier {
   /// Màu primary tương ứng với themeColor đã chọn
   Color get primaryColor {
     switch (_themeColor) {
+      case 'Ocean Navy':
       case 'Xanh Băng Xanh (Ocean Navy)':
         return const Color(0xFF1E40AF);
+      case 'Emerald Green':
       case 'Lục Bảo (Emerald)':
         return const Color(0xFF059669);
+      case 'Amber Orange (Default)':
       case 'Cam Hổ Phách (Mặc định)':
       default:
         return const Color(0xFFF15A22);
@@ -57,8 +60,29 @@ class AppSettingsNotifier extends ChangeNotifier {
     _pushNotifications = await StorageManager.getPushNotifications();
     _examSound         = await StorageManager.getExamSound();
     _vibration         = await StorageManager.getVibration();
-    _language          = await StorageManager.getLanguage();
-    _themeColor        = await StorageManager.getThemeColor();
+    
+    final rawLang      = await StorageManager.getLanguage();
+    if (rawLang == 'Tiếng Việt (VN)') {
+      _language = 'Vietnamese (VN)';
+    } else if (rawLang == 'English (US)' || rawLang == 'Vietnamese (VN)') {
+      _language = rawLang;
+    } else {
+      _language = 'Vietnamese (VN)';
+    }
+
+    final rawColor     = await StorageManager.getThemeColor();
+    if (rawColor == 'Cam Hổ Phách (Mặc định)') {
+      _themeColor = 'Amber Orange (Default)';
+    } else if (rawColor == 'Xanh Băng Xanh (Ocean Navy)') {
+      _themeColor = 'Ocean Navy';
+    } else if (rawColor == 'Lục Bảo (Emerald)') {
+      _themeColor = 'Emerald Green';
+    } else if (['Amber Orange (Default)', 'Ocean Navy', 'Emerald Green'].contains(rawColor)) {
+      _themeColor = rawColor;
+    } else {
+      _themeColor = 'Amber Orange (Default)';
+    }
+
     _biometricLock     = await StorageManager.getBiometricLock();
     // Không notifyListeners() ở đây vì widget tree chưa được tạo
   }
