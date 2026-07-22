@@ -95,11 +95,13 @@ class ProfileMenuConfigBuilder {
     }
 
     // ── Common bottom items ──────────────────────────────────────
-    items.add(ProfileMenuItemConfig(
-      icon: Icons.help_outline,
-      label: 'Help & Support',
-      onTap: onHelpSupport,
-    ));
+    if (!profile.isAdmin) {
+      items.add(ProfileMenuItemConfig(
+        icon: Icons.help_outline,
+        label: 'Help & Support',
+        onTap: onHelpSupport,
+      ));
+    }
 
     return items;
   }
