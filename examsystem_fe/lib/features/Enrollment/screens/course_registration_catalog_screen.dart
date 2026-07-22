@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../common/skeleton_loader.dart';
 import '../../../core/theme/app_theme.dart';
 import '../bloc/enrollment_bloc.dart';
 import '../bloc/enrollment_event.dart';
@@ -108,7 +109,10 @@ class _CatalogViewState extends State<_CatalogView> {
             state is EnrollmentLoadFailure,
         builder: (context, state) {
           if (state is EnrollmentLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: SkeletonListLoader(count: 4, cardHeight: 110),
+            );
           }
 
           if (state is EnrollmentLoadFailure) {

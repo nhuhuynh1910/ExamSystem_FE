@@ -12,6 +12,7 @@ import '../widgets/upcoming_exams_section.dart';
 
 import '../../../../features/exam/widgets/student_exam_body.dart';
 import '../../../../features/results/screens/student_results_body.dart';
+import '../../../common/skeleton_loader.dart';
 import '../../../profile/presentation/profile_screen.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -50,46 +51,129 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 768;
+
+    final mainContent = Column(
+      children: [
+        // ── Shared Header (hiển thị cho tab 0, 1, 2 — Profile tự có header riêng)
+        if (_currentIndex != 3)
+          BlocBuilder<StudentDashboardBloc, StudentDashboardState>(
+            builder: (context, state) {
+              final String studentName = (state is StudentDashboardLoaded)
+                  ? state.studentName
+                  : 'Student';
+              final int notifCount = (state is StudentDashboardLoaded)
+                  ? state.unreadNotifications
+                  : 0;
+              return StudentHeader(
+                studentName: studentName,
+                notificationCount: notifCount,
+              );
+            },
+          ),
+
+        // ── Body — thay đổi theo tab, Header và BottomNav được share
+        Expanded(
+          child: IndexedStack(
+            index: _currentIndex,
+            children: [
+              // 0: Home Dashboard
+              _buildHomeBody(context),
+              // 1: Exams — dùng StudentExamBody (không có Scaffold)
+              const StudentExamBody(),
+              // 2: Results — dùng StudentResultsBody (không có Scaffold)
+              const StudentResultsBody(),
+              // 3: Profile — ProfileScreen có header gradient riêng
+              const ProfileScreen(hideBottomNav: true),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
-      body: Column(
-        children: [
-          // ── Shared Header (hiển thị cho tab 0, 1, 2 — Profile tự có header riêng)
-          if (_currentIndex != 3)
-            BlocBuilder<StudentDashboardBloc, StudentDashboardState>(
-              builder: (context, state) {
-                final String studentName = (state is StudentDashboardLoaded)
-                    ? state.studentName
-                    : 'Student';
-                final int notifCount = (state is StudentDashboardLoaded)
-                    ? state.unreadNotifications
-                    : 0;
-                return StudentHeader(
-                  studentName: studentName,
-                  notificationCount: notifCount,
-                );
-              },
-            ),
-
-          // ── Body — thay đổi theo tab, Header và BottomNav được share
-          Expanded(
-            child: IndexedStack(
-              index: _currentIndex,
+      body: isDesktop
+          ? Row(
               children: [
-                // 0: Home Dashboard
-                _buildHomeBody(context),
-                // 1: Exams — dùng StudentExamBody (không có Scaffold)
-                const StudentExamBody(),
-                // 2: Results — dùng StudentResultsBody (không có Scaffold)
-                const StudentResultsBody(),
-                // 3: Profile — ProfileScreen có header gradient riêng
-                const ProfileScreen(hideBottomNav: true),
+                // Desktop Adaptive NavigationRail Sidebar
+                NavigationRail(
+                  selectedIndex: _currentIndex,
+                  onDestinationSelected: (int index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  labelType: NavigationRailLabelType.all,
+                  backgroundColor: Colors.white,
+                  selectedIconTheme: const IconThemeData(color: Color(0xFFF15A22)),
+                  selectedLabelTextStyle: const TextStyle(
+                    color: Color(0xFFF15A22),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  unselectedIconTheme: IconThemeData(color: Colors.grey.shade400),
+                  unselectedLabelTextStyle: TextStyle(
+                    color: Colors.grey.shade500,
+                    fontSize: 12,
+                  ),
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFFF3EE),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.school_rounded,
+                            color: Color(0xFFF15A22),
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'ExamHub',
+                          style: TextStyle(
+                            color: Color(0xFF1D3557),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  destinations: const [
+                    NavigationRailDestination(
+                      icon: Icon(Icons.home_outlined),
+                      selectedIcon: Icon(Icons.home_rounded),
+                      label: Text('Home'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.assignment_outlined),
+                      selectedIcon: Icon(Icons.assignment_rounded),
+                      label: Text('Exams'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.leaderboard_outlined),
+                      selectedIcon: Icon(Icons.leaderboard_rounded),
+                      label: Text('Results'),
+                    ),
+                    NavigationRailDestination(
+                      icon: Icon(Icons.person_outline),
+                      selectedIcon: Icon(Icons.person_rounded),
+                      label: Text('Profile'),
+                    ),
+                  ],
+                ),
+                const VerticalDivider(thickness: 1, width: 1, color: Color(0xFFE2E8F0)),
+                Expanded(child: mainContent),
               ],
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(context),
+            )
+          : mainContent,
+      bottomNavigationBar: isDesktop ? null : _buildBottomNav(context),
     );
   }
 
@@ -98,9 +182,18 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return BlocBuilder<StudentDashboardBloc, StudentDashboardState>(
       builder: (context, state) {
         if (state is StudentDashboardLoading) {
-          return const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFFF15A22),
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  SkeletonLoader(width: double.infinity, height: 90, borderRadius: 16),
+                  SizedBox(height: 16),
+                  SkeletonLoader(width: double.infinity, height: 48, borderRadius: 14),
+                  SizedBox(height: 24),
+                  SkeletonListLoader(count: 3, cardHeight: 110),
+                ],
+              ),
             ),
           );
         }
@@ -114,10 +207,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         }
 
         // Initial state
-        return const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFFF15A22),
-          ),
+        return const Padding(
+          padding: EdgeInsets.all(16),
+          child: SkeletonListLoader(count: 3, cardHeight: 110),
         );
       },
     );

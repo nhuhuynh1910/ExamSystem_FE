@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../common/skeleton_loader.dart';
+
 import '../bloc/results_bloc.dart';
 import '../bloc/results_event.dart';
 import '../bloc/results_state.dart';
@@ -29,8 +31,9 @@ class _StudentResultsView extends StatelessWidget {
     return BlocBuilder<ResultsBloc, ResultsState>(
       builder: (context, state) {
         if (state is ResultsLoading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFFF15A22)),
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: SkeletonListLoader(count: 4, cardHeight: 100),
           );
         }
 
