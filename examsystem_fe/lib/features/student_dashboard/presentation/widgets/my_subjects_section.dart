@@ -283,7 +283,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Hủy đăng ký môn học?',
+              'Unenroll from Subject?',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -292,7 +292,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Bạn có chắc chắn muốn hủy đăng ký môn "${subject.subjectName}"?',
+              'Are you sure you want to unenroll from "${subject.subjectName}"?',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,
@@ -314,7 +314,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
                     ),
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text(
-                      'Hủy',
+                      'Cancel',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -337,7 +337,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Đã hủy đăng ký môn "${subject.subjectName}"!',
+                              'Successfully unenrolled from "${subject.subjectName}"!',
                             ),
                             backgroundColor: Colors.green,
                           ),
@@ -348,7 +348,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
                         messenger.showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Lỗi hủy đăng ký: ${e.toString().replaceAll("Exception: ", "")}',
+                              'Unenroll failed: ${e.toString().replaceAll("Exception: ", "")}',
                             ),
                             backgroundColor: const Color(0xFFBA1A1A),
                           ),
@@ -356,7 +356,7 @@ class _HorizontalSubjectCard extends StatelessWidget {
                       }
                     },
                     child: const Text(
-                      'Xác nhận hủy',
+                      'Confirm Unenroll',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

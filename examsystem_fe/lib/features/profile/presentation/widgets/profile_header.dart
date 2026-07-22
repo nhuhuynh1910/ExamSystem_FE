@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 ///
 /// Avatar nằm ngoài widget này (overlapping) — xử lý bằng Stack ở ProfileScreen.
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({super.key});
+  final VoidCallback? onSettingsTap;
+
+  const ProfileHeader({super.key, this.onSettingsTap});
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +56,7 @@ class ProfileHeader extends StatelessWidget {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
-                      // TODO: Navigate to settings
-                    },
+                    onTap: onSettingsTap,
                     borderRadius: BorderRadius.circular(20),
                     splashColor: Colors.white24,
                     child: Container(

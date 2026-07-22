@@ -75,7 +75,7 @@ class _CatalogViewState extends State<_CatalogView> {
           IconButton(
             onPressed: () => context.push('/student/courses/registered'),
             icon: const Icon(Icons.fact_check_rounded, color: AppTheme.primary, size: 26),
-            tooltip: 'Môn đã đăng ký',
+            tooltip: 'Enrolled Subjects',
           ),
           const SizedBox(width: 8),
         ],
@@ -122,7 +122,7 @@ class _CatalogViewState extends State<_CatalogView> {
                         size: 48, color: AppTheme.error),
                     const SizedBox(height: 12),
                     Text(
-                      'Lỗi tải dữ liệu: ${state.message}',
+                      'Failed to load data: ${state.message}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppTheme.error),
                     ),
@@ -131,7 +131,7 @@ class _CatalogViewState extends State<_CatalogView> {
                       onPressed: () =>
                           context.read<EnrollmentBloc>().add(LoadCatalog()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Thử lại'),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -239,7 +239,7 @@ class _CatalogViewState extends State<_CatalogView> {
           child: filtered.isEmpty
               ? const Center(
                   child: Text(
-                    'Không tìm thấy môn học nào.',
+                    'No subjects found.',
                     style: TextStyle(color: AppTheme.textMuted),
                   ),
                 )
@@ -351,7 +351,7 @@ class _CatalogCourseCard extends StatelessWidget {
                       if (subject.courseCode.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
-                          'Mã môn: ${subject.courseCode}',
+                          'Code: ${subject.courseCode}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -384,7 +384,7 @@ class _CatalogCourseCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Loại: ${subject.courseCategory.toUpperCase()}',
+                      'Type: ${subject.courseCategory.toUpperCase()}',
                       style: const TextStyle(
                         color: Color(0xFF1D4ED8),
                         fontSize: 11,
@@ -400,7 +400,7 @@ class _CatalogCourseCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${subject.courseCredits} Tín chỉ',
+                    '${subject.courseCredits} Credits',
                     style: const TextStyle(
                       color: Color(0xFFC2410C),
                       fontSize: 11,
@@ -421,10 +421,10 @@ class _CatalogCourseCard extends StatelessWidget {
                   ),
                   child: Text(
                     isEnrolled
-                        ? 'Đã đăng ký'
+                        ? 'Enrolled'
                         : (subject.isActive
-                            ? 'Đang mở (Active)'
-                            : 'Chưa mở (Inactive)'),
+                            ? 'Active'
+                            : 'Inactive'),
                     style: TextStyle(
                       color: isEnrolled
                           ? const Color(0xFF047857)
@@ -440,7 +440,7 @@ class _CatalogCourseCard extends StatelessWidget {
 
             // Description Heading & Body
             const Text(
-              'Chi tiết mô tả môn học:',
+              'Course Details:',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -459,7 +459,7 @@ class _CatalogCourseCard extends StatelessWidget {
               child: Text(
                 subject.cleanDescription.isNotEmpty
                     ? subject.cleanDescription
-                    : 'Chưa có thông tin mô tả chi tiết cho môn học này.',
+                    : 'No detailed description available for this subject.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade800,
@@ -489,7 +489,7 @@ class _CatalogCourseCard extends StatelessWidget {
                       },
                       icon: const Icon(Icons.exit_to_app_rounded, size: 18),
                       label: const Text(
-                        'Hủy đăng ký môn học (Unenroll)',
+                        'Unenroll from this Subject',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -512,7 +512,7 @@ class _CatalogCourseCard extends StatelessWidget {
                       icon: const Icon(Icons.add_circle_outline_rounded,
                           size: 18),
                       label: const Text(
-                        'Đăng ký môn học này (Enroll)',
+                        'Enroll in this Subject',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,

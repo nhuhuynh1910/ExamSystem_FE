@@ -183,7 +183,7 @@ class _CatalogSubjectCardState extends State<_CatalogSubjectCard> {
         messenger.showSnackBar(
           SnackBar(
             content: Text(
-              'Đã đăng ký thành công môn "${widget.subject.subjectName}"!',
+              'Successfully enrolled in "${widget.subject.subjectName}"!',
             ),
             backgroundColor: const Color(0xFF047857),
           ),
@@ -196,7 +196,7 @@ class _CatalogSubjectCardState extends State<_CatalogSubjectCard> {
         messenger.showSnackBar(
           SnackBar(
             content: Text(
-              'Đăng ký thất bại: ${e.toString().replaceAll("Exception: ", "")}',
+              'Enrollment failed: ${e.toString().replaceAll("Exception: ", "")}',
             ),
             backgroundColor: const Color(0xFFBA1A1A),
           ),

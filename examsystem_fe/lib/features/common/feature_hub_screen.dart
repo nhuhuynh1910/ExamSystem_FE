@@ -81,7 +81,7 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
     final fullName = await StorageManager.getFullName();
     if (mounted) {
       setState(() {
-        _fullName = fullName ?? 'Người dùng';
+        _fullName = fullName ?? 'User';
       });
     }
   }
@@ -91,11 +91,11 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(featureName),
-        content: Text('Tính năng "$featureName" đang được phát triển và sẽ sớm ra mắt.'),
+        content: Text('Feature "$featureName" is under development and will be available soon.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -137,7 +137,7 @@ class _FeatureHubScreenState extends State<FeatureHubScreen> {
           IconButton(
             icon: const Icon(Icons.notifications_outlined, color: AppTheme.secondary),
             onPressed: () => context.push('/notifications'),
-            tooltip: 'Thông báo',
+            tooltip: 'Notifications',
           ),
           const SizedBox(width: 8),
           Padding(

@@ -33,6 +33,8 @@ import 'widgets/profile_identity_card.dart';
 import 'widgets/profile_menu_card.dart';
 import 'widgets/profile_menu_config.dart';
 import 'widgets/profile_sign_out_card.dart';
+import 'screens/help_support_screen.dart';
+import 'screens/app_settings_screen.dart';
 import '../../common/admin_bottom_nav_bar.dart';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -147,7 +149,16 @@ class ProfileScreen extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // Gradient Header
-          const ProfileHeader(),
+          ProfileHeader(
+            onSettingsTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AppSettingsScreen(),
+                ),
+              );
+            },
+          ),
 
           // Avatar (positioned overlapping bottom of header)
           Positioned(
@@ -230,8 +241,12 @@ class ProfileScreen extends StatelessWidget {
         context.push(AppRouter.examList);
       },
       onHelpSupport: () {
-        // TODO: Navigate to help & support
-        _showSnackBar(context, 'Coming soon!', isError: false);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const HelpSupportScreen(),
+          ),
+        );
       },
     );
 

@@ -19,7 +19,7 @@ class ResultCardWidget extends StatelessWidget {
     final isPassed = result.isPassed;
     final dateStr = result.submitTime != null
         ? DateFormat('dd/MM/yyyy HH:mm').format(result.submitTime!)
-        : 'Vừa xong';
+        : 'Just now';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -125,8 +125,8 @@ class ResultCardWidget extends StatelessWidget {
                           const SizedBox(width: 4),
                           Text(
                             result.totalQuestions > 0
-                                ? '${result.correctAnswers} / ${result.totalQuestions} câu đúng (${result.score}/${result.totalScore}đ)'
-                                : 'Điểm: ${result.score} / ${result.totalScore}',
+                                ? '${result.correctAnswers} / ${result.totalQuestions} correct (${result.score}/${result.totalScore}pts)'
+                                : 'Score: ${result.score} / ${result.totalScore}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -174,7 +174,7 @@ class ResultCardWidget extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        isPassed ? 'Đạt' : 'Chưa đạt',
+                        isPassed ? 'Passed' : 'Failed',
                         style: TextStyle(
                           color: isPassed
                               ? const Color(0xFF047857)

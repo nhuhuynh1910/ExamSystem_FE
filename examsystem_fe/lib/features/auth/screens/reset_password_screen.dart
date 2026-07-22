@@ -249,17 +249,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Vui lòng nhập mật khẩu mới';
+                  return 'Please enter your new password';
                 }
                 if (value.length < 6) {
-                  return 'Mật khẩu phải từ 6 ký tự trở lên';
+                  return 'Password must be at least 6 characters';
                 }
-                // Validate: phải có chữ, số và ký tự đặc biệt
+                // Validate: must contain letters, numbers, and special chars
                 final hasLetter = RegExp(r'[A-Za-z]').hasMatch(value);
                 final hasDigit = RegExp(r'\d').hasMatch(value);
                 final hasSpecial = RegExp(r'[^A-Za-z\d]').hasMatch(value);
                 if (!hasLetter || !hasDigit || !hasSpecial) {
-                  return 'Mật khẩu phải có chữ, số và ký tự đặc biệt';
+                  return 'Password must contain letters, numbers, and special characters';
                 }
                 return null;
               },
@@ -281,10 +281,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               },
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Vui lòng xác nhận mật khẩu';
+                  return 'Please confirm your password';
                 }
                 if (value != _passwordController.text) {
-                  return 'Mật khẩu xác nhận không khớp';
+                  return 'Passwords do not match';
                 }
                 return null;
               },

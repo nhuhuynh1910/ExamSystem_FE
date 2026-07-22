@@ -59,7 +59,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
           IconButton(
             onPressed: () => context.go('/student/courses/catalog'),
             icon: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary, size: 26),
-            tooltip: 'Đăng ký môn mới',
+            tooltip: 'Enroll New Subject',
           ),
           const SizedBox(width: 8),
         ],
@@ -104,7 +104,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                     const Icon(Icons.error_outline_rounded, size: 48, color: AppTheme.error),
                     const SizedBox(height: 12),
                     Text(
-                      'Lỗi: ${state.message}',
+                      'Error: ${state.message}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: AppTheme.error),
                     ),
@@ -112,7 +112,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                     FilledButton.icon(
                       onPressed: () => context.read<EnrollmentBloc>().add(LoadMyEnrollments()),
                       icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('Thử lại'),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -179,7 +179,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                             Icon(Icons.calendar_today_rounded, size: 48, color: Colors.grey),
                             SizedBox(height: 12),
                             Text(
-                              'Bạn chưa đăng ký môn học nào.',
+                              'You have no registered subjects yet.',
                               style: TextStyle(color: AppTheme.textMuted, fontSize: 14),
                             ),
                           ],
@@ -289,7 +289,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                                         Icon(Icons.access_time_rounded, size: 15, color: Colors.grey),
                                         SizedBox(width: 6),
                                         Text(
-                                          'Lịch: TBD • Phòng: TBD',
+                                          'Schedule: TBD • Room: TBD',
                                           style: TextStyle(color: Colors.grey, fontSize: 13),
                                         ),
                                       ],
@@ -423,7 +423,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
             ),
             const SizedBox(height: 12),
             Text(
-              'Hủy đăng ký?',
+              'Unenroll?',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -436,7 +436,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
               text: TextSpan(
                 style: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
                 children: [
-                  const TextSpan(text: 'Bạn có chắc chắn muốn rút khỏi môn học '),
+                  const TextSpan(text: 'Are you sure you want to withdraw from '),
                   TextSpan(
                     text: "'${course.courseNameOnly}'",
                     style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.navy),
@@ -457,7 +457,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                     ),
                     onPressed: () => Navigator.pop(ctx),
                     child: const Text(
-                      'Hủy',
+                      'Cancel',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -474,7 +474,7 @@ class _MyRegisteredCoursesContentState extends State<_MyRegisteredCoursesContent
                       context.read<EnrollmentBloc>().add(UnenrollSubject(course.subjectId));
                     },
                     child: const Text(
-                      'Xác nhận',
+                      'Confirm',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

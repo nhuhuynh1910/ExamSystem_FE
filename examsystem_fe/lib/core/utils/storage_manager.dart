@@ -29,6 +29,15 @@ class StorageManager {
   static const String _keyUsername = 'username';
   static const String _keyRole     = 'role';
 
+  // Key cài đặt ứng dụng (AppSettings):
+  static const String _keyDarkMode          = 'setting_dark_mode';
+  static const String _keyPushNotifications = 'setting_push_notifications';
+  static const String _keyExamSound         = 'setting_exam_sound';
+  static const String _keyVibration         = 'setting_vibration';
+  static const String _keyLanguage          = 'setting_language';
+  static const String _keyThemeColor        = 'setting_theme_color';
+  static const String _keyBiometricLock     = 'setting_biometric_lock';
+
   // ════════════════════════════════════════════════════════════════════════════
   // PHẦN 1: LƯU DỮ LIỆU
   // ════════════════════════════════════════════════════════════════════════════
@@ -164,5 +173,79 @@ class StorageManager {
     await prefs.remove(_keyEmail);
     await prefs.remove(_keyUsername);
     await prefs.remove(_keyRole);
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // PHẦN 5: ĐỌC & GHI CÀI ĐẶT ỨNG DỤNG (SETTINGS)
+  // ════════════════════════════════════════════════════════════════════════════
+
+  static Future<bool> getDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyDarkMode) ?? false;
+  }
+
+  static Future<void> setDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyDarkMode, value);
+  }
+
+  static Future<bool> getPushNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyPushNotifications) ?? true;
+  }
+
+  static Future<void> setPushNotifications(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPushNotifications, value);
+  }
+
+  static Future<bool> getExamSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyExamSound) ?? true;
+  }
+
+  static Future<void> setExamSound(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyExamSound, value);
+  }
+
+  static Future<bool> getVibration() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyVibration) ?? true;
+  }
+
+  static Future<void> setVibration(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyVibration, value);
+  }
+
+  static Future<String> getLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLanguage) ?? 'Tiếng Việt (VN)';
+  }
+
+  static Future<void> setLanguage(String lang) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLanguage, lang);
+  }
+
+  static Future<String> getThemeColor() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyThemeColor) ?? 'Cam Hổ Phách (Mặc định)';
+  }
+
+  static Future<void> setThemeColor(String colorName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyThemeColor, colorName);
+  }
+
+  static Future<bool> getBiometricLock() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyBiometricLock) ?? false;
+  }
+
+  static Future<void> setBiometricLock(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyBiometricLock, value);
   }
 }

@@ -39,21 +39,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   static const List<_OnboardingContent> _pages = [
     _OnboardingContent(
       icon: Icons.quiz_rounded,
-      title: 'Thi trực tuyến\nmọi lúc mọi nơi',
+      title: 'Take exams online\nanytime, anywhere',
       subtitle:
-          'Hệ thống thi online hiện đại của FPT University.\nTruy cập đề thi, làm bài và xem kết quả ngay lập tức.',
+          'The modern online exam system of FPT University.\nAccess exams, complete them, and view results instantly.',
     ),
     _OnboardingContent(
       icon: Icons.analytics_rounded,
-      title: 'Theo dõi\nkết quả tức thì',
+      title: 'Track results\nin real-time',
       subtitle:
-          'Xem điểm số, phân tích câu trả lời và\nthống kê kết quả sau mỗi bài thi.',
+          'View scores, analyze answers and\nview statistics after each exam.',
     ),
     _OnboardingContent(
       icon: Icons.security_rounded,
-      title: 'An toàn\nvà bảo mật',
+      title: 'Safe\nand Secure',
       subtitle:
-          'Hệ thống xác thực JWT đảm bảo\nbảo mật tuyệt đối cho mọi kỳ thi.',
+          'JWT authentication ensures\ncomplete security for every exam.',
     ),
   ];
 

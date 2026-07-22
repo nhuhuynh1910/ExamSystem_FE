@@ -26,7 +26,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(
         e,
-        'Không thể tải thông tin profile. Vui lòng thử lại sau.',
+        'Failed to load profile. Please try again later.',
       ));
     } catch (e) {
       rethrow;
@@ -40,7 +40,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(
         e,
-        'Không thể cập nhật profile. Vui lòng thử lại sau.',
+        'Failed to update profile. Please try again later.',
       ));
     } catch (e) {
       rethrow;
@@ -54,7 +54,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(
         e,
-        'Không thể đổi mật khẩu. Vui lòng thử lại sau.',
+        'Failed to change password. Please try again later.',
       ));
     } catch (e) {
       rethrow;
@@ -68,7 +68,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(
         e,
-        'Không thể upload ảnh đại diện. Vui lòng thử lại sau.',
+        'Failed to upload avatar. Please try again later.',
       ));
     } catch (e) {
       rethrow;

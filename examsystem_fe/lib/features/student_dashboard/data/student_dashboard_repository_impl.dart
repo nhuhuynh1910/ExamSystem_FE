@@ -21,7 +21,7 @@ class StudentDashboardRepositoryImpl implements StudentDashboardRepository {
     } on DioException catch (e) {
       throw Exception(_extractErrorMessage(
         e,
-        'Không thể tải danh sách bài thi. Vui lòng thử lại sau.',
+        'Failed to load exam list. Please try again later.',
       ));
     } catch (e) {
       rethrow;

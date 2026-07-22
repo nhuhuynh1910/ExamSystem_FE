@@ -60,7 +60,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               builder: (context, state) {
                 final String studentName = (state is StudentDashboardLoaded)
                     ? state.studentName
-                    : 'Sinh viên';
+                    : 'Student';
                 final int notifCount = (state is StudentDashboardLoaded)
                     ? state.unreadNotifications
                     : 0;

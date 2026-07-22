@@ -55,7 +55,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     try {
       final updatedProfile = await _profileRepository.updateProfile(event.request);
-      emit(ProfileUpdateSuccess(updatedProfile, 'Cập nhật thành công!'));
+      emit(ProfileUpdateSuccess(updatedProfile, 'Profile updated successfully!'));
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       if (currentProfile != null) {
@@ -103,7 +103,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
     try {
       final updatedProfile = await _profileRepository.uploadAvatar(event.fileBytes, event.fileName);
-      emit(ProfileUpdateSuccess(updatedProfile, 'Cập nhật avatar thành công!'));
+      emit(ProfileUpdateSuccess(updatedProfile, 'Avatar updated successfully!'));
     } catch (e) {
       final errorMessage = e.toString().replaceAll('Exception: ', '');
       if (currentProfile != null) {

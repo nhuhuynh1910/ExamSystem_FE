@@ -69,16 +69,16 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
   String _getErrorMessage(dynamic e, String defaultMsg) {
     final errStr = e.toString();
     if (errStr.contains('409')) {
-      return 'Môn học này đã được đăng ký trước đó hoặc lịch học bị trùng!';
+      return 'This course has already been enrolled or schedule conflicts!';
     }
     if (errStr.contains('401') || errStr.contains('403')) {
-      return 'Phiên làm việc hết hạn hoặc bạn không có quyền thực hiện.';
+      return 'Session expired or insufficient permission.';
     }
     if (errStr.contains('404')) {
-      return 'Không tìm thấy môn học hoặc dữ liệu tương ứng.';
+      return 'Course or data not found.';
     }
     if (errStr.contains('connection') || errStr.contains('timeout') || errStr.contains('502') || errStr.contains('503')) {
-      return 'Không kết nối được tới máy chủ. Vui lòng thử lại sau.';
+      return 'Cannot connect to server. Please try again later.';
     }
     return '$defaultMsg: $e';
   }
@@ -89,9 +89,9 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
   ) async {
     try {
       await _repository.enrollSubject(event.subjectId);
-      emit(EnrollmentActionSuccess('Đăng ký môn học thành công.'));
+      emit(EnrollmentActionSuccess('Course enrolled successfully.'));
     } catch (e) {
-      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Đăng ký thất bại')));
+      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Enrollment failed')));
     }
   }
 
@@ -102,9 +102,9 @@ class EnrollmentBloc extends Bloc<EnrollmentEvent, EnrollmentState> {
   ) async {
     try {
       await _repository.unenrollSubject(event.subjectId);
-      emit(EnrollmentActionSuccess('Hủy đăng ký thành công.'));
+      emit(EnrollmentActionSuccess('Unenrolled successfully.'));
     } catch (e) {
-      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Hủy đăng ký thất bại')));
+      emit(EnrollmentActionFailure(_getErrorMessage(e, 'Unenrollment failed')));
     }
   }
 }

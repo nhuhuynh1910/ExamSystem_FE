@@ -11,11 +11,11 @@ class AdminBottomNavBar extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(featureName),
-        content: Text('Tính năng "$featureName" đang được phát triển và sẽ sớm ra mắt.'),
+        content: Text('Feature "$featureName" is under development and will be available soon.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Đóng'),
+            child: const Text('Close'),
           ),
         ],
       ),

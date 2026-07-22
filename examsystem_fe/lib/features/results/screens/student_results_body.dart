@@ -45,7 +45,7 @@ class _StudentResultsView extends StatelessWidget {
                       size: 56, color: Colors.red.shade400),
                   const SizedBox(height: 12),
                   Text(
-                    'Không thể tải kết quả: ${state.message}',
+                    'Failed to load results: ${state.message}',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                   ),
@@ -55,7 +55,7 @@ class _StudentResultsView extends StatelessWidget {
                         .read<ResultsBloc>()
                         .add(const LoadStudentResultsEvent()),
                     icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Thử lại'),
+                    label: const Text('Retry'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFF15A22),
                       foregroundColor: Colors.white,
@@ -84,7 +84,7 @@ class _StudentResultsView extends StatelessWidget {
                         size: 64, color: Colors.grey.shade300),
                     const SizedBox(height: 16),
                     const Text(
-                      'Chưa có kết quả bài thi nào',
+                      'No exam results yet',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -93,7 +93,7 @@ class _StudentResultsView extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Kết quả thi của bạn sẽ tự động xuất hiện tại đây sau khi hoàn thành bài thi.',
+                      'Your exam results will automatically appear here after you complete an exam.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 13,
