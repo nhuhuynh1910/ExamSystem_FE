@@ -31,6 +31,7 @@ class DioClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'bypass-tunnel-reminder': 'true',
         },
       ),
     );
@@ -67,10 +68,7 @@ class DioClient {
   }
 
   static String _resolveBaseUrl() {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:5122/api';
-    }
-    return 'http://localhost:5122/api';
+    return 'https://clever-kings-travel.loca.lt/api';
   }
 
   static InterceptorsWrapper _buildAuthInterceptor(Dio dio) {

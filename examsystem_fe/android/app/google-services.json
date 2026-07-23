@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "332038070735",
+    "project_id": "examsystem-ac274",
+    "storage_bucket": "examsystem-ac274.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:332038070735:android:0f738439c7176252a332ba",
+        "android_client_info": {
+          "package_name": "com.example.examsystem_fe"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "332038070735-498hncnq9kvdmk3f0nscpsac5fqeoor0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.examsystem_fe",
+            "certificate_hash": "3d0d6bb15c9c6235b5356888e4fb3ba99beea46e"
+          }
+        },
+        {
+          "client_id": "332038070735-kb6pfne4dnp1vn1veqe9n93mfnl16m1b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNPoqk2CHvYThFR7PZaF7f4jBeCthR8Ig"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "332038070735-kb6pfne4dnp1vn1veqe9n93mfnl16m1b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
